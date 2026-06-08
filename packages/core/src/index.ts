@@ -6,3 +6,4 @@ export * from './colors';
 export * from './conversions';
 export * from './node-definition';
 export * from './registry';
+export * from './graph';

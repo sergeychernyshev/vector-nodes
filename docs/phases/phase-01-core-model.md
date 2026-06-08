@@ -24,7 +24,7 @@ mismatches, cycles, and missing outputs with clear errors.
 
 ## Step 1.3 — Graph model
 
-- [ ] **Scope:** `Graph` types (nodes, links, parameters, embedded meta-node defs, single
+- [x] **Scope:** `Graph` types (nodes, links, parameters, embedded meta-node defs, single
       Output); constructors and basic accessors.
 - **Acceptance:** build a graph in code; query nodes/links.
 - **Branch:** `phase-1/step-1.3-graph-model`
