@@ -4,6 +4,7 @@
   "private": true,
   "description": "Node-based procedural geometry generator for 2D and 3D.",
   "license": "Apache-2.0",
+  "author": "Sergey Chernyshev <sergey.chernyshev@gmail.com>",
   "type": "module",
   "repository": {
     "type": "git",
