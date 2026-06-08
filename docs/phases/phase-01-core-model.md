@@ -17,7 +17,7 @@ mismatches, cycles, and missing outputs with clear errors.
 
 ## Step 1.2 — Node definitions & registry
 
-- [ ] **Scope:** `NodeDefinition` interface (inputs, outputs, params w/ defaults/ranges,
+- [x] **Scope:** `NodeDefinition` interface (inputs, outputs, params w/ defaults/ranges,
       metadata) + a registry to look up definitions by type.
 - **Acceptance:** register and retrieve a sample definition; param defaults resolve.
 - **Branch:** `phase-1/step-1.2-node-definitions`
