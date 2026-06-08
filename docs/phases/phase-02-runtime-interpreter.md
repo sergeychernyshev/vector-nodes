@@ -29,7 +29,7 @@ only the affected subtree.
 
 ## Step 2.4 — Interpreter: memoization & dirty tracking
 
-- [ ] **Scope:** cache results keyed by hash of inputs+params; recompute only the dirty subtree on
+- [x] **Scope:** cache results keyed by hash of inputs+params; recompute only the dirty subtree on
       an edit.
 - **Acceptance:** editing one param recomputes only affected nodes (assert via instrumentation).
 - **Branch:** `phase-2/step-2.4-memoization`
