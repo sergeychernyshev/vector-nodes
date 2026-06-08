@@ -16,7 +16,7 @@ only the affected subtree.
 
 ## Step 2.2 — Runtime: geometry ops
 
-- [ ] **Scope:** point/vector array construction (grid, line, circle, random, from-list),
+- [x] **Scope:** point/vector array construction (grid, line, circle, random, from-list),
       projection (orthographic/perspective), translation, bezier sampling.
 - **Acceptance:** numeric tests against known values.
 - **Branch:** `phase-2/step-2.2-runtime-geometry`
