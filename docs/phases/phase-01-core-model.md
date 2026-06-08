@@ -31,7 +31,7 @@ mismatches, cycles, and missing outputs with clear errors.
 
 ## Step 1.4 — `.vnodes` (de)serialize + schema validation
 
-- [ ] **Scope:** parse/serialize `.vnodes`; validate against `docs/vnodes.schema.json` (ajv 2020).
+- [x] **Scope:** parse/serialize `.vnodes`; validate against `docs/vnodes.schema.json` (ajv 2020).
 - **Acceptance:** lossless round-trip of an example file; invalid docs rejected with messages.
 - **Branch:** `phase-1/step-1.4-serialize-validate`
 

@@ -7,3 +7,5 @@ export * from './conversions';
 export * from './node-definition';
 export * from './registry';
 export * from './graph';
+export * from './schema';
+export * from './vnodes';

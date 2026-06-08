@@ -9,7 +9,7 @@ clean checkout and in CI.
 
 ## Step 0.1 — Root tooling
 
-- [ ] **Scope:** Root `package.json` with `workspaces`, root `tsconfig.base.json`, `.nvmrc`,
+- [x] **Scope:** Root `package.json` with `workspaces`, root `tsconfig.base.json`, `.nvmrc`,
       `.editorconfig`, Prettier, ESLint (flat config, TS), Vitest config, npm scripts
       (`build`, `lint`, `typecheck`, `test`).
 - **Touches:** repo root.
