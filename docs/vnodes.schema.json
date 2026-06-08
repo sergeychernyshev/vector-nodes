@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vector-nodes.dev/schema/vnodes.schema.json",
+  "title": "Vector Nodes network (.vnodes)",
+  "description": "Skeleton schema for the Vector Nodes JSON network definition format. Refined during Phase 1.",
+  "type": "object",
+  "required": ["format", "version", "nodes", "links"],
+  "additionalProperties": false,
+  "properties": {
+    "format": {
+      "const": "vector-nodes",
+      "description": "Format discriminator."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$",
+      "description": "Format version, e.g. \"1.0\"."
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Human-facing info. `name` seeds the generated function name.",
+      "properties": {
+        "name": { "type": "string" },
+        "author": { "type": "string" },
+        "description": { "type": "string" },
+        "created": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "parameters": {
+      "type": "array",
+      "description": "External, typed inputs exposed as the generated function's arguments.",
+      "items": { "$ref": "#/$defs/parameter" }
+    },
+    "nodes": {
+      "type": "array",
+      "description": "The nodes in the network. Exactly one OutputGeometry node is expected.",
+      "items": { "$ref": "#/$defs/node" }
+    },
+    "links": {
+      "type": "array",
+      "description": "Edges connecting an output socket to an input socket.",
+      "items": { "$ref": "#/$defs/link" }
+    },
+    "metaNodes": {
+      "type": "object",
+      "description": "Reusable meta-node (function) definitions, keyed by name.",
+      "additionalProperties": { "$ref": "#/$defs/metaNode" }
+    }
+  },
+  "$defs": {
+    "socketType": {
+      "type": "string",
+      "enum": [
+        "Float",
+        "Integer",
+        "Boolean",
+        "Vector",
+        "Color",
+        "String",
+        "Geometry",
+        "Matrix"
+      ],
+      "description": "Socket data type. Drives color-coding and link type-checking."
+    },
+    "parameter": {
+      "type": "object",
+      "required": ["id", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "$ref": "#/$defs/socketType" },
+        "isArray": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if this carries a field/array of the type."
+        },
+        "default": {
+          "description": "Default value; shape depends on `type`."
+        },
+        "min": { "type": "number" },
+        "max": { "type": "number" }
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": ["id", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable unique id used by links."
+        },
+        "type": {
+          "type": "string",
+          "description": "Node type from the node library (e.g. \"PointArray\", \"OutputGeometry\")."
+        },
+        "position": {
+          "type": "array",
+          "description": "Editor canvas position [x, y].",
+          "items": { "type": "number" },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "params": {
+          "type": "object",
+          "description": "Static parameter values baked into the node.",
+          "additionalProperties": true
+        },
+        "label": { "type": "string" }
+      }
+    },
+    "endpoint": {
+      "type": "array",
+      "description": "A [nodeId, socketName] reference.",
+      "items": { "type": "string" },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "link": {
+      "type": "object",
+      "required": ["from", "to"],
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/endpoint",
+          "description": "Source output socket [nodeId, outputSocketName]."
+        },
+        "to": {
+          "$ref": "#/$defs/endpoint",
+          "description": "Target input socket [nodeId, inputSocketName]."
+        }
+      }
+    },
+    "metaNode": {
+      "type": "object",
+      "required": ["interface", "nodes", "links"],
+      "additionalProperties": false,
+      "properties": {
+        "interface": {
+          "type": "object",
+          "required": ["inputs", "outputs"],
+          "additionalProperties": false,
+          "properties": {
+            "inputs": { "type": "array", "items": { "$ref": "#/$defs/interfaceSocket" } },
+            "outputs": { "type": "array", "items": { "$ref": "#/$defs/interfaceSocket" } }
+          }
+        },
+        "nodes": { "type": "array", "items": { "$ref": "#/$defs/node" } },
+        "links": { "type": "array", "items": { "$ref": "#/$defs/link" } }
+      }
+    },
+    "interfaceSocket": {
+      "type": "object",
+      "required": ["name", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "$ref": "#/$defs/socketType" },
+        "isArray": { "type": "boolean", "default": false }
+      }
+    }
+  }
+}
