@@ -40,7 +40,7 @@ Rust that you can call from your own code.
    arguments:
 
    ```ts
-   import circle from "./circle.generated";
+   import circle from './circle.generated';
 
    const geo = circle(5); // export default function circle(radius: number): Geometry
    ```
@@ -54,13 +54,13 @@ Rust that you can call from your own code.
 
 ### Design goals
 
-| Goal | How it's met |
-| --- | --- |
-| Skills transfer from Blender | Socket types use Blender's color palette and conventions |
-| Portable & inspectable | Plain JSON definition format with a published JSON Schema |
+| Goal                               | How it's met                                                                                           |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Skills transfer from Blender       | Socket types use Blender's color palette and conventions                                               |
+| Portable & inspectable             | Plain JSON definition format with a published JSON Schema                                              |
 | Idiomatic, dependency-light output | Generated code imports a small shared **runtime library** and is emitted by a graph **code generator** |
-| Runs anywhere | Main-thread and Web Worker wrappers for TS/JS |
-| 2D and 3D from one model | 3D is the native model; 2D is the 3D model projected to the X–Y plane (drop Z) |
+| Runs anywhere                      | Main-thread and Web Worker wrappers for TS/JS                                                          |
+| 2D and 3D from one model           | 3D is the native model; 2D is the 3D model projected to the X–Y plane (drop Z)                         |
 
 ---
 
@@ -88,21 +88,21 @@ Sockets are color-coded using **Blender's node socket palette** so that anyone w
 Blender's Geometry/Shader nodes can read a network at a glance. Colors are theme values and can
 be customized, but ship with these Blender-matching defaults:
 
-| Type | Meaning | Blender color | Hex |
-| --- | --- | --- | --- |
-| `Float` | Scalar real number | Gray | `#A1A1A1` |
-| `Integer` | Whole number | Green | `#108526` |
-| `Boolean` | true / false | Lavender | `#CCA6D6` |
-| `Vector` | 2D/3D vector or position (x, y, z) | Blue | `#6363C7` |
-| `Color` | RGBA | Yellow | `#C7C729` |
-| `String` | Text (labels, attribute names) | Light blue | `#70B3FF` |
-| `Geometry` | Points / curves / meshes bundle | Teal | `#00D6A3` |
-| `Matrix` | 4×4 transform | Orange | `#ED9E5C` |
+| Type       | Meaning                            | Blender color | Hex       |
+| ---------- | ---------------------------------- | ------------- | --------- |
+| `Float`    | Scalar real number                 | Gray          | `#A1A1A1` |
+| `Integer`  | Whole number                       | Green         | `#108526` |
+| `Boolean`  | true / false                       | Lavender      | `#CCA6D6` |
+| `Vector`   | 2D/3D vector or position (x, y, z) | Blue          | `#6363C7` |
+| `Color`    | RGBA                               | Yellow        | `#C7C729` |
+| `String`   | Text (labels, attribute names)     | Light blue    | `#70B3FF` |
+| `Geometry` | Points / curves / meshes bundle    | Teal          | `#00D6A3` |
+| `Matrix`   | 4×4 transform                      | Orange        | `#ED9E5C` |
 
 Conventions carried over from Blender:
 
 - **A single internal `Vector` type** represents both points and directions; 2D is simply a
-  `Vector` with `z = 0`. There is no separate `Point` type — a *point* is a `Vector` used as a
+  `Vector` with `z = 0`. There is no separate `Point` type — a _point_ is a `Vector` used as a
   position, exactly like Blender.
 - **Fields**: any socket can carry an array (a "field" in Blender terms). Array sockets are drawn
   with a distinct ring/badge so single-value vs. array is obvious.
@@ -114,6 +114,7 @@ Conventions carried over from Blender:
 ## Node library
 
 ### Inputs & primitives
+
 - **Float / Integer / Boolean / Vector / Color / String** constant nodes
 - **Parameter** — a named, typed external input that becomes one argument of the generated
   function. A parameter can be **any** socket type, including `Geometry` — input geometry is not
@@ -121,6 +122,7 @@ Conventions carried over from Blender:
   parameters of any types (several `Geometry` inputs, several scalars, etc.).
 
 ### Points & vectors (the spec's basics)
+
 - **Point** — construct a position from x, y, z (z optional / 0 in 2D)
 - **Vector** — construct/decompose a vector from components
 - **Combine / Separate XYZ**
@@ -129,6 +131,7 @@ Conventions carried over from Blender:
 - **Vector Array** — array of vectors / per-point attributes
 
 ### Transforms
+
 - **Translate** — move points/geometry by a vector
 - **Rotate** — by axis-angle or Euler
 - **Scale**
@@ -136,6 +139,7 @@ Conventions carried over from Blender:
 - **Project** — orthographic / perspective projection onto a plane (the engine of 3D→2D)
 
 ### Curves
+
 - **Bezier Curve** — defined through control **points** and tangent **vectors** (per the spec)
 - **Polyline**, **Line**, **Arc / Circle**
 - **Sample Curve** — position/tangent/normal at parameter `t`
@@ -143,6 +147,7 @@ Conventions carried over from Blender:
 - **Curve Length**
 
 ### Geometry (suggested additions)
+
 - **Mesh primitives** — plane, cube, grid, UV sphere, cylinder, cone
 - **Extrude**, **Fill / Triangulate**, **Subdivide**
 - **Boolean** (union / difference / intersect) — stretch goal
@@ -150,17 +155,20 @@ Conventions carried over from Blender:
 - **Merge / Join Geometry**, **Separate**
 
 ### Instancing & fields
+
 - **Instance on Points** — place geometry at each point of an array
 - **Distribute Points** — on a curve or surface
 - **Capture / Store Attribute**, **Named Attribute**
 
 ### Utility & control flow
+
 - **Math** (scalar), **Map Range**, **Clamp**, **Mix / Lerp**
 - **Compare**, **Switch** (boolean-selected output), **Index**, **Count**
 - **Random Value** (seeded)
 - **For-Each / Repeat** zone (bounded iteration) — stretch goal
 
 ### Output
+
 - **Output Geometry** — the network's single result node
 
 > The library is **extensible**: each node is defined by metadata (sockets, params) plus an
@@ -200,38 +208,39 @@ A network is a versioned JSON document. A published **JSON Schema** validates it
   "version": "1.0",
   "metadata": { "name": "Spiral", "author": "...", "created": "2026-06-08" },
 
-  "parameters": [
-    { "id": "turns", "type": "Float", "default": 3, "min": 1, "max": 10 }
-  ],
+  "parameters": [{ "id": "turns", "type": "Float", "default": 3, "min": 1, "max": 10 }],
 
   "nodes": [
     {
       "id": "n1",
       "type": "PointArray",
       "position": [120, 80],
-      "params": { "count": 64, "pattern": "circle" }
+      "params": { "count": 64, "pattern": "circle" },
     },
-    { "id": "out", "type": "OutputGeometry", "position": [600, 80] }
+    { "id": "out", "type": "OutputGeometry", "position": [600, 80] },
   ],
 
-  "links": [
-    { "from": ["n1", "points"], "to": ["out", "geometry"] }
-  ],
+  "links": [{ "from": ["n1", "points"], "to": ["out", "geometry"] }],
 
   "metaNodes": {
     "RoundedRect": {
       "interface": {
-        "inputs":  [{ "name": "size", "type": "Vector" }],
-        "outputs": [{ "name": "curve", "type": "Geometry" }]
+        "inputs": [{ "name": "size", "type": "Vector" }],
+        "outputs": [{ "name": "curve", "type": "Geometry" }],
       },
-      "nodes": [ /* ... */ ],
-      "links": [ /* ... */ ]
-    }
-  }
+      "nodes": [
+        /* ... */
+      ],
+      "links": [
+        /* ... */
+      ],
+    },
+  },
 }
 ```
 
 Key properties:
+
 - **Stable IDs** so links and diffs survive edits.
 - **Self-describing**: node `type` references the node library; `params` are static values.
 - **Meta-node definitions** are embedded (or referenced from a shared library file).
@@ -268,9 +277,9 @@ Compilation turns a graph into idiomatic source code. The strategy:
 
 ### Current target: TypeScript / JavaScript
 
-| Target | Strategy | Runtime |
-| --- | --- | --- |
-| **TypeScript** | Emit typed `.ts` importing from `@vector-nodes/runtime` | shared TS runtime |
+| Target         | Strategy                                                             | Runtime           |
+| -------------- | -------------------------------------------------------------------- | ----------------- |
+| **TypeScript** | Emit typed `.ts` importing from `@vector-nodes/runtime`              | shared TS runtime |
 | **JavaScript** | Same generator, emit an ES module (TS output minus type annotations) | shared TS runtime |
 
 Generated TS/JS modules carry exactly **one lightweight dependency** (`@vector-nodes/runtime`),
@@ -282,11 +291,11 @@ generator pins it at a compatible semver range.
 The architecture is deliberately language-agnostic: adding a target = implement a runtime in
 that language + a codegen backend. The first planned additions:
 
-| Target | Strategy | Runtime |
-| --- | --- | --- |
-| **Rust** *(future)* | Emit a `.rs` crate calling `vector-nodes-runtime` (crate) | Rust runtime |
-| **WASM** *(future)* | Compile the Rust output to `wasm32` + JS glue (wasm-bindgen) | Rust runtime |
-| **Other** *(future)* | Implement a runtime + a codegen backend for the language | per-language |
+| Target               | Strategy                                                     | Runtime      |
+| -------------------- | ------------------------------------------------------------ | ------------ |
+| **Rust** _(future)_  | Emit a `.rs` crate calling `vector-nodes-runtime` (crate)    | Rust runtime |
+| **WASM** _(future)_  | Compile the Rust output to `wasm32` + JS glue (wasm-bindgen) | Rust runtime |
+| **Other** _(future)_ | Implement a runtime + a codegen backend for the language     | per-language |
 
 > When built, **Rust and WASM will share one runtime** (the Rust crate) and be
 > **conformance-tested against the TS reference** so results match across languages.
@@ -301,7 +310,7 @@ network's `Parameter` nodes — in declared order. The return value is the outpu
 
 ```ts
 // circle.generated.ts — generated from a network named "Circle" with a `radius` parameter
-import circle from "./circle.generated";
+import circle from './circle.generated';
 
 const geo = circle(5);
 // signature: export default function circle(radius: number): Geometry
@@ -312,7 +321,7 @@ can declare **several** of them alongside scalars, in any order:
 
 ```ts
 // from a network named "Blend" with parameters: base (Geometry), detail (Geometry), amount (Float)
-import blend from "./blend.generated";
+import blend from './blend.generated';
 
 const out = blend(baseMesh, detailMesh, 0.2);
 // signature: export default function blend(base: Geometry, detail: Geometry, amount: number): Geometry
@@ -320,14 +329,14 @@ const out = blend(baseMesh, detailMesh, 0.2);
 
 **Parameter → TypeScript argument type mapping** (idiomatic TS):
 
-| Socket type | TS argument type |
-| --- | --- |
-| `Float`, `Integer` | `number` |
-| `Boolean` | `boolean` |
-| `Vector` | `[number, number, number]` |
-| `Color` | `[number, number, number, number]` |
-| `String` | `string` |
-| `Geometry` | `Geometry` (from `@vector-nodes/runtime`) |
+| Socket type        | TS argument type                          |
+| ------------------ | ----------------------------------------- |
+| `Float`, `Integer` | `number`                                  |
+| `Boolean`          | `boolean`                                 |
+| `Vector`           | `[number, number, number]`                |
+| `Color`            | `[number, number, number, number]`        |
+| `String`           | `string`                                  |
+| `Geometry`         | `Geometry` (from `@vector-nodes/runtime`) |
 
 Optional parameters take the default value defined on their node. Geometry values use a shared,
 documented **interchange format** (points, vectors, curves, meshes as plain arrays) so data
@@ -412,3 +421,9 @@ Summary of phases:
 
 **Future (separate plan):** Rust + WASM codegen — Rust runtime crate, Rust output, WASM build +
 glue + worker, conformance-tested against the TS reference.
+
+---
+
+## License
+
+Licensed under the **Apache License, Version 2.0** — see [LICENSE](LICENSE).
