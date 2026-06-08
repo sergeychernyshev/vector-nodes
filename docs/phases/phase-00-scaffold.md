@@ -18,7 +18,7 @@ clean checkout and in CI.
 
 ## Step 0.2 — Workspace packages
 
-- [ ] **Scope:** Create empty packages `@vector-nodes/core`, `@vector-nodes/runtime`,
+- [x] **Scope:** Create empty packages `@vector-nodes/core`, `@vector-nodes/runtime`,
       `@vector-nodes/engine`, `@vector-nodes/codegen`, and private `editor`. Each gets
       `package.json` (with `"engines": { "node": ">=24" }`, and stub `exports`, `types`, `files`,
       `publishConfig.access: public` for the scoped ones), `tsconfig.json` with project references,
