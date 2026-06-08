@@ -37,7 +37,7 @@ mismatches, cycles, and missing outputs with clear errors.
 
 ## Step 1.5 — Static graph validation
 
-- [ ] **Scope:** link type-compatibility (incl. implicit conversions), cycle detection,
+- [x] **Scope:** link type-compatibility (incl. implicit conversions), cycle detection,
       single-output rule, dangling-link checks; structured error reporting.
 - **Acceptance:** tests cover each failure mode with clear errors.
 - **Branch:** `phase-1/step-1.5-graph-validation`

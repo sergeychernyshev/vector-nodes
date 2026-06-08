@@ -9,3 +9,4 @@ export * from './registry';
 export * from './graph';
 export * from './schema';
 export * from './vnodes';
+export * from './validate-graph';
