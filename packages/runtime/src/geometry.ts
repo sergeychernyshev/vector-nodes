@@ -1,0 +1,158 @@
+import { ORIGIN, type Point, type Vector } from './types';
+import { add } from './vector';
+
+// --- Point-array construction -------------------------------------------------
+
+/** Copy a list of vectors into a fresh point array. */
+export function fromList(points: readonly Vector[]): Point[] {
+  return points.map((p) => [p[0], p[1], p[2]]);
+}
+
+/**
+ * `count` points evenly spaced from `start` to `end`, inclusive of both ends.
+ * `count <= 0` yields an empty array; `count === 1` yields just `start`.
+ */
+export function linePoints(start: Vector, end: Vector, count: number): Point[] {
+  if (count <= 0) return [];
+  if (count === 1) return [[start[0], start[1], start[2]]];
+  const out: Point[] = [];
+  const last = count - 1;
+  for (let i = 0; i < count; i++) {
+    const t = i / last;
+    out.push([
+      start[0] + (end[0] - start[0]) * t,
+      start[1] + (end[1] - start[1]) * t,
+      start[2] + (end[2] - start[2]) * t,
+    ]);
+  }
+  return out;
+}
+
+/**
+ * A `countX × countY` grid of points on the XY plane, starting at the origin,
+ * stepping by `spacingX`/`spacingY`. Row-major: x varies fastest.
+ */
+export function gridPoints(
+  countX: number,
+  countY: number,
+  spacingX = 1,
+  spacingY = spacingX,
+): Point[] {
+  const out: Point[] = [];
+  for (let y = 0; y < countY; y++) {
+    for (let x = 0; x < countX; x++) {
+      out.push([x * spacingX, y * spacingY, 0]);
+    }
+  }
+  return out;
+}
+
+/**
+ * `count` points evenly distributed around a circle of `radius` on the XY plane,
+ * centered at `center`, starting at angle 0 and going counter-clockwise.
+ */
+export function circlePoints(radius: number, count: number, center: Vector = ORIGIN): Point[] {
+  const out: Point[] = [];
+  for (let i = 0; i < count; i++) {
+    const angle = (2 * Math.PI * i) / count;
+    out.push([
+      center[0] + radius * Math.cos(angle),
+      center[1] + radius * Math.sin(angle),
+      center[2],
+    ]);
+  }
+  return out;
+}
+
+/**
+ * A deterministic PRNG (mulberry32) returning floats in `[0, 1)`. Used so
+ * "random" geometry is reproducible from a seed.
+ */
+export function makeRng(seed: number): () => number {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), 1 | state);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * `count` random points uniformly within the axis-aligned box `[min, max]`,
+ * reproducible for a given `seed`.
+ */
+export function randomPoints(count: number, min: Vector, max: Vector, seed = 0): Point[] {
+  const rng = makeRng(seed);
+  const out: Point[] = [];
+  for (let i = 0; i < count; i++) {
+    out.push([
+      min[0] + rng() * (max[0] - min[0]),
+      min[1] + rng() * (max[1] - min[1]),
+      min[2] + rng() * (max[2] - min[2]),
+    ]);
+  }
+  return out;
+}
+
+// --- Projection ---------------------------------------------------------------
+
+/** Orthographic projection onto the XY plane (drops z). */
+export function projectOrthographic(p: Vector): Vector {
+  return [p[0], p[1], 0];
+}
+
+/**
+ * Perspective projection onto the XY plane from an eye at `[0, 0, distance]`.
+ * A point on the plane (`z = 0`) is unchanged. If the point lies on the eye
+ * plane (`z === distance`) the projection is undefined, so the unscaled `x, y`
+ * are returned.
+ */
+export function projectPerspective(p: Vector, distance: number): Vector {
+  const denom = distance - p[2];
+  if (denom === 0) return [p[0], p[1], 0];
+  const f = distance / denom;
+  return [p[0] * f, p[1] * f, 0];
+}
+
+// --- Translation --------------------------------------------------------------
+
+/** Move every point by `offset`. */
+export function translatePoints(points: readonly Vector[], offset: Vector): Point[] {
+  return points.map((p) => add(p, offset));
+}
+
+// --- Bezier -------------------------------------------------------------------
+
+/** Evaluate a cubic Bézier with control points `p0..p3` at parameter `t`. */
+export function cubicBezier(p0: Vector, p1: Vector, p2: Vector, p3: Vector, t: number): Vector {
+  const u = 1 - t;
+  const b0 = u * u * u;
+  const b1 = 3 * u * u * t;
+  const b2 = 3 * u * t * t;
+  const b3 = t * t * t;
+  return [
+    b0 * p0[0] + b1 * p1[0] + b2 * p2[0] + b3 * p3[0],
+    b0 * p0[1] + b1 * p1[1] + b2 * p2[1] + b3 * p3[1],
+    b0 * p0[2] + b1 * p1[2] + b2 * p2[2] + b3 * p3[2],
+  ];
+}
+
+/**
+ * Sample a cubic Bézier into `segments + 1` points from `t = 0` to `t = 1`
+ * inclusive. `segments < 1` is treated as 1.
+ */
+export function sampleCubicBezier(
+  p0: Vector,
+  p1: Vector,
+  p2: Vector,
+  p3: Vector,
+  segments: number,
+): Point[] {
+  const n = segments < 1 ? 1 : Math.floor(segments);
+  const out: Point[] = [];
+  for (let i = 0; i <= n; i++) {
+    out.push(cubicBezier(p0, p1, p2, p3, i / n));
+  }
+  return out;
+}
