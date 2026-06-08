@@ -20,16 +20,17 @@ clean checkout and in CI.
 
 - [ ] **Scope:** Create empty packages `@vector-nodes/core`, `@vector-nodes/runtime`,
       `@vector-nodes/engine`, `@vector-nodes/codegen`, and private `editor`. Each gets
-      `package.json` (with stub `exports`, `types`, `files`, `publishConfig.access: public` for the
-      scoped ones), `tsconfig.json` with project references, and an `src/index.ts` stub + one trivial
-      passing test.
+      `package.json` (with `"engines": { "node": ">=24" }`, and stub `exports`, `types`, `files`,
+      `publishConfig.access: public` for the scoped ones), `tsconfig.json` with project references,
+      and an `src/index.ts` stub + one trivial passing test.
 - **Touches:** `packages/*`.
 - **Acceptance:** `npm run build --workspaces` and `npm test --workspaces` pass; references resolve.
 - **Branch:** `phase-0/step-0.2-workspace-packages`
 
 ## Step 0.3 — CI
 
-- [ ] **Scope:** GitHub Actions workflow: matrix on Node LTS, `npm ci` → typecheck → lint → test.
+- [ ] **Scope:** GitHub Actions workflow: matrix on Node 24+ (e.g. `24`, `latest`), `npm ci` →
+      typecheck → lint → test.
 - **Touches:** `.github/workflows/ci.yml`.
 - **Acceptance:** CI green on the PR.
 - **Branch:** `phase-0/step-0.3-ci`

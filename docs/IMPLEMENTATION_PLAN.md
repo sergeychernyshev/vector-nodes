@@ -29,8 +29,9 @@ docs/
   vnodes.schema.json
 ```
 
-Tooling: **npm** workspaces (npm 7+), **TypeScript** (strict), **Vitest**, ESLint + Prettier,
-and **Vite** for the editor. CI runs typecheck + lint + tests on every package.
+Tooling: **Node 24+** (required everywhere — see [AGENTS.md](../AGENTS.md)), **npm** workspaces,
+**TypeScript** (strict, ESM), **Vitest**, ESLint + Prettier, and **Vite** for the editor. CI
+runs typecheck + lint + tests on every package.
 
 ---
 
