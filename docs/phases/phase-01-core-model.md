@@ -9,7 +9,7 @@ mismatches, cycles, and missing outputs with clear errors.
 
 ## Step 1.1 — Socket types & Blender colors
 
-- [ ] **Scope:** `SocketType` union (Float, Integer, Boolean, Vector, Color, String, Geometry,
+- [x] **Scope:** `SocketType` union (Float, Integer, Boolean, Vector, Color, String, Geometry,
       Matrix) + the `isArray`/field flag; exported Blender color map (canonical hex from README);
       allowed implicit conversions table.
 - **Acceptance:** unit tests for the color map and conversion lookups.
