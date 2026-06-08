@@ -9,7 +9,7 @@ only the affected subtree.
 
 ## Step 2.1 — Runtime: math & interchange types
 
-- [ ] **Scope:** `@vector-nodes/runtime` geometry interchange types (point, vector, curve, mesh as
+- [x] **Scope:** `@vector-nodes/runtime` geometry interchange types (point, vector, curve, mesh as
       plain arrays) + scalar/vector math (add, sub, scale, dot, cross, normalize, length, distance).
 - **Acceptance:** unit tests for every math op.
 - **Branch:** `phase-2/step-2.1-runtime-math`
