@@ -10,7 +10,7 @@ See [../README.md](../README.md) for the full requirements and design.
 - **One declarative node definition** per node type (sockets, params, types, default values) is
   the single source of truth consumed by the editor, validator, interpreter, and codegen. A node
   cannot drift between how it looks, runs, and compiles.
-- **One shared runtime** package, `@vector-nodes/runtime`: the interpreter calls it *and*
+- **One shared runtime** package, `@vector-nodes/runtime`: the interpreter calls it _and_
   generated code imports from it, so interpreted preview == compiled output for free.
 - **3D is the native model**; 2D is the same model projected to the X–Y plane (drop Z).
 - Ship each phase behind tests; later phases depend on earlier ones being solid.
@@ -193,7 +193,7 @@ interpreter-vs-compiled conformance test.
 - Boolean (union / difference / intersect) — stretch goal within this phase.
 
 The Three.js preview already renders meshes (Phase 4); this phase adds the nodes that
-*generate* them.
+_generate_ them.
 
 **Done when:** each mesh node has a runtime op, renders correctly in the 3D preview, and passes
 an interpreter-vs-compiled conformance test.
@@ -225,8 +225,8 @@ export.
     (build/validate/evaluate/compile networks from code).
   - `editor` stays **private** (`"private": true`) — it ships as a deployed web app, not a package.
 - **Package metadata** (set up in Phase 0, completed here): correct `name`, `version`, `exports`
-  + `types`, a `files` allowlist, `repository`/`license`, and `"publishConfig": { "access":
-  "public" }` for the scoped packages. Each ships **ESM + `.d.ts`**.
+  - `types`, a `files` allowlist, `repository`/`license`, and `"publishConfig": { "access":
+"public" }` for the scoped packages. Each ships **ESM + `.d.ts`**.
 - **Codegen wires the dependency**: generated output declares `@vector-nodes/runtime` at a
   compatible **semver range** (matching the codegen version), so a generated module installs and
   runs in a fresh project. A conformance test consumes a published (or `npm pack`ed) tarball.
