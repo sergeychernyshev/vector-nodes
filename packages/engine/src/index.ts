@@ -5,3 +5,4 @@ export * from './operator';
 export * from './interpreter';
 export * from './hash';
 export * from './incremental-interpreter';
+export * from './basic-nodes';

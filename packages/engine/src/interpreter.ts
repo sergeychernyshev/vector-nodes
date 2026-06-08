@@ -47,6 +47,7 @@ export function evaluateGraph(
   graph: Graph,
   registry: NodeRegistry,
   operators: OperatorTable,
+  parameters: Record<string, unknown> = {},
 ): EvaluationResult {
   assertValidGraph(graph, registry);
 
@@ -93,7 +94,7 @@ export function evaluateGraph(
     if (evaluator === undefined) {
       throw new MissingOperatorError(node.type);
     }
-    const outputs = evaluator({ inputs, params, node });
+    const outputs = evaluator({ inputs, params, parameters, node });
 
     visiting.delete(nodeId);
     nodeOutputs.set(nodeId, outputs);

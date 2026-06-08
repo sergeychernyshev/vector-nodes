@@ -36,7 +36,7 @@ only the affected subtree.
 
 ## Step 2.5 — Basic node set
 
-- [ ] **Scope:** wire the basic nodes (Point, Vector, Combine/Separate XYZ, Vector Math, Point
+- [x] **Scope:** wire the basic nodes (Point, Vector, Combine/Separate XYZ, Vector Math, Point
       Array, Vector Array, Project, Translate, Bezier Curve, constants, Parameter incl. Geometry,
       Output Geometry) to runtime ops + definitions.
 - **Acceptance:** each node has a definition + interpreter behavior + test.
