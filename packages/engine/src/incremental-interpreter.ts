@@ -1,6 +1,7 @@
 import {
   assertValidGraph,
   getOutputNode,
+  isParameterNodeType,
   resolveParamDefaults,
   type Graph,
   type GraphNode,
@@ -51,7 +52,7 @@ export class Interpreter {
   }
 
   /** Evaluate `graph`, reusing cached node results where signatures match. */
-  evaluate(graph: Graph): IncrementalEvaluationResult {
+  evaluate(graph: Graph, parameters: Record<string, unknown> = {}): IncrementalEvaluationResult {
     assertValidGraph(graph, this.#registry);
 
     const outputNode = getOutputNode(graph);
@@ -104,8 +105,13 @@ export class Interpreter {
       const { values, signatureParts } = resolveInputs(node, def);
       const params = { ...resolveParamDefaults(def), ...(node.params ?? {}) };
 
+      // Parameter nodes read an external binding; fold it into the signature so
+      // changing a binding invalidates only the parameter node and its subtree.
+      const external = isParameterNodeType(node.type)
+        ? `|param=${stableStringify(parameters[params.name as string])}`
+        : '';
       const signature = String(
-        cyrb53(`${node.type}|${stableStringify(params)}|${signatureParts.join('|')}`),
+        cyrb53(`${node.type}|${stableStringify(params)}|${signatureParts.join('|')}${external}`),
       );
       signatures.set(nodeId, signature);
 
@@ -118,7 +124,7 @@ export class Interpreter {
         if (evaluator === undefined) {
           throw new MissingOperatorError(node.type);
         }
-        outputs = evaluator({ inputs: values, params, node });
+        outputs = evaluator({ inputs: values, params, parameters, node });
         this.#cache.set(nodeId, { signature, outputs });
         evaluated.add(nodeId);
       }

@@ -10,3 +10,4 @@ export * from './graph';
 export * from './schema';
 export * from './vnodes';
 export * from './validate-graph';
+export * from './nodes';

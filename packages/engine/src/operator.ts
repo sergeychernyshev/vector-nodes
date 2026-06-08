@@ -10,6 +10,8 @@ export interface EvaluatorContext {
   inputs: Record<string, unknown>;
   /** Effective parameter values: definition defaults overlaid with node params. */
   params: Record<string, unknown>;
+  /** Network-level parameter bindings (function arguments), keyed by id. */
+  parameters: Record<string, unknown>;
   /** The node instance being evaluated. */
   node: GraphNode;
 }
