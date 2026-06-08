@@ -1,6 +1,8 @@
 /**
  * @vector-nodes/runtime — geometry and math runtime operations.
  *
- * Placeholder entry point; real exports land in Phase 2.
+ * The single hand-written implementation of every node's math/geometry op,
+ * shared by the interpreter and by generated TS/JS code.
  */
-export const PACKAGE_NAME = '@vector-nodes/runtime';
+export * from './types';
+export * from './vector';
