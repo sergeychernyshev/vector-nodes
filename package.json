@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "description": "Node-based procedural geometry generator for 2D and 3D.",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "type": "module",
   "repository": {
     "type": "git",

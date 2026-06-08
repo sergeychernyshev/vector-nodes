@@ -421,3 +421,9 @@ Summary of phases:
 
 **Future (separate plan):** Rust + WASM codegen — Rust runtime crate, Rust output, WASM build +
 glue + worker, conformance-tested against the TS reference.
+
+---
+
+## License
+
+Licensed under the **Apache License, Version 2.0** — see [LICENSE](LICENSE).
