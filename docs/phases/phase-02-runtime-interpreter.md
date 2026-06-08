@@ -23,7 +23,7 @@ only the affected subtree.
 
 ## Step 2.3 — Interpreter: pull evaluation
 
-- [ ] **Scope:** validate → topological sort from Output → evaluate each node once via runtime ops.
+- [x] **Scope:** validate → topological sort from Output → evaluate each node once via runtime ops.
 - **Acceptance:** a sample graph evaluates to expected geometry.
 - **Branch:** `phase-2/step-2.3-interpreter-eval`
 
