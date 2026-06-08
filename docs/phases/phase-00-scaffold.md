@@ -29,7 +29,7 @@ clean checkout and in CI.
 
 ## Step 0.3 — CI
 
-- [ ] **Scope:** GitHub Actions workflow: matrix on Node 24+ (e.g. `24`, `latest`), `npm ci` →
+- [x] **Scope:** GitHub Actions workflow: matrix on Node 24+ (e.g. `24`, `latest`), `npm ci` →
       typecheck → lint → test.
 - **Touches:** `.github/workflows/ci.yml`.
 - **Acceptance:** CI green on the PR.
