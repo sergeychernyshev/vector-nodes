@@ -1,5 +1,11 @@
 {
   "extends": "./tsconfig.base.json",
   "files": [],
-  "references": []
+  "references": [
+    { "path": "packages/core" },
+    { "path": "packages/runtime" },
+    { "path": "packages/engine" },
+    { "path": "packages/codegen" },
+    { "path": "packages/editor" }
+  ]
 }

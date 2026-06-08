@@ -1,0 +1,28 @@
+{
+  "name": "editor",
+  "version": "0.0.0",
+  "description": "React Flow editor and preview for Vector Nodes.",
+  "license": "Apache-2.0",
+  "author": "Sergey Chernyshev <sergey.chernyshev@gmail.com>",
+  "type": "module",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sergeychernyshev/vector-nodes.git",
+    "directory": "packages/editor"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@vector-nodes/core": "*",
+    "@vector-nodes/runtime": "*",
+    "@vector-nodes/engine": "*",
+    "@vector-nodes/codegen": "*"
+  }
+}

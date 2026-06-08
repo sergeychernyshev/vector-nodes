@@ -1,0 +1,35 @@
+{
+  "name": "@vector-nodes/runtime",
+  "version": "0.0.0",
+  "description": "Geometry and math runtime operations for Vector Nodes.",
+  "license": "Apache-2.0",
+  "author": "Sergey Chernyshev <sergey.chernyshev@gmail.com>",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sergeychernyshev/vector-nodes.git",
+    "directory": "packages/runtime"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b",
+    "test": "vitest run"
+  }
+}
