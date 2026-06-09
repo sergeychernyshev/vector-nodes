@@ -21,11 +21,15 @@
   `exports`/`types`.
 - **Branch:** `phase-4.5/step-4.5.1-package-metadata`
 
-## Step 4.5.2 — Publish to npm
+## Step 4.5.2 — Release CI (npm trusted publishing)
 
-- [ ] **Scope:** publish `@vector-nodes/runtime`, `core`, `engine`, and `codegen` (manual
-      `npm publish` for the initial release); verify a clean install in a temp project resolves
-      them.
-- **Acceptance:** a fresh project can `npm install @vector-nodes/runtime` (and the others) and
-  import them; the editor's Cloudflare build no longer fails on unresolved workspace packages.
-- **Branch:** `phase-4.5/step-4.5.2-publish`
+- [x] **Scope:** GitHub Actions release workflow that publishes `@vector-nodes/runtime`, `core`,
+      `engine`, and `codegen` via **OIDC trusted publishing** (no `NPM_TOKEN`), with automatic
+      provenance, on a published GitHub Release. Setup + first-publish bootstrap documented in
+      [../RELEASING.md](../RELEASING.md).
+- **Acceptance:** cutting a release publishes the packages; a fresh project can
+  `npm install @vector-nodes/runtime` (and the others) and import them; the editor's Cloudflare
+  build no longer fails on unresolved workspace packages.
+- **Branch:** `phase-4.5/step-4.5.2-release-ci`
+- **Operational (maintainer):** configure the trusted publisher per package on npmjs.com and do
+  the one-time first publish (see RELEASING.md).
