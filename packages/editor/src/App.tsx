@@ -9,8 +9,9 @@ import {
   useNodesState,
   type Connection,
 } from '@xyflow/react';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
+import { checkConnection, type ConnectionLike } from './connection';
 import {
   createFlowNode,
   graphToFlowEdges,
@@ -48,12 +49,35 @@ export function App() {
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState(graphToFlowEdges(seed));
   const idCounter = useRef(0);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+  const lastReason = useRef<string | null>(null);
 
   const items = useMemo(() => paletteItems(registry), []);
 
+  const isValidConnection = useCallback(
+    (connection: ConnectionLike) => {
+      const result = checkConnection(connection, nodes, edges);
+      const reason = result.ok ? null : (result.reason ?? 'Invalid connection.');
+      if (lastReason.current !== reason) {
+        lastReason.current = reason;
+        setConnectionError(reason);
+      }
+      return result.ok;
+    },
+    [nodes, edges],
+  );
+
+  const clearConnectionError = useCallback(() => {
+    lastReason.current = null;
+    setConnectionError(null);
+  }, []);
+
   const onConnect = useCallback(
-    (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
-    [setEdges],
+    (connection: Connection) => {
+      setEdges((eds) => addEdge(connection, eds));
+      clearConnectionError();
+    },
+    [setEdges, clearConnectionError],
   );
 
   const addNode = useCallback(
@@ -73,6 +97,11 @@ export function App() {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Toolbar nodeCount={nodes.length} />
+      {connectionError && (
+        <div role="alert" className="connection-error">
+          {connectionError}
+        </div>
+      )}
       <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
         <Palette items={items} onAdd={addNode} />
         <div style={{ flex: 1, minHeight: 0 }}>
@@ -83,6 +112,8 @@ export function App() {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            isValidConnection={isValidConnection}
+            onConnectEnd={clearConnectionError}
             fitView
           >
             <Background />

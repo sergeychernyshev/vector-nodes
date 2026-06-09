@@ -23,7 +23,7 @@ identical graph; invalid links are blocked.
 
 ## Step 3.3 — Type-checked linking
 
-- [ ] **Scope:** allow/reject connections using `core` type rules + implicit conversions; show a
+- [x] **Scope:** allow/reject connections using `core` type rules + implicit conversions; show a
       reason on rejection.
 - **Acceptance:** invalid links blocked with message; valid links (incl. conversions) allowed.
 - **Branch:** `phase-3/step-3.3-linking`

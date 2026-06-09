@@ -46,6 +46,15 @@
   outline-offset: 1px;
 }
 
+/* Connection error banner */
+.connection-error {
+  padding: 6px 12px;
+  background: #fde2e1;
+  color: #8a1c13;
+  border-bottom: 1px solid #f5b5b0;
+  font-size: 13px;
+}
+
 /* Palette */
 .palette {
   width: 220px;
