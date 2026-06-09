@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import { summarizeGeometry, type PreviewResult } from './preview';
 import { SvgView } from './SvgView';
 import { ThreeView } from './ThreeView';
@@ -6,30 +8,53 @@ export interface PreviewPaneProps {
   result: PreviewResult;
 }
 
+/** Which renderer the preview shows. The underlying network is always 3D. */
+export type PreviewMode = '3d' | '2d';
+
 /**
- * Preview panel: renders the evaluated output geometry in both 3D (Three.js)
- * and 2D (SVG, Z dropped), with a lightweight element-count footer, or the
- * evaluation error. The 2D⇄3D toggle that collapses these into one view arrives
- * in Step 4.4.
+ * Preview panel: renders the evaluated output geometry with a 2D⇄3D toggle that
+ * swaps only the renderer/projection — 3D uses Three.js, 2D uses the SVG
+ * projection (Z dropped). Also shows an element-count footer, or the evaluation
+ * error.
  */
 export function PreviewPane({ result }: PreviewPaneProps) {
+  const [mode, setMode] = useState<PreviewMode>('3d');
+
   return (
     <aside className="preview">
-      <div className="preview__header">Preview</div>
+      <div className="preview__header">
+        <span>Preview</span>
+        <div className="preview__toggle" role="group" aria-label="Preview mode">
+          <button
+            type="button"
+            className="preview__toggle-btn"
+            aria-pressed={mode === '3d'}
+            onClick={() => setMode('3d')}
+          >
+            3D
+          </button>
+          <button
+            type="button"
+            className="preview__toggle-btn"
+            aria-pressed={mode === '2d'}
+            onClick={() => setMode('2d')}
+          >
+            2D
+          </button>
+        </div>
+      </div>
       {result.error ? (
         <div className="preview__error" role="alert">
           {result.error}
         </div>
       ) : (
         <div className="preview__body">
-          {result.geometry && (
-            <>
-              <div className="preview__view-label">3D</div>
+          {result.geometry &&
+            (mode === '3d' ? (
               <ThreeView geometry={result.geometry} />
-              <div className="preview__view-label">2D</div>
+            ) : (
               <SvgView geometry={result.geometry} />
-            </>
-          )}
+            ))}
           <PreviewSummary result={result} />
         </div>
       )}

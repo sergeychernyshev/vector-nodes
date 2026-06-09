@@ -28,6 +28,6 @@
 
 ## Step 4.4 — 2D ⇄ 3D toggle
 
-- [ ] **Scope:** toggle that swaps renderer/projection only; the network stays 3D.
+- [x] **Scope:** toggle that swaps renderer/projection only; the network stays 3D.
 - **Acceptance:** toggling is instant and preserves the network.
 - **Branch:** `phase-4/step-4.4-mode-toggle`
