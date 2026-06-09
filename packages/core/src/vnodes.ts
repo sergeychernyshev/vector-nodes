@@ -1,6 +1,13 @@
-import Ajv2020, { type ErrorObject, type ValidateFunction } from 'ajv/dist/2020.js';
+import Ajv2020Import from 'ajv/dist/2020.js';
+import type { ErrorObject, ValidateFunction } from 'ajv/dist/2020.js';
 
 import type { Graph } from './graph.js';
+
+// ajv ships CJS; under NodeNext the default import is typed as the namespace, but
+// at runtime it is the Ajv2020 constructor (the value is unchanged). Cast to a
+// constructor typed by the one method we use.
+type AjvInstance = { compile: (schema: object) => ValidateFunction };
+const Ajv2020 = Ajv2020Import as unknown as new (opts?: object) => AjvInstance;
 import { VNODES_SCHEMA } from './schema.js';
 
 /** A single schema-validation problem, derived from an ajv error. */
