@@ -20,8 +20,7 @@
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "test": "vitest run",
-    "deploy": "npm run build && wrangler deploy",
-    "deploy:preview": "npm run build && wrangler versions upload"
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "@vector-nodes/codegen": "*",

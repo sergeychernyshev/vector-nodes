@@ -378,27 +378,37 @@ A web-based visual editor:
 ## Deployment
 
 The editor is a static SPA deployed to **Cloudflare Workers** (static assets) from
-`packages/editor/dist`. Config lives in [`packages/editor/wrangler.jsonc`](packages/editor/wrangler.jsonc).
+`packages/editor/dist`, via Cloudflare's **Workers Builds** Git integration (service
+`vector-nodes`). Config lives in
+[`packages/editor/wrangler.jsonc`](packages/editor/wrangler.jsonc): assets-only Worker with SPA
+fallback, the production custom domain `vector-nodes.sergeyche.dev`, and `workers.dev` +
+per-version **preview URLs** (Workers Builds publishes a preview URL for every PR automatically).
 
-- **Production** → custom domain `vector-nodes.sergeyche.dev`.
-- **Preview URLs** → each PR uploads a new Worker version via `wrangler versions upload`,
-  producing a per-version preview URL; the editor's `*.workers.dev` URL is also enabled.
+### Workers Builds settings (Cloudflare dashboard)
 
-Deploys run from [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml): production on
-push to `main`, a preview version on every PR. The deploy steps **no-op unless the
-`CLOUDFLARE_API_TOKEN` repository secret is set**, so the workflow stays green before secrets are
-configured. Required repository secrets:
+Because this is an **npm-workspaces monorepo**, the build **must run from the repo root** so the
+unpublished local `@vector-nodes/*` packages resolve via workspaces (running `npm ci` inside
+`packages/editor` fails — there's no lockfile there and the packages aren't on npm). Set, in the
+Worker's **Builds** settings:
 
-- `CLOUDFLARE_API_TOKEN` — a token with the _Workers Scripts: Edit_ permission.
-- `CLOUDFLARE_ACCOUNT_ID` — the target account id.
+| Setting        | Value                                                         |
+| -------------- | ------------------------------------------------------------- |
+| Root directory | `/` (repo root)                                               |
+| Build command  | `npm ci && npm run build --workspace=editor`                  |
+| Deploy command | `npx wrangler deploy --config packages/editor/wrangler.jsonc` |
 
-Deploy by hand from `packages/editor`:
+`wrangler` resolves the `./dist` assets path relative to the config file, i.e.
+`packages/editor/dist`.
+
+### Manual deploy
 
 ```bash
-npm run build --workspace=editor
-npm run deploy --workspace=editor          # production
-npm run deploy:preview --workspace=editor  # upload a preview version
+npm ci                              # from the repo root (links the workspace packages)
+npm run deploy --workspace=editor   # builds dist/ then `wrangler deploy`
 ```
+
+`wrangler` authenticates via `wrangler login`, or `CLOUDFLARE_API_TOKEN` (a token with the
+_Workers Scripts: Edit_ permission) plus `CLOUDFLARE_ACCOUNT_ID`.
 
 ---
 
