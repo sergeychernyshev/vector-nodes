@@ -1,0 +1,32 @@
+{
+  // Cloudflare Workers static-assets deployment for the Vector Nodes editor.
+  // The built SPA in ./dist is served directly; there is no Worker script.
+  // Docs: https://developers.cloudflare.com/workers/static-assets/
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "vector-nodes-editor",
+  "compatibility_date": "2026-06-08",
+
+  // Serve the Vite build output. SPA fallback rewrites unknown paths to
+  // index.html so client-side routing / deep links work.
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application",
+  },
+
+  // Production custom domain.
+  "routes": [
+    {
+      "pattern": "vector-nodes.sergeyche.dev",
+      "custom_domain": true,
+    },
+  ],
+
+  // *.workers.dev URL plus per-version preview URLs (used for PR previews via
+  // `wrangler versions upload`).
+  "workers_dev": true,
+  "preview_urls": true,
+
+  "observability": {
+    "enabled": true,
+  },
+}

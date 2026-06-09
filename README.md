@@ -375,6 +375,33 @@ A web-based visual editor:
 
 ---
 
+## Deployment
+
+The editor is a static SPA deployed to **Cloudflare Workers** (static assets) from
+`packages/editor/dist`. Config lives in [`packages/editor/wrangler.jsonc`](packages/editor/wrangler.jsonc).
+
+- **Production** → custom domain `vector-nodes.sergeyche.dev`.
+- **Preview URLs** → each PR uploads a new Worker version via `wrangler versions upload`,
+  producing a per-version preview URL; the editor's `*.workers.dev` URL is also enabled.
+
+Deploys run from [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml): production on
+push to `main`, a preview version on every PR. The deploy steps **no-op unless the
+`CLOUDFLARE_API_TOKEN` repository secret is set**, so the workflow stays green before secrets are
+configured. Required repository secrets:
+
+- `CLOUDFLARE_API_TOKEN` — a token with the _Workers Scripts: Edit_ permission.
+- `CLOUDFLARE_ACCOUNT_ID` — the target account id.
+
+Deploy by hand from `packages/editor`:
+
+```bash
+npm run build --workspace=editor
+npm run deploy --workspace=editor          # production
+npm run deploy:preview --workspace=editor  # upload a preview version
+```
+
+---
+
 ## Architecture overview
 
 An npm-workspaces monorepo:
