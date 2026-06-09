@@ -1,11 +1,19 @@
 // @vitest-environment jsdom
 import { emptyGeometry } from '@vector-nodes/runtime';
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { PreviewPane } from './PreviewPane';
 
 afterEach(cleanup);
+
+const sampleGeometry = () => ({
+  ...emptyGeometry(),
+  points: [
+    [0, 0, 0],
+    [1, 0, 0],
+  ] as [number, number, number][],
+});
 
 describe('PreviewPane', () => {
   it('shows the geometry summary counts', () => {
@@ -25,5 +33,27 @@ describe('PreviewPane', () => {
   it('shows an error message when evaluation failed', () => {
     const { getByRole } = render(<PreviewPane result={{ error: 'boom' }} />);
     expect(getByRole('alert').textContent).toBe('boom');
+  });
+
+  it('defaults to the 3D view', () => {
+    const { getByTestId, queryByTestId, getByRole } = render(
+      <PreviewPane result={{ geometry: sampleGeometry() }} />,
+    );
+    expect(getByTestId('preview-canvas')).toBeTruthy();
+    expect(queryByTestId('preview-svg')).toBeNull();
+    expect(getByRole('button', { name: '3D' }).getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('swaps to the 2D SVG view when 2D is clicked, and back', () => {
+    const { getByRole, getByTestId, queryByTestId } = render(
+      <PreviewPane result={{ geometry: sampleGeometry() }} />,
+    );
+    fireEvent.click(getByRole('button', { name: '2D' }));
+    expect(getByTestId('preview-svg')).toBeTruthy();
+    expect(queryByTestId('preview-canvas')).toBeNull();
+
+    fireEvent.click(getByRole('button', { name: '3D' }));
+    expect(getByTestId('preview-canvas')).toBeTruthy();
+    expect(queryByTestId('preview-svg')).toBeNull();
   });
 });
