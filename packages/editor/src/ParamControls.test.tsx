@@ -68,6 +68,19 @@ describe('ParamControls', () => {
     expect(setParam).toHaveBeenCalledWith('n1', 'offset', [0, 5, 0]);
   });
 
+  it('scrubs and types the alpha channel of a color param', () => {
+    const { setParam, getByLabelText } = renderControls(
+      [{ name: 'tint', type: 'Color', default: [1, 0, 0, 1] }],
+      { tint: [1, 0, 0, 1] },
+    );
+    // Range scrubber maps 0..1 to the same alpha value.
+    fireEvent.change(getByLabelText('alpha'), { target: { value: '0.5' } });
+    expect(setParam).toHaveBeenCalledWith('n1', 'tint', [1, 0, 0, 0.5]);
+    // Number field edits the same alpha.
+    fireEvent.change(getByLabelText('alpha value'), { target: { value: '0.25' } });
+    expect(setParam).toHaveBeenLastCalledWith('n1', 'tint', [1, 0, 0, 0.25]);
+  });
+
   it('renders nothing when there are no params', () => {
     const { container } = renderControls([], {});
     expect(container.querySelector('.vnode__params')).toBeNull();

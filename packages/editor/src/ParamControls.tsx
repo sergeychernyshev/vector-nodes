@@ -75,6 +75,7 @@ function VectorControl({ value, onChange }: ControlProps) {
 
 function ColorControl({ value, onChange }: ControlProps) {
   const [r, g, b, a] = asRgba(value);
+  const setAlpha = (n: number) => onChange([r, g, b, Math.max(0, Math.min(1, n))]);
   return (
     <span className="vnode__color">
       <input
@@ -88,14 +89,24 @@ function ColorControl({ value, onChange }: ControlProps) {
         }}
       />
       <input
+        className="nodrag vnode__alpha"
+        type="range"
+        min={0}
+        max={1}
+        step={0.01}
+        aria-label="alpha"
+        value={a}
+        onChange={(e) => setAlpha(Number(e.target.value))}
+      />
+      <input
         className="nodrag vnode__input vnode__input--axis"
         type="number"
         step="any"
         min={0}
         max={1}
-        aria-label="alpha"
+        aria-label="alpha value"
         value={a}
-        onChange={(e) => onChange([r, g, b, Number(e.target.value)])}
+        onChange={(e) => setAlpha(Number(e.target.value))}
       />
     </span>
   );

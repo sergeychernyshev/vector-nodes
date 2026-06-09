@@ -70,7 +70,11 @@
 .vnode__vector,
 .vnode__color {
   display: inline-flex;
+  align-items: center;
   gap: 3px;
+}
+.vnode__alpha {
+  width: 60px;
 }
 
 /* Sockets: colored handles; field sockets get a white ring. */
