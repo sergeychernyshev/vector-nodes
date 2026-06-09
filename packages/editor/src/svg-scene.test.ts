@@ -1,7 +1,7 @@
 import type { Geometry } from '@vector-nodes/runtime';
 import { describe, expect, it } from 'vitest';
 
-import { boundsOf, buildSvgScene, padBounds, project } from './svg-scene';
+import { boundsOf, buildSvgScene, padBounds, pointsPathD, project } from './svg-scene';
 
 function geometry(partial: Partial<Geometry>): Geometry {
   return { points: [], curves: [], meshes: [], ...partial };
@@ -10,6 +10,21 @@ function geometry(partial: Partial<Geometry>): Geometry {
 describe('project', () => {
   it('drops the Z component', () => {
     expect(project([1, 2, 3])).toEqual([1, 2]);
+  });
+});
+
+describe('pointsPathD', () => {
+  it('builds one zero-length subpath per point', () => {
+    expect(
+      pointsPathD([
+        [0, 0],
+        [1, 2],
+      ]),
+    ).toBe('M0 0l0 0M1 2l0 0');
+  });
+
+  it('is empty for no points', () => {
+    expect(pointsPathD([])).toBe('');
   });
 });
 
