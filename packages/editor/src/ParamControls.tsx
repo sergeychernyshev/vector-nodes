@@ -53,6 +53,22 @@ function StringControl({ value, onChange }: ControlProps) {
   );
 }
 
+function SelectControl({ param, value, onChange }: ControlProps) {
+  return (
+    <select
+      className="nodrag vnode__input"
+      value={typeof value === 'string' ? value : ''}
+      onChange={(e) => onChange(e.target.value)}
+    >
+      {param.options?.map((option) => (
+        <option key={option} value={option}>
+          {option}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 function VectorControl({ value, onChange }: ControlProps) {
   const v = asVec3(value);
   const setAxis = (axis: number, n: number) => {
@@ -123,6 +139,9 @@ function ParamControl(props: ControlProps) {
   if (props.param.isArray) {
     return <span className="vnode__param-note">(array)</span>;
   }
+  if (props.param.options && props.param.options.length > 0) {
+    return <SelectControl {...props} />;
+  }
   switch (props.param.type) {
     case 'Float':
     case 'Integer':
@@ -144,6 +163,22 @@ export interface ParamControlsProps {
   nodeId: string;
   paramDefs: readonly ParamDefinition[];
   values: Record<string, unknown>;
+}
+
+/** A single param control bound to the node-edit context (no name label). */
+export function ParamControlField({
+  nodeId,
+  param,
+  value,
+}: {
+  nodeId: string;
+  param: ParamDefinition;
+  value: unknown;
+}) {
+  const { setParam } = useNodeEdit();
+  return (
+    <ParamControl param={param} value={value} onChange={(v) => setParam(nodeId, param.name, v)} />
+  );
 }
 
 /** Inline editors for a node's params, dispatched by socket type. */

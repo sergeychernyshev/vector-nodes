@@ -1,4 +1,10 @@
-import { createBasicRegistry, createGraph, OUTPUT_NODE_TYPE } from '@vector-nodes/core';
+import {
+  createBasicRegistry,
+  createGraph,
+  OUTPUT_NODE_TYPE,
+  parseVnodes,
+  serializeVnodes,
+} from '@vector-nodes/core';
 import {
   addEdge,
   Background,
@@ -9,11 +15,13 @@ import {
   useNodesState,
   type Connection,
 } from '@xyflow/react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { checkConnection, type ConnectionLike } from './connection';
+import { downloadText, flowToGraph, maxAutoId } from './graph-io';
 import { NodeEditContext, type NodeEditApi } from './NodeEditContext';
 import { setNodeParam } from './param';
+import { clearGraph, loadGraph, saveGraph } from './storage';
 import {
   canAddNode,
   createFlowNode,
@@ -46,13 +54,21 @@ const seed = createGraph({
 
 const nodeTypes = { [VNODE_TYPE]: VNode };
 
+// Restore the autosaved network on load, falling back to the seed.
+const initialGraph = loadGraph() ?? seed;
+const initialNodes = graphToFlowNodes(initialGraph, registry);
+const initialEdges = graphToFlowEdges(initialGraph);
+
 /** Editor application shell: palette + a pannable/zoomable node canvas. */
 export function App() {
-  const [nodes, setNodes, onNodesChange] = useNodesState<VNodeFlowNode>(
-    graphToFlowNodes(seed, registry),
-  );
-  const [edges, setEdges, onEdgesChange] = useEdgesState(graphToFlowEdges(seed));
-  const idCounter = useRef(0);
+  const [nodes, setNodes, onNodesChange] = useNodesState<VNodeFlowNode>(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const idCounter = useRef(maxAutoId(initialNodes));
+
+  // Autosave the current network to localStorage on every change.
+  useEffect(() => {
+    saveGraph(flowToGraph(nodes, edges));
+  }, [nodes, edges]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const lastReason = useRef<string | null>(null);
 
@@ -95,6 +111,34 @@ export function App() {
     [setNodes],
   );
 
+  const onSave = useCallback(() => {
+    downloadText('network.vnodes', serializeVnodes(flowToGraph(nodes, edges)));
+  }, [nodes, edges]);
+
+  const onReset = useCallback(() => {
+    clearGraph();
+    setNodes(graphToFlowNodes(seed, registry));
+    setEdges(graphToFlowEdges(seed));
+    idCounter.current = 0;
+    clearError();
+  }, [setNodes, setEdges, clearError]);
+
+  const onOpen = useCallback(
+    async (file: File) => {
+      try {
+        const graph = parseVnodes(await file.text());
+        const loaded = graphToFlowNodes(graph, registry);
+        setNodes(loaded);
+        setEdges(graphToFlowEdges(graph));
+        idCounter.current = maxAutoId(loaded);
+        clearError();
+      } catch (err) {
+        setErrorMessage(`Failed to open file: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    },
+    [setNodes, setEdges, clearError],
+  );
+
   const addNode = useCallback(
     (type: string) => {
       const def = registry.get(type);
@@ -125,7 +169,7 @@ export function App() {
           position: 'relative',
         }}
       >
-        <Toolbar nodeCount={nodes.length} />
+        <Toolbar nodeCount={nodes.length} onSave={onSave} onOpen={onOpen} onReset={onReset} />
         <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
           <Palette items={items} onAdd={addNode} disabledTypes={disabledTypes} />
           <div style={{ flex: 1, minHeight: 0 }}>

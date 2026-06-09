@@ -27,6 +27,8 @@ export interface ParamDefinition {
   readonly default?: unknown;
   readonly min?: number;
   readonly max?: number;
+  /** Enumerated allowed values; when set, editors present a dropdown. */
+  readonly options?: readonly string[];
   readonly description?: string;
 }
 

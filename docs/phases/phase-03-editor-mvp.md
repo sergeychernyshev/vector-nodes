@@ -36,6 +36,6 @@ identical graph; invalid links are blocked.
 
 ## Step 3.5 — Save / Open
 
-- [ ] **Scope:** export/import `.vnodes` (uses `core` serialize + validate), preserving positions.
+- [x] **Scope:** export/import `.vnodes` (uses `core` serialize + validate), preserving positions.
 - **Acceptance:** build → save → reopen yields an identical graph.
 - **Branch:** `phase-3/step-3.5-save-open`

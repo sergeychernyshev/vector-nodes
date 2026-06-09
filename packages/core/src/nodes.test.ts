@@ -26,6 +26,14 @@ describe('BASIC_NODE_DEFINITIONS', () => {
     expect(def.outputs.map((o) => o.name)).toEqual(['vector', 'value']);
     expect(def.params[0]?.name).toBe('operation');
   });
+
+  it('enumerates options for choice params', () => {
+    const registry = createBasicRegistry();
+    const operation = registry.require('VectorMath').params.find((p) => p.name === 'operation');
+    expect(operation?.options).toContain('cross');
+    const mode = registry.require('PointArray').params.find((p) => p.name === 'mode');
+    expect(mode?.options).toEqual(['grid', 'line', 'circle', 'random']);
+  });
 });
 
 describe('parameter node helpers', () => {
