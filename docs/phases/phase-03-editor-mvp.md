@@ -9,7 +9,7 @@ identical graph; invalid links are blocked.
 
 ## Step 3.1 — App shell + canvas
 
-- [ ] **Scope:** Vite + React app; React Flow canvas with pan/zoom; load node definitions from
+- [x] **Scope:** Vite + React app; React Flow canvas with pan/zoom; load node definitions from
       `core`.
 - **Acceptance:** app runs; can drop and drag nodes.
 - **Branch:** `phase-3/step-3.1-app-shell`
