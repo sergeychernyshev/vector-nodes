@@ -9,8 +9,8 @@ describe('runPreviewRequest', () => {
       nodes: [
         {
           id: 'pa',
-          type: 'PointArray',
-          params: { mode: 'circle', radius: 1, count: 6 },
+          type: 'PointCircle',
+          params: { radius: 1, count: 6 },
         },
         { id: 'out', type: 'OutputGeometry' },
       ],
