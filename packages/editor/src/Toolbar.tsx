@@ -4,10 +4,11 @@ export interface ToolbarProps {
   nodeCount: number;
   onSave?: () => void;
   onOpen?: (file: File) => void;
+  onReset?: () => void;
 }
 
-/** Top app bar: product name, node count, and Save/Open actions. */
-export function Toolbar({ nodeCount, onSave, onOpen }: ToolbarProps) {
+/** Top app bar: product name, node count, and Save/Open/Reset actions. */
+export function Toolbar({ nodeCount, onSave, onOpen, onReset }: ToolbarProps) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -23,11 +24,14 @@ export function Toolbar({ nodeCount, onSave, onOpen }: ToolbarProps) {
       <strong>Vector Nodes</strong>
       <span data-testid="node-count">{nodeCount} nodes</span>
       <span style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-        <button type="button" onClick={onSave}>
-          Save
+        <button type="button" onClick={onReset}>
+          Reset
         </button>
         <button type="button" onClick={() => fileRef.current?.click()}>
           Open
+        </button>
+        <button type="button" onClick={onSave}>
+          Save
         </button>
         <input
           ref={fileRef}

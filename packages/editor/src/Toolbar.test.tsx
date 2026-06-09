@@ -27,4 +27,11 @@ describe('Toolbar', () => {
     fireEvent.change(getByLabelText('Open file'), { target: { files: [file] } });
     expect(onOpen).toHaveBeenCalledWith(file);
   });
+
+  it('calls onReset when Reset is clicked', () => {
+    const onReset = vi.fn();
+    const { getByText } = render(<Toolbar nodeCount={0} onReset={onReset} />);
+    fireEvent.click(getByText('Reset'));
+    expect(onReset).toHaveBeenCalledTimes(1);
+  });
 });
