@@ -124,6 +124,43 @@
   pointer-events: none;
 }
 
+/* Preview pane */
+.preview {
+  width: 240px;
+  border-left: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+.preview__header {
+  padding: 8px 12px;
+  font-weight: 600;
+  border-bottom: 1px solid #ddd;
+}
+.preview__error {
+  margin: 8px;
+  padding: 8px 10px;
+  background: #fdecea;
+  color: #8a1c13;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.preview__summary {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 4px 12px;
+  margin: 12px;
+}
+.preview__summary dt {
+  opacity: 0.7;
+}
+.preview__summary dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Palette */
 .palette {
   width: 220px;
