@@ -1,4 +1,4 @@
-import { canConvertImplicitly } from './conversions';
+import { canConvertImplicitly } from './conversions.js';
 import {
   endpointNode,
   endpointSocket,
@@ -6,9 +6,9 @@ import {
   type Endpoint,
   type Graph,
   type GraphLink,
-} from './graph';
-import type { NodeDefinition, SocketDefinition } from './node-definition';
-import type { NodeRegistry } from './registry';
+} from './graph.js';
+import type { NodeDefinition, SocketDefinition } from './node-definition.js';
+import type { NodeRegistry } from './registry.js';
 
 /** The kinds of static-validation problems a graph can have. */
 export type GraphValidationCode =

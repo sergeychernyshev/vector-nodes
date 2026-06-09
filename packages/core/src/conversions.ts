@@ -1,4 +1,4 @@
-import type { SocketType } from './socket-types';
+import type { SocketType } from './socket-types.js';
 
 /**
  * Allowed implicit conversions between socket types.

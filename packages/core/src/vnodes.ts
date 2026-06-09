@@ -1,7 +1,7 @@
-import Ajv2020, { type ErrorObject, type ValidateFunction } from 'ajv/dist/2020';
+import Ajv2020, { type ErrorObject, type ValidateFunction } from 'ajv/dist/2020.js';
 
-import type { Graph } from './graph';
-import { VNODES_SCHEMA } from './schema';
+import type { Graph } from './graph.js';
+import { VNODES_SCHEMA } from './schema.js';
 
 /** A single schema-validation problem, derived from an ajv error. */
 export interface VnodesValidationIssue {

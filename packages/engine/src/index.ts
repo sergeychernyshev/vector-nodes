@@ -1,8 +1,8 @@
 /**
  * @vector-nodes/engine — pull-based memoizing DAG interpreter.
  */
-export * from './operator';
-export * from './interpreter';
-export * from './hash';
-export * from './incremental-interpreter';
-export * from './basic-nodes';
+export * from './operator.js';
+export * from './interpreter.js';
+export * from './hash.js';
+export * from './incremental-interpreter.js';
+export * from './basic-nodes.js';

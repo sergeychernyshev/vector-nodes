@@ -8,7 +8,7 @@ import {
   type NodeRegistry,
 } from '@vector-nodes/core';
 
-import type { OperatorTable } from './operator';
+import type { OperatorTable } from './operator.js';
 
 /** The result of evaluating a graph. */
 export interface EvaluationResult {

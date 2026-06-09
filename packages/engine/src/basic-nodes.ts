@@ -20,7 +20,7 @@ import {
   type Vector,
 } from '@vector-nodes/runtime';
 
-import type { NodeEvaluator, OperatorTable } from './operator';
+import type { NodeEvaluator, OperatorTable } from './operator.js';
 
 function geometryOf(points: Vector[]): Geometry {
   return { points, curves: [], meshes: [] };
