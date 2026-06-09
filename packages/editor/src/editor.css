@@ -8,6 +8,10 @@
   font-size: 12px;
   overflow: hidden;
 }
+.vnode--selected {
+  border-color: #4a90d9;
+  box-shadow: 0 0 0 2px #4a90d9;
+}
 .vnode__header {
   padding: 4px 8px;
   font-weight: 600;
