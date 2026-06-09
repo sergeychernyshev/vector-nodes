@@ -30,7 +30,7 @@ identical graph; invalid links are blocked.
 
 ## Step 3.4 — Param editing
 
-- [ ] **Scope:** inline param editors per type (number, bool, vector, color, string).
+- [x] **Scope:** inline param editors per type (number, bool, vector, color, string).
 - **Acceptance:** edits update the graph model and persist on save.
 - **Branch:** `phase-3/step-3.4-param-editing`
 

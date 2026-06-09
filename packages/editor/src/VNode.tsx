@@ -1,6 +1,7 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 
 import { socketClassName, socketStyle, type FlowSocket, type VNodeFlowNode } from './flow';
+import { ParamControls } from './ParamControls';
 
 function SocketRow({ socket, side }: { socket: FlowSocket; side: 'input' | 'output' }) {
   const isInput = side === 'input';
@@ -19,7 +20,7 @@ function SocketRow({ socket, side }: { socket: FlowSocket; side: 'input' | 'outp
 }
 
 /** Custom React Flow node: a labeled box with Blender-colored input/output sockets. */
-export function VNode({ data, selected }: NodeProps<VNodeFlowNode>) {
+export function VNode({ id, data, selected }: NodeProps<VNodeFlowNode>) {
   return (
     <div className={selected ? 'vnode vnode--selected' : 'vnode'}>
       <div className="vnode__header">{data.label}</div>
@@ -35,6 +36,7 @@ export function VNode({ data, selected }: NodeProps<VNodeFlowNode>) {
           ))}
         </div>
       </div>
+      <ParamControls nodeId={id} paramDefs={data.paramDefs} values={data.params} />
     </div>
   );
 }

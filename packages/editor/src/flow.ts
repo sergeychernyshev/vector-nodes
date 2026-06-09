@@ -5,6 +5,7 @@ import {
   type Graph,
   type NodeDefinition,
   type NodeRegistry,
+  type ParamDefinition,
   type SocketType,
 } from '@vector-nodes/core';
 import type { Edge, Node } from '@xyflow/react';
@@ -27,6 +28,8 @@ export interface FlowNodeData extends Record<string, unknown> {
   nodeType: string;
   /** Static parameter values. */
   params: Record<string, unknown>;
+  /** Parameter definitions (type/range) for rendering inline editors. */
+  paramDefs: readonly ParamDefinition[];
   inputs: FlowSocket[];
   outputs: FlowSocket[];
 }
@@ -72,6 +75,7 @@ export function graphToFlowNodes(graph: Graph, registry: NodeRegistry): VNodeFlo
         label: node.label ?? def?.label ?? node.type,
         nodeType: node.type,
         params: node.params ?? {},
+        paramDefs: def?.params ?? [],
         inputs: sockets.inputs,
         outputs: sockets.outputs,
       },
@@ -108,6 +112,7 @@ export function createFlowNode(
       label: def.label ?? def.type,
       nodeType: def.type,
       params: resolveParamDefaults(def),
+      paramDefs: def.params,
       inputs: sockets.inputs,
       outputs: sockets.outputs,
     },
