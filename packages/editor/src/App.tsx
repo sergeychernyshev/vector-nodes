@@ -35,7 +35,7 @@ import {
 import { Palette } from './Palette';
 import { evaluatePreview } from './preview';
 import { PreviewPane } from './PreviewPane';
-import { Toolbar } from './Toolbar';
+import { Toolbar, type ToolbarHandle } from './Toolbar';
 import { VNode } from './VNode';
 
 const registry = createBasicRegistry();
@@ -66,6 +66,7 @@ export function App() {
   const [nodes, setNodes, onNodesChange] = useNodesState<VNodeFlowNode>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const idCounter = useRef(maxAutoId(initialNodes));
+  const toolbarRef = useRef<ToolbarHandle>(null);
 
   // Autosave the current network to localStorage on every change.
   useEffect(() => {
@@ -119,6 +120,23 @@ export function App() {
   const onSave = useCallback(() => {
     downloadText('network.vnodes', serializeVnodes(flowToGraph(nodes, edges)));
   }, [nodes, edges]);
+
+  // Cmd/Ctrl+S saves, Cmd/Ctrl+O opens — overriding the browser defaults.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
+      const key = event.key.toLowerCase();
+      if (key === 's') {
+        event.preventDefault();
+        onSave();
+      } else if (key === 'o') {
+        event.preventDefault();
+        toolbarRef.current?.openFileDialog();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onSave]);
 
   const onReset = useCallback(() => {
     clearGraph();
@@ -174,7 +192,13 @@ export function App() {
           position: 'relative',
         }}
       >
-        <Toolbar nodeCount={nodes.length} onSave={onSave} onOpen={onOpen} onReset={onReset} />
+        <Toolbar
+          ref={toolbarRef}
+          nodeCount={nodes.length}
+          onSave={onSave}
+          onOpen={onOpen}
+          onReset={onReset}
+        />
         <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
           <Palette items={items} onAdd={addNode} disabledTypes={disabledTypes} />
           <div style={{ flex: 1, minHeight: 0 }}>

@@ -1,12 +1,14 @@
 import { summarizeGeometry, type PreviewResult } from './preview';
+import { ThreeView } from './ThreeView';
 
 export interface PreviewPaneProps {
   result: PreviewResult;
 }
 
 /**
- * Preview panel: shows the evaluated output geometry (a lightweight summary for
- * now; the 3D/2D renderers arrive in Steps 4.2/4.3), or the evaluation error.
+ * Preview panel: renders the evaluated output geometry in 3D (Three.js) with a
+ * lightweight element-count footer, or the evaluation error. The 2D renderer
+ * and 2D⇄3D toggle arrive in Steps 4.3/4.4.
  */
 export function PreviewPane({ result }: PreviewPaneProps) {
   return (
@@ -17,7 +19,10 @@ export function PreviewPane({ result }: PreviewPaneProps) {
           {result.error}
         </div>
       ) : (
-        <PreviewSummary result={result} />
+        <div className="preview__body">
+          {result.geometry && <ThreeView geometry={result.geometry} />}
+          <PreviewSummary result={result} />
+        </div>
       )}
     </aside>
   );

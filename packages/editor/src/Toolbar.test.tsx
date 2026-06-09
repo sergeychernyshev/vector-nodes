@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render } from '@testing-library/react';
+import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { Toolbar } from './Toolbar';
+import { Toolbar, type ToolbarHandle } from './Toolbar';
 
 afterEach(cleanup);
 
@@ -33,5 +34,14 @@ describe('Toolbar', () => {
     const { getByText } = render(<Toolbar nodeCount={0} onReset={onReset} />);
     fireEvent.click(getByText('Reset'));
     expect(onReset).toHaveBeenCalledTimes(1);
+  });
+
+  it('openFileDialog handle clicks the hidden file input', () => {
+    const ref = createRef<ToolbarHandle>();
+    const { getByLabelText } = render(<Toolbar ref={ref} nodeCount={0} />);
+    const input = getByLabelText('Open file') as HTMLInputElement;
+    const click = vi.spyOn(input, 'click');
+    ref.current?.openFileDialog();
+    expect(click).toHaveBeenCalledTimes(1);
   });
 });

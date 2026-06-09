@@ -15,7 +15,7 @@
 
 ## Step 4.2 — Three.js 3D renderer
 
-- [ ] **Scope:** render points, curves, meshes from the interchange format; orbit camera, grid,
+- [x] **Scope:** render points, curves, meshes from the interchange format; orbit camera, grid,
       lighting.
 - **Acceptance:** sample geometry renders correctly in 3D.
 - **Branch:** `phase-4/step-4.2-threejs-renderer`

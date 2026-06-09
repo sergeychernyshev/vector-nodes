@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { forwardRef, useImperativeHandle, useRef } from 'react';
 
 export interface ToolbarProps {
   nodeCount: number;
@@ -7,9 +7,20 @@ export interface ToolbarProps {
   onReset?: () => void;
 }
 
+/** Imperative handle exposed by {@link Toolbar} for keyboard shortcuts. */
+export interface ToolbarHandle {
+  /** Open the native file picker, as if the Open button were clicked. */
+  openFileDialog: () => void;
+}
+
 /** Top app bar: product name, node count, and Save/Open/Reset actions. */
-export function Toolbar({ nodeCount, onSave, onOpen, onReset }: ToolbarProps) {
+export const Toolbar = forwardRef<ToolbarHandle, ToolbarProps>(function Toolbar(
+  { nodeCount, onSave, onOpen, onReset },
+  ref,
+) {
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useImperativeHandle(ref, () => ({ openFileDialog: () => fileRef.current?.click() }), []);
 
   return (
     <header
@@ -48,4 +59,4 @@ export function Toolbar({ nodeCount, onSave, onOpen, onReset }: ToolbarProps) {
       </span>
     </header>
   );
-}
+});
