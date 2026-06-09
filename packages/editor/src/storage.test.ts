@@ -15,7 +15,7 @@ function fakeStore(): KeyValueStore & { map: Map<string, string> } {
 
 const graph = createGraph({
   nodes: [
-    { id: 'pa', type: 'PointArray', position: [10, 20] },
+    { id: 'pa', type: 'PointCircle', position: [10, 20] },
     { id: 'out', type: 'OutputGeometry', position: [200, 30] },
   ],
   links: [{ from: ['pa', 'geometry'], to: ['out', 'geometry'] }],

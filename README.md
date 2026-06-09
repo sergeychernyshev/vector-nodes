@@ -127,7 +127,8 @@ Conventions carried over from Blender:
 - **Vector** — construct/decompose a vector from components
 - **Combine / Separate XYZ**
 - **Vector Math** — add, subtract, scale, dot, cross, normalize, length, distance, reflect
-- **Point Array** — generate an array of points (grid, line, circle, random, from list)
+- **Point Grid / Point Line / Point Circle / Point Random** — generate an array of points; one
+  node per pattern
 - **Vector Array** — array of vectors / per-point attributes
 
 ### Transforms
@@ -213,9 +214,9 @@ A network is a versioned JSON document. A published **JSON Schema** validates it
   "nodes": [
     {
       "id": "n1",
-      "type": "PointArray",
+      "type": "PointCircle",
       "position": [120, 80],
-      "params": { "count": 64, "pattern": "circle" },
+      "params": { "count": 64, "radius": 1 },
     },
     { "id": "out", "type": "OutputGeometry", "position": [600, 80] },
   ],

@@ -8,7 +8,7 @@ import type { PaletteItem } from './flow';
 afterEach(cleanup);
 
 const items: PaletteItem[] = [
-  { type: 'PointArray', label: 'Point Array', category: 'Geometry' },
+  { type: 'PointCircle', label: 'Point Circle', category: 'Geometry' },
   { type: 'Translate', label: 'Translate', category: 'Geometry' },
   { type: 'VectorMath', label: 'Vector Math', category: 'Vector' },
 ];
@@ -28,7 +28,7 @@ describe('Palette', () => {
       target: { value: 'vector' },
     });
     expect(queryByText('Vector Math')).not.toBeNull();
-    expect(queryByText('Point Array')).toBeNull();
+    expect(queryByText('Point Circle')).toBeNull();
   });
 
   it('disables items in disabledTypes and does not add them on click', () => {

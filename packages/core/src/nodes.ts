@@ -39,25 +39,17 @@ const xyzInputs = [
   { name: 'z', type: 'Float' as const, default: 0 },
 ];
 
-const pointArrayParams: ParamDefinition[] = [
-  {
-    name: 'mode',
-    type: 'String',
-    default: 'grid',
-    options: ['grid', 'line', 'circle', 'random'],
-  },
-  { name: 'countX', type: 'Integer', default: 3, min: 1 },
-  { name: 'countY', type: 'Integer', default: 3, min: 1 },
-  { name: 'spacingX', type: 'Float', default: 1 },
-  { name: 'spacingY', type: 'Float', default: 1 },
-  { name: 'start', type: 'Vector', default: [0, 0, 0] },
-  { name: 'end', type: 'Vector', default: [1, 0, 0] },
-  { name: 'count', type: 'Integer', default: 8, min: 0 },
-  { name: 'radius', type: 'Float', default: 1 },
-  { name: 'min', type: 'Vector', default: [0, 0, 0] },
-  { name: 'max', type: 'Vector', default: [1, 1, 1] },
-  { name: 'seed', type: 'Integer', default: 0 },
+// The point-source nodes (grid/line/circle/random) all emit the same pair of
+// outputs: a geometry bundle and the raw point field.
+const pointSourceOutputs = [
+  { name: 'geometry', type: 'Geometry' as const },
+  { name: 'points', type: 'Vector' as const, isArray: true },
 ];
+
+/** A point-source node definition: shared outputs, mode-specific params. */
+function pointSourceDef(type: string, label: string, params: ParamDefinition[]): NodeDefinition {
+  return { type, label, category: 'Geometry', inputs: [], outputs: pointSourceOutputs, params };
+}
 
 const parameterDefs: NodeDefinition[] = SOCKET_TYPES.map((type) => ({
   type: parameterNodeType(type),
@@ -146,18 +138,28 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
     params: [{ name: 'values', type: 'Vector', isArray: true, default: [] }],
   },
 
-  // Geometry
-  {
-    type: 'PointArray',
-    label: 'Point Array',
-    category: 'Geometry',
-    inputs: [],
-    outputs: [
-      { name: 'geometry', type: 'Geometry' },
-      { name: 'points', type: 'Vector', isArray: true },
-    ],
-    params: pointArrayParams,
-  },
+  // Geometry — point sources, one node per pattern
+  pointSourceDef('PointGrid', 'Point Grid', [
+    { name: 'countX', type: 'Integer', default: 3, min: 1 },
+    { name: 'countY', type: 'Integer', default: 3, min: 1 },
+    { name: 'spacingX', type: 'Float', default: 1 },
+    { name: 'spacingY', type: 'Float', default: 1 },
+  ]),
+  pointSourceDef('PointLine', 'Point Line', [
+    { name: 'start', type: 'Vector', default: [0, 0, 0] },
+    { name: 'end', type: 'Vector', default: [1, 0, 0] },
+    { name: 'count', type: 'Integer', default: 8, min: 0 },
+  ]),
+  pointSourceDef('PointCircle', 'Point Circle', [
+    { name: 'radius', type: 'Float', default: 1 },
+    { name: 'count', type: 'Integer', default: 8, min: 0 },
+  ]),
+  pointSourceDef('PointRandom', 'Point Random', [
+    { name: 'count', type: 'Integer', default: 8, min: 0 },
+    { name: 'min', type: 'Vector', default: [0, 0, 0] },
+    { name: 'max', type: 'Vector', default: [1, 1, 1] },
+    { name: 'seed', type: 'Integer', default: 0 },
+  ]),
   {
     type: 'Project',
     label: 'Project',
