@@ -1,4 +1,5 @@
 import { summarizeGeometry, type PreviewResult } from './preview';
+import { SvgView } from './SvgView';
 import { ThreeView } from './ThreeView';
 
 export interface PreviewPaneProps {
@@ -6,9 +7,10 @@ export interface PreviewPaneProps {
 }
 
 /**
- * Preview panel: renders the evaluated output geometry in 3D (Three.js) with a
- * lightweight element-count footer, or the evaluation error. The 2D renderer
- * and 2D⇄3D toggle arrive in Steps 4.3/4.4.
+ * Preview panel: renders the evaluated output geometry in both 3D (Three.js)
+ * and 2D (SVG, Z dropped), with a lightweight element-count footer, or the
+ * evaluation error. The 2D⇄3D toggle that collapses these into one view arrives
+ * in Step 4.4.
  */
 export function PreviewPane({ result }: PreviewPaneProps) {
   return (
@@ -20,7 +22,14 @@ export function PreviewPane({ result }: PreviewPaneProps) {
         </div>
       ) : (
         <div className="preview__body">
-          {result.geometry && <ThreeView geometry={result.geometry} />}
+          {result.geometry && (
+            <>
+              <div className="preview__view-label">3D</div>
+              <ThreeView geometry={result.geometry} />
+              <div className="preview__view-label">2D</div>
+              <SvgView geometry={result.geometry} />
+            </>
+          )}
           <PreviewSummary result={result} />
         </div>
       )}

@@ -22,7 +22,7 @@
 
 ## Step 4.3 — SVG 2D renderer
 
-- [ ] **Scope:** SVG renderer that **projects to X–Y and drops Z**; points, curves, polygons.
+- [x] **Scope:** SVG renderer that **projects to X–Y and drops Z**; points, curves, polygons.
 - **Acceptance:** sample geometry renders correctly in 2D with Z dropped.
 - **Branch:** `phase-4/step-4.3-svg-renderer`
 
