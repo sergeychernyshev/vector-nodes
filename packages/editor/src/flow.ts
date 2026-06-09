@@ -1,29 +1,78 @@
-import type { Graph, NodeRegistry } from '@vector-nodes/core';
+import {
+  resolveParamDefaults,
+  socketColor,
+  type Graph,
+  type NodeDefinition,
+  type NodeRegistry,
+  type SocketType,
+} from '@vector-nodes/core';
 import type { Edge, Node } from '@xyflow/react';
+
+/** The React Flow node type id for our custom node component. */
+export const VNODE_TYPE = 'vnode';
+
+/** A socket as rendered on a flow node. */
+export interface FlowSocket {
+  name: string;
+  type: SocketType;
+  isArray: boolean;
+}
 
 /** Data carried on a React Flow node mirroring a graph node. */
 export interface FlowNodeData extends Record<string, unknown> {
-  /** Display label (default node renders this). */
+  /** Display label. */
   label: string;
   /** The underlying node type. */
   nodeType: string;
   /** Static parameter values. */
   params: Record<string, unknown>;
+  inputs: FlowSocket[];
+  outputs: FlowSocket[];
 }
 
 export type VNodeFlowNode = Node<FlowNodeData>;
 
-/** Convert a graph's nodes into React Flow nodes, resolving labels via the registry. */
+/** The input/output sockets of a definition, as {@link FlowSocket}s. */
+export function socketsOf(def: NodeDefinition): {
+  inputs: FlowSocket[];
+  outputs: FlowSocket[];
+} {
+  const toSocket = (s: { name: string; type: SocketType; isArray?: boolean }): FlowSocket => ({
+    name: s.name,
+    type: s.type,
+    isArray: s.isArray ?? false,
+  });
+  return {
+    inputs: def.inputs.map(toSocket),
+    outputs: def.outputs.map(toSocket),
+  };
+}
+
+/** Inline style for a socket handle: its Blender color. */
+export function socketStyle(socket: FlowSocket): { background: string } {
+  return { background: socketColor(socket.type) };
+}
+
+/** Class name for a socket handle (field sockets get a ring). */
+export function socketClassName(socket: FlowSocket): string {
+  return socket.isArray ? 'vnode__handle vnode__handle--field' : 'vnode__handle';
+}
+
+/** Convert a graph's nodes into React Flow nodes, resolving labels/sockets via the registry. */
 export function graphToFlowNodes(graph: Graph, registry: NodeRegistry): VNodeFlowNode[] {
   return graph.nodes.map((node) => {
     const def = registry.get(node.type);
+    const sockets = def ? socketsOf(def) : { inputs: [], outputs: [] };
     return {
       id: node.id,
+      type: VNODE_TYPE,
       position: { x: node.position?.[0] ?? 0, y: node.position?.[1] ?? 0 },
       data: {
         label: node.label ?? def?.label ?? node.type,
         nodeType: node.type,
         params: node.params ?? {},
+        inputs: sockets.inputs,
+        outputs: sockets.outputs,
       },
     };
   });
@@ -38,6 +87,30 @@ export function graphToFlowEdges(graph: Graph): Edge[] {
     target: link.to[0],
     targetHandle: link.to[1],
   }));
+}
+
+/**
+ * Build a new React Flow node for a definition at `position`, with params
+ * initialized to the definition's defaults.
+ */
+export function createFlowNode(
+  def: NodeDefinition,
+  position: { x: number; y: number },
+  id: string,
+): VNodeFlowNode {
+  const sockets = socketsOf(def);
+  return {
+    id,
+    type: VNODE_TYPE,
+    position,
+    data: {
+      label: def.label ?? def.type,
+      nodeType: def.type,
+      params: resolveParamDefaults(def),
+      inputs: sockets.inputs,
+      outputs: sockets.outputs,
+    },
+  };
 }
 
 /** A palette entry for adding a node, derived from a definition. */
@@ -57,4 +130,16 @@ export function paletteItems(registry: NodeRegistry): PaletteItem[] {
       category: def.category ?? 'Other',
     }))
     .sort((a, b) => a.category.localeCompare(b.category) || a.label.localeCompare(b.label));
+}
+
+/** Case-insensitive filter of palette items by label, type, or category. */
+export function filterPalette(items: PaletteItem[], query: string): PaletteItem[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return items;
+  return items.filter(
+    (item) =>
+      item.label.toLowerCase().includes(q) ||
+      item.type.toLowerCase().includes(q) ||
+      item.category.toLowerCase().includes(q),
+  );
 }

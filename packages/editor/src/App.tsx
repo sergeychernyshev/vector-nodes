@@ -1,8 +1,27 @@
 import { createBasicRegistry, createGraph } from '@vector-nodes/core';
-import { Background, Controls, MiniMap, ReactFlow } from '@xyflow/react';
+import {
+  addEdge,
+  Background,
+  Controls,
+  MiniMap,
+  ReactFlow,
+  useEdgesState,
+  useNodesState,
+  type Connection,
+} from '@xyflow/react';
+import { useCallback, useMemo, useRef } from 'react';
 
-import { graphToFlowEdges, graphToFlowNodes } from './flow';
+import {
+  createFlowNode,
+  graphToFlowEdges,
+  graphToFlowNodes,
+  paletteItems,
+  VNODE_TYPE,
+  type VNodeFlowNode,
+} from './flow';
+import { Palette } from './Palette';
 import { Toolbar } from './Toolbar';
+import { VNode } from './VNode';
 
 const registry = createBasicRegistry();
 
@@ -20,19 +39,57 @@ const seed = createGraph({
   links: [{ from: ['pa', 'geometry'], to: ['out', 'geometry'] }],
 });
 
-/** Editor application shell: a top bar above a pannable/zoomable node canvas. */
+const nodeTypes = { [VNODE_TYPE]: VNode };
+
+/** Editor application shell: palette + a pannable/zoomable node canvas. */
 export function App() {
-  const nodes = graphToFlowNodes(seed, registry);
-  const edges = graphToFlowEdges(seed);
+  const [nodes, setNodes, onNodesChange] = useNodesState<VNodeFlowNode>(
+    graphToFlowNodes(seed, registry),
+  );
+  const [edges, setEdges, onEdgesChange] = useEdgesState(graphToFlowEdges(seed));
+  const idCounter = useRef(0);
+
+  const items = useMemo(() => paletteItems(registry), []);
+
+  const onConnect = useCallback(
+    (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
+    [setEdges],
+  );
+
+  const addNode = useCallback(
+    (type: string) => {
+      const def = registry.get(type);
+      if (!def) return;
+      const id = `n${(idCounter.current += 1)}`;
+      const position = {
+        x: 120 + (idCounter.current % 5) * 24,
+        y: 80 + (idCounter.current % 5) * 24,
+      };
+      setNodes((nds) => [...nds, createFlowNode(def, position, id)]);
+    },
+    [setNodes],
+  );
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Toolbar nodeCount={nodes.length} />
-      <div style={{ flex: 1, minHeight: 0 }}>
-        <ReactFlow defaultNodes={nodes} defaultEdges={edges} fitView>
-          <Background />
-          <MiniMap />
-          <Controls />
-        </ReactFlow>
+      <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
+        <Palette items={items} onAdd={addNode} />
+        <div style={{ flex: 1, minHeight: 0 }}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            nodeTypes={nodeTypes}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            fitView
+          >
+            <Background />
+            <MiniMap />
+            <Controls />
+          </ReactFlow>
+        </div>
       </div>
     </div>
   );

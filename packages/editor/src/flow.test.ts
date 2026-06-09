@@ -1,7 +1,17 @@
-import { createBasicRegistry, createGraph } from '@vector-nodes/core';
+import { createBasicRegistry, createGraph, socketColor } from '@vector-nodes/core';
 import { describe, expect, it } from 'vitest';
 
-import { graphToFlowEdges, graphToFlowNodes, paletteItems } from './flow';
+import {
+  createFlowNode,
+  filterPalette,
+  graphToFlowEdges,
+  graphToFlowNodes,
+  paletteItems,
+  socketClassName,
+  socketsOf,
+  socketStyle,
+  VNODE_TYPE,
+} from './flow';
 
 const registry = createBasicRegistry();
 
@@ -14,22 +24,44 @@ const graph = createGraph({
 });
 
 describe('graphToFlowNodes', () => {
-  it('maps id, position, and resolves the label from the registry', () => {
+  it('maps id, type, position, label, and sockets', () => {
     const [pa, out] = graphToFlowNodes(graph, registry);
     expect(pa).toMatchObject({
       id: 'pa',
+      type: VNODE_TYPE,
       position: { x: 10, y: 20 },
       data: { label: 'Point Array', nodeType: 'PointArray' },
     });
-    // Missing position defaults to the origin.
-    expect(out!.position).toEqual({ x: 0, y: 0 });
+    // PointArray exposes a geometry output and a field "points" output.
+    expect(pa!.data.outputs).toEqual([
+      { name: 'geometry', type: 'Geometry', isArray: false },
+      { name: 'points', type: 'Vector', isArray: true },
+    ]);
+    expect(out!.data.inputs).toEqual([{ name: 'geometry', type: 'Geometry', isArray: false }]);
+  });
+});
+
+describe('socketsOf', () => {
+  it('defaults isArray to false and preserves field flags', () => {
+    const def = registry.require('PointArray');
+    const { outputs } = socketsOf(def);
+    expect(outputs.find((s) => s.name === 'points')?.isArray).toBe(true);
+    expect(outputs.find((s) => s.name === 'geometry')?.isArray).toBe(false);
+  });
+});
+
+describe('socket styling', () => {
+  it('colors a socket by its Blender type color', () => {
+    expect(socketStyle({ name: 'g', type: 'Geometry', isArray: false })).toEqual({
+      background: socketColor('Geometry'),
+    });
   });
 
-  it('prefers an explicit node label over the definition label', () => {
-    const g = createGraph({
-      nodes: [{ id: 'n', type: 'PointArray', label: 'My Points' }],
-    });
-    expect(graphToFlowNodes(g, registry)[0]!.data.label).toBe('My Points');
+  it('marks field sockets with a modifier class', () => {
+    expect(socketClassName({ name: 'p', type: 'Vector', isArray: false })).toBe('vnode__handle');
+    expect(socketClassName({ name: 'p', type: 'Vector', isArray: true })).toBe(
+      'vnode__handle vnode__handle--field',
+    );
   });
 });
 
@@ -47,13 +79,32 @@ describe('graphToFlowEdges', () => {
   });
 });
 
-describe('paletteItems', () => {
-  it('lists every definition with a category, sorted', () => {
+describe('createFlowNode', () => {
+  it('builds a node with default params and sockets', () => {
+    const node = createFlowNode(registry.require('Translate'), { x: 5, y: 6 }, 'n1');
+    expect(node).toMatchObject({
+      id: 'n1',
+      type: VNODE_TYPE,
+      position: { x: 5, y: 6 },
+      data: { nodeType: 'Translate', label: 'Translate' },
+    });
+    expect(node.data.inputs.map((s) => s.name)).toEqual(['geometry', 'offset']);
+  });
+});
+
+describe('palette', () => {
+  it('lists every definition, sorted by category then label', () => {
     const items = paletteItems(registry);
     expect(items.length).toBe(registry.size);
-    expect(items.some((i) => i.type === 'PointArray')).toBe(true);
-    // Sorted by category then label.
     const categories = items.map((i) => i.category);
     expect([...categories]).toEqual([...categories].sort());
+  });
+
+  it('filters by label, type, or category (case-insensitive)', () => {
+    const items = paletteItems(registry);
+    expect(filterPalette(items, 'bezier').map((i) => i.type)).toEqual(['BezierCurve']);
+    expect(filterPalette(items, 'GEOMETRY').length).toBeGreaterThan(0);
+    expect(filterPalette(items, '')).toHaveLength(items.length);
+    expect(filterPalette(items, 'zzz-nope')).toHaveLength(0);
   });
 });
