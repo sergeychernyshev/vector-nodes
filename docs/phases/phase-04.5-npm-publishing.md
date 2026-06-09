@@ -14,7 +14,7 @@
 
 ## Step 4.5.1 — Publishable package metadata
 
-- [ ] **Scope:** finalize `name`, `version`, `exports`, `types`, `files` allowlist,
+- [x] **Scope:** finalize `name`, `version`, `exports`, `types`, `files` allowlist,
       `repository`/`license`, and `publishConfig.access: public` for each `@vector-nodes/*`
       package; ensure ESM + `.d.ts` build output ships; `editor` stays private.
 - **Acceptance:** `npm pack` for each package contains only the intended files with correct

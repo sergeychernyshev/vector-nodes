@@ -1,10 +1,11 @@
 {
   "name": "@vector-nodes/core",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Types, graph model, and .vnodes schema for Vector Nodes.",
   "license": "Apache-2.0",
   "author": "Sergey Chernyshev <sergey.chernyshev@gmail.com>",
   "type": "module",
+  "sideEffects": false,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sergeychernyshev/vector-nodes.git",
@@ -30,7 +31,8 @@
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc -b",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepack": "tsc -b"
   },
   "dependencies": {
     "ajv": "^8.20.0"

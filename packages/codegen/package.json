@@ -1,10 +1,11 @@
 {
   "name": "@vector-nodes/codegen",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "TypeScript/JavaScript code generator for Vector Nodes graphs.",
   "license": "Apache-2.0",
   "author": "Sergey Chernyshev <sergey.chernyshev@gmail.com>",
   "type": "module",
+  "sideEffects": false,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/sergeychernyshev/vector-nodes.git",
@@ -30,10 +31,11 @@
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc -b",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepack": "tsc -b"
   },
   "dependencies": {
-    "@vector-nodes/core": "*",
-    "@vector-nodes/runtime": "*"
+    "@vector-nodes/core": "^0.1.0",
+    "@vector-nodes/runtime": "^0.1.0"
   }
 }
