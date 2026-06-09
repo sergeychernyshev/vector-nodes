@@ -92,26 +92,29 @@ function ColorControl({ value, onChange }: ControlProps) {
           onChange([nr, ng, nb, a]);
         }}
       />
-      <input
-        className="nodrag vnode__alpha"
-        type="range"
-        min={0}
-        max={1}
-        step={0.01}
-        aria-label="alpha"
-        value={a}
-        onChange={(e) => setAlpha(Number(e.target.value))}
-      />
-      <input
-        className="nodrag vnode__input vnode__input--axis"
-        type="number"
-        step="any"
-        min={0}
-        max={1}
-        aria-label="alpha value"
-        value={a}
-        onChange={(e) => setAlpha(Number(e.target.value))}
-      />
+      <span className="vnode__opacity">
+        <span className="vnode__param-label">opacity</span>
+        <input
+          className="nodrag vnode__alpha"
+          type="range"
+          min={0}
+          max={1}
+          step={0.01}
+          aria-label="opacity"
+          value={a}
+          onChange={(e) => setAlpha(Number(e.target.value))}
+        />
+        <input
+          className="nodrag vnode__input vnode__input--axis"
+          type="number"
+          step="any"
+          min={0}
+          max={1}
+          aria-label="opacity value"
+          value={a}
+          onChange={(e) => setAlpha(Number(e.target.value))}
+        />
+      </span>
     </span>
   );
 }
