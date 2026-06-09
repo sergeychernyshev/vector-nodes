@@ -8,7 +8,7 @@
 
 ## Step 4.1 — Preview pane + interpreter integration
 
-- [ ] **Scope:** preview panel that runs the interpreter on the current graph and re-renders on
+- [x] **Scope:** preview panel that runs the interpreter on the current graph and re-renders on
       graph/param edits.
 - **Acceptance:** preview updates live as the graph changes.
 - **Branch:** `phase-4/step-4.1-preview-pane`

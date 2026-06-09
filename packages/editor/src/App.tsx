@@ -33,6 +33,8 @@ import {
   type VNodeFlowNode,
 } from './flow';
 import { Palette } from './Palette';
+import { evaluatePreview } from './preview';
+import { PreviewPane } from './PreviewPane';
 import { Toolbar } from './Toolbar';
 import { VNode } from './VNode';
 
@@ -71,6 +73,9 @@ export function App() {
   }, [nodes, edges]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const lastReason = useRef<string | null>(null);
+
+  // Re-evaluate the graph for the preview whenever nodes or edges change.
+  const preview = useMemo(() => evaluatePreview(flowToGraph(nodes, edges)), [nodes, edges]);
 
   const items = useMemo(() => paletteItems(registry), []);
   const disabledTypes = useMemo(
@@ -189,6 +194,7 @@ export function App() {
               <Controls />
             </ReactFlow>
           </div>
+          <PreviewPane result={preview} />
         </div>
         {errorMessage && (
           <div role="alert" className="connection-toast">
