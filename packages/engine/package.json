@@ -1,6 +1,6 @@
 {
   "name": "@vector-nodes/engine",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Pull-based memoizing DAG interpreter for Vector Nodes.",
   "license": "Apache-2.0",
   "author": "Sergey Chernyshev <sergey.chernyshev@gmail.com>",

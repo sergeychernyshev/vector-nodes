@@ -1,4 +1,4 @@
-import type { SocketType } from './socket-types';
+import type { SocketType } from './socket-types.js';
 
 /** Format discriminator written into every `.vnodes` document. */
 export const VNODES_FORMAT = 'vector-nodes';

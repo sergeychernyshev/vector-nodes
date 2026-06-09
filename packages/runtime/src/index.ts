@@ -4,6 +4,6 @@
  * The single hand-written implementation of every node's math/geometry op,
  * shared by the interpreter and by generated TS/JS code.
  */
-export * from './types';
-export * from './vector';
-export * from './geometry';
+export * from './types.js';
+export * from './vector.js';
+export * from './geometry.js';

@@ -1,5 +1,5 @@
-import { ORIGIN, type Point, type Vector } from './types';
-import { add } from './vector';
+import { ORIGIN, type Point, type Vector } from './types.js';
+import { add } from './vector.js';
 
 // --- Point-array construction -------------------------------------------------
 

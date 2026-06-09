@@ -1,4 +1,4 @@
-import type { SocketType } from './socket-types';
+import type { SocketType } from './socket-types.js';
 
 /**
  * An input or output socket on a node definition.

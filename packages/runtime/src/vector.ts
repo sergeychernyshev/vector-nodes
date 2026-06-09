@@ -1,4 +1,4 @@
-import type { Vector } from './types';
+import type { Vector } from './types.js';
 
 /** Component-wise sum `a + b`. */
 export function add(a: Vector, b: Vector): Vector {

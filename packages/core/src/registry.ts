@@ -1,4 +1,4 @@
-import type { NodeDefinition } from './node-definition';
+import type { NodeDefinition } from './node-definition.js';
 
 /**
  * A lookup table of {@link NodeDefinition}s keyed by their `type`.

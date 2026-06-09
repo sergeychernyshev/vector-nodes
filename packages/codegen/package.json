@@ -1,6 +1,6 @@
 {
   "name": "@vector-nodes/codegen",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "TypeScript/JavaScript code generator for Vector Nodes graphs.",
   "license": "Apache-2.0",
   "author": "Sergey Chernyshev <sergey.chernyshev@gmail.com>",

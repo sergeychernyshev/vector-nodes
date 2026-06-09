@@ -9,9 +9,9 @@ import {
   type NodeRegistry,
 } from '@vector-nodes/core';
 
-import { cyrb53, stableStringify } from './hash';
-import { MissingOperatorError, type EvaluationResult } from './interpreter';
-import type { OperatorTable } from './operator';
+import { cyrb53, stableStringify } from './hash.js';
+import { MissingOperatorError, type EvaluationResult } from './interpreter.js';
+import type { OperatorTable } from './operator.js';
 
 /** An {@link EvaluationResult} plus which nodes were (re)computed this run. */
 export interface IncrementalEvaluationResult extends EvaluationResult {

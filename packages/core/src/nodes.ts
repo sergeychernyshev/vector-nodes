@@ -1,6 +1,6 @@
-import type { NodeDefinition, ParamDefinition } from './node-definition';
-import { NodeRegistry } from './registry';
-import { SOCKET_TYPES, type SocketType } from './socket-types';
+import type { NodeDefinition, ParamDefinition } from './node-definition.js';
+import { NodeRegistry } from './registry.js';
+import { SOCKET_TYPES, type SocketType } from './socket-types.js';
 
 /** Prefix shared by the per-type Parameter node types (e.g. `ParameterFloat`). */
 export const PARAMETER_NODE_PREFIX = 'Parameter';

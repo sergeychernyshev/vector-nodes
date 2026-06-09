@@ -1,4 +1,4 @@
-import type { SocketType } from './socket-types';
+import type { SocketType } from './socket-types.js';
 
 /**
  * Canonical Blender socket-palette colors for each socket type, as hex strings.
