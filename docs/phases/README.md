@@ -13,6 +13,7 @@ Branch naming: `phase-<n>/step-<n.m>-<slug>` (e.g. `phase-0/step-0.1-root-toolin
 | 2     | [phase-02-runtime-interpreter.md](phase-02-runtime-interpreter.md) | Runtime + interpreter, basic nodes  |
 | 3     | [phase-03-editor-mvp.md](phase-03-editor-mvp.md)                   | React Flow editor                   |
 | 4     | [phase-04-preview.md](phase-04-preview.md)                         | SVG (2D) + Three.js (3D)            |
+| 4.5   | [phase-04.5-npm-publishing.md](phase-04.5-npm-publishing.md)       | npm package publishing (moved up)   |
 | 5     | [phase-05-meta-nodes.md](phase-05-meta-nodes.md)                   | Group / window-edit / inline        |
 | 6     | [phase-06-codegen.md](phase-06-codegen.md)                         | TS/JS codegen + wrappers            |
 | 7     | [phase-07-expanded-nodes.md](phase-07-expanded-nodes.md)           | Transforms, curves, fields, utility |
