@@ -95,13 +95,15 @@ export function App() {
   );
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div
+      style={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
+      }}
+    >
       <Toolbar nodeCount={nodes.length} />
-      {connectionError && (
-        <div role="alert" className="connection-error">
-          {connectionError}
-        </div>
-      )}
       <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
         <Palette items={items} onAdd={addNode} />
         <div style={{ flex: 1, minHeight: 0 }}>
@@ -122,6 +124,11 @@ export function App() {
           </ReactFlow>
         </div>
       </div>
+      {connectionError && (
+        <div role="alert" className="connection-toast">
+          {connectionError}
+        </div>
+      )}
     </div>
   );
 }

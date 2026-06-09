@@ -46,13 +46,21 @@
   outline-offset: 1px;
 }
 
-/* Connection error banner */
-.connection-error {
-  padding: 6px 12px;
-  background: #fde2e1;
-  color: #8a1c13;
-  border-bottom: 1px solid #f5b5b0;
+/* Connection error toast — floats over the canvas without shifting layout */
+.connection-toast {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  max-width: 80%;
+  padding: 8px 14px;
+  background: #8a1c13;
+  color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   font-size: 13px;
+  pointer-events: none;
 }
 
 /* Palette */
