@@ -1,4 +1,4 @@
-import { createBasicRegistry, createGraph } from '@vector-nodes/core';
+import { createBasicRegistry, createGraph, OUTPUT_NODE_TYPE } from '@vector-nodes/core';
 import {
   addEdge,
   Background,
@@ -9,12 +9,15 @@ import {
   useNodesState,
   type Connection,
 } from '@xyflow/react';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
+import { checkConnection, type ConnectionLike } from './connection';
 import {
+  canAddNode,
   createFlowNode,
   graphToFlowEdges,
   graphToFlowNodes,
+  hasOutputNode,
   paletteItems,
   VNODE_TYPE,
   type VNodeFlowNode,
@@ -48,33 +51,73 @@ export function App() {
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState(graphToFlowEdges(seed));
   const idCounter = useRef(0);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const lastReason = useRef<string | null>(null);
 
   const items = useMemo(() => paletteItems(registry), []);
+  const disabledTypes = useMemo(
+    () => (hasOutputNode(nodes) ? new Set([OUTPUT_NODE_TYPE]) : new Set<string>()),
+    [nodes],
+  );
+
+  const clearError = useCallback(() => {
+    lastReason.current = null;
+    setErrorMessage(null);
+  }, []);
+
+  const isValidConnection = useCallback(
+    (connection: ConnectionLike) => {
+      const result = checkConnection(connection, nodes, edges);
+      const reason = result.ok ? null : (result.reason ?? 'Invalid connection.');
+      if (lastReason.current !== reason) {
+        lastReason.current = reason;
+        setErrorMessage(reason);
+      }
+      return result.ok;
+    },
+    [nodes, edges],
+  );
 
   const onConnect = useCallback(
-    (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
-    [setEdges],
+    (connection: Connection) => {
+      setEdges((eds) => addEdge(connection, eds));
+      clearError();
+    },
+    [setEdges, clearError],
   );
 
   const addNode = useCallback(
     (type: string) => {
       const def = registry.get(type);
       if (!def) return;
+      const check = canAddNode(type, nodes);
+      if (!check.ok) {
+        setErrorMessage(check.reason ?? 'Cannot add this node.');
+        return;
+      }
       const id = `n${(idCounter.current += 1)}`;
       const position = {
         x: 120 + (idCounter.current % 5) * 24,
         y: 80 + (idCounter.current % 5) * 24,
       };
       setNodes((nds) => [...nds, createFlowNode(def, position, id)]);
+      clearError();
     },
-    [setNodes],
+    [nodes, setNodes, clearError],
   );
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div
+      style={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
+      }}
+    >
       <Toolbar nodeCount={nodes.length} />
       <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
-        <Palette items={items} onAdd={addNode} />
+        <Palette items={items} onAdd={addNode} disabledTypes={disabledTypes} />
         <div style={{ flex: 1, minHeight: 0 }}>
           <ReactFlow
             nodes={nodes}
@@ -83,6 +126,8 @@ export function App() {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            isValidConnection={isValidConnection}
+            onConnectEnd={clearError}
             fitView
           >
             <Background />
@@ -91,6 +136,11 @@ export function App() {
           </ReactFlow>
         </div>
       </div>
+      {errorMessage && (
+        <div role="alert" className="connection-toast">
+          {errorMessage}
+        </div>
+      )}
     </div>
   );
 }

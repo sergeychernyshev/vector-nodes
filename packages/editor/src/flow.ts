@@ -1,4 +1,5 @@
 import {
+  OUTPUT_NODE_TYPE,
   resolveParamDefaults,
   socketColor,
   type Graph,
@@ -111,6 +112,31 @@ export function createFlowNode(
       outputs: sockets.outputs,
     },
   };
+}
+
+/** Whether the canvas already contains an OutputGeometry node. */
+export function hasOutputNode(nodes: VNodeFlowNode[]): boolean {
+  return nodes.some((n) => n.data.nodeType === OUTPUT_NODE_TYPE);
+}
+
+/** Result of checking whether a node type may be added to the canvas. */
+export interface AddCheck {
+  ok: boolean;
+  reason?: string;
+}
+
+/**
+ * Whether a node of `type` may be added. Enforces the single-output rule: a
+ * graph may contain only one OutputGeometry node.
+ */
+export function canAddNode(type: string, nodes: VNodeFlowNode[]): AddCheck {
+  if (type === OUTPUT_NODE_TYPE && hasOutputNode(nodes)) {
+    return {
+      ok: false,
+      reason: 'There can only be one Output Geometry node.',
+    };
+  }
+  return { ok: true };
 }
 
 /** A palette entry for adding a node, derived from a definition. */

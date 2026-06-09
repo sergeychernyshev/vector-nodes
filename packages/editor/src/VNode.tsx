@@ -19,9 +19,9 @@ function SocketRow({ socket, side }: { socket: FlowSocket; side: 'input' | 'outp
 }
 
 /** Custom React Flow node: a labeled box with Blender-colored input/output sockets. */
-export function VNode({ data }: NodeProps<VNodeFlowNode>) {
+export function VNode({ data, selected }: NodeProps<VNodeFlowNode>) {
   return (
-    <div className="vnode">
+    <div className={selected ? 'vnode vnode--selected' : 'vnode'}>
       <div className="vnode__header">{data.label}</div>
       <div className="vnode__body">
         <div className="vnode__col">
