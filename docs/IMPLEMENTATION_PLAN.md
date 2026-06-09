@@ -44,7 +44,7 @@ runs typecheck + lint + tests on every package.
 - Empty packages (`core`, `runtime`, `engine`, `codegen`, `editor`) with `package.json` + entry
   files and TypeScript project references. Scope library packages under `@vector-nodes/*` and
   stub publishing metadata now (`exports`, `types`, `files`, `publishConfig.access`); `editor`
-  is `"private": true`. Full publishing is Phase 10.
+  is `"private": true`. Packages are published in Phase 4.5; full release engineering is Phase 10.
 - GitHub Actions: install → typecheck → lint → test.
 - `docs/vnodes.schema.json` skeleton committed.
 
@@ -118,6 +118,23 @@ identical graph; invalid links are blocked.
 - Preview is driven by the interpreter, updating on graph/param edits.
 
 **Done when:** the same network renders correctly in both modes and the toggle is instant.
+
+---
+
+## Phase 4.5 — npm package publishing
+
+**Goal:** publish the `@vector-nodes/*` packages to npm early so they resolve for consumers and CI
+(e.g. the editor's Cloudflare deploy), instead of relying only on the local workspace.
+
+- Finalize publishable metadata (`exports`, `types`, `files`, `publishConfig.access: public`) for
+  the library packages; `editor` stays private.
+- Publish `@vector-nodes/runtime`, `core`, `engine`, and `codegen`; verify a clean install
+  resolves them.
+- Full release engineering (changesets, provenance release CI, codegen runtime-pin + tarball
+  conformance) remains **Phase 10**.
+
+**Done when:** a clean `npm install` of the published packages in an empty project imports
+successfully.
 
 ---
 
