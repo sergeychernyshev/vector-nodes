@@ -1,0 +1,91 @@
+/* Custom node */
+.vnode {
+  min-width: 140px;
+  border: 1px solid #555;
+  border-radius: 6px;
+  background: #2b2b2b;
+  color: #eee;
+  font-size: 12px;
+  overflow: hidden;
+}
+.vnode__header {
+  padding: 4px 8px;
+  font-weight: 600;
+  background: #3a3a3a;
+  border-bottom: 1px solid #555;
+}
+.vnode__body {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+.vnode__col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.vnode__col--outputs {
+  text-align: right;
+}
+.vnode__port {
+  position: relative;
+  padding: 2px 10px;
+}
+.vnode__socket-label {
+  opacity: 0.85;
+}
+
+/* Sockets: colored handles; field sockets get a white ring. */
+.vnode__handle {
+  width: 10px;
+  height: 10px;
+  border: 1px solid #1a1a1a;
+}
+.vnode__handle--field {
+  outline: 2px solid #fff;
+  outline-offset: 1px;
+}
+
+/* Palette */
+.palette {
+  width: 220px;
+  border-right: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.palette__search {
+  margin: 8px;
+  padding: 6px 8px;
+}
+.palette__list {
+  list-style: none;
+  margin: 0;
+  padding: 0 8px 8px;
+  overflow: auto;
+}
+.palette__item {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  background: #f6f6f6;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+}
+.palette__item:hover {
+  background: #ececec;
+}
+.palette__item-category {
+  opacity: 0.6;
+  font-size: 11px;
+}
+.palette__empty {
+  list-style: none;
+  opacity: 0.6;
+  padding: 8px;
+}

@@ -16,7 +16,7 @@ identical graph; invalid links are blocked.
 
 ## Step 3.2 — Node rendering & palette
 
-- [ ] **Scope:** custom node component with Blender-colored sockets (field sockets get a ring/
+- [x] **Scope:** custom node component with Blender-colored sockets (field sockets get a ring/
       badge); node palette/search backed by the registry.
 - **Acceptance:** nodes render with correct socket colors; palette adds nodes.
 - **Branch:** `phase-3/step-3.2-node-rendering`
