@@ -6,6 +6,9 @@ dist/
 build/
 *.tsbuildinfo
 
+# Wrangler / Cloudflare
+.wrangler/
+
 # Test / coverage
 coverage/
 

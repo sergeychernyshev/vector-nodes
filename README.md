@@ -376,6 +376,43 @@ A web-based visual editor:
 
 ---
 
+## Deployment
+
+The editor is a static SPA deployed to **Cloudflare Workers** (static assets) from
+`packages/editor/dist`, via Cloudflare's **Workers Builds** Git integration (service
+`vector-nodes`). Config lives in
+[`packages/editor/wrangler.jsonc`](packages/editor/wrangler.jsonc): assets-only Worker with SPA
+fallback, the production custom domain `vector-nodes.sergeyche.dev`, and `workers.dev` +
+per-version **preview URLs** (Workers Builds publishes a preview URL for every PR automatically).
+
+### Workers Builds settings (Cloudflare dashboard)
+
+Because this is an **npm-workspaces monorepo**, the build **must run from the repo root** so the
+unpublished local `@vector-nodes/*` packages resolve via workspaces (running `npm ci` inside
+`packages/editor` fails — there's no lockfile there and the packages aren't on npm). Set, in the
+Worker's **Builds** settings:
+
+| Setting        | Value                                                         |
+| -------------- | ------------------------------------------------------------- |
+| Root directory | `/` (repo root)                                               |
+| Build command  | `npm ci && npm run build --workspace=editor`                  |
+| Deploy command | `npx wrangler deploy --config packages/editor/wrangler.jsonc` |
+
+`wrangler` resolves the `./dist` assets path relative to the config file, i.e.
+`packages/editor/dist`.
+
+### Manual deploy
+
+```bash
+npm ci                              # from the repo root (links the workspace packages)
+npm run deploy --workspace=editor   # builds dist/ then `wrangler deploy`
+```
+
+`wrangler` authenticates via `wrangler login`, or `CLOUDFLARE_API_TOKEN` (a token with the
+_Workers Scripts: Edit_ permission) plus `CLOUDFLARE_ACCOUNT_ID`.
+
+---
+
 ## Architecture overview
 
 An npm-workspaces monorepo:
