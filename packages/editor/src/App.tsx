@@ -33,9 +33,9 @@ import {
   type VNodeFlowNode,
 } from './flow';
 import { Palette } from './Palette';
-import { evaluatePreview } from './preview';
 import { PreviewPane } from './PreviewPane';
 import { Toolbar, type ToolbarHandle } from './Toolbar';
+import { usePreview } from './usePreview';
 import { VNode } from './VNode';
 
 const registry = createBasicRegistry();
@@ -68,15 +68,18 @@ export function App() {
   const idCounter = useRef(maxAutoId(initialNodes));
   const toolbarRef = useRef<ToolbarHandle>(null);
 
-  // Autosave the current network to localStorage on every change.
+  // The current network as a core graph; recomputed only on node/edge changes.
+  const graph = useMemo(() => flowToGraph(nodes, edges), [nodes, edges]);
+
+  // Autosave to localStorage on every change.
   useEffect(() => {
-    saveGraph(flowToGraph(nodes, edges));
-  }, [nodes, edges]);
+    saveGraph(graph);
+  }, [graph]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const lastReason = useRef<string | null>(null);
 
-  // Re-evaluate the graph for the preview whenever nodes or edges change.
-  const preview = useMemo(() => evaluatePreview(flowToGraph(nodes, edges)), [nodes, edges]);
+  // Evaluate the graph for the preview off the main thread (Web Worker).
+  const preview = usePreview(graph);
 
   const items = useMemo(() => paletteItems(registry), []);
   const disabledTypes = useMemo(
