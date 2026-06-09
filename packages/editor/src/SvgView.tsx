@@ -1,7 +1,7 @@
 import type { Geometry } from '@vector-nodes/runtime';
 import { useMemo } from 'react';
 
-import { buildSvgScene, padBounds, type Point2 } from './svg-scene';
+import { buildSvgScene, padBounds, pointsPathD, type Point2 } from './svg-scene';
 
 export interface SvgViewProps {
   geometry: Geometry;
@@ -70,9 +70,17 @@ export function SvgView({ geometry }: SvgViewProps) {
             />
           ),
         )}
-        {scene.points.map(([x, y], i) => (
-          <circle key={`p${i}`} cx={x} cy={y} r={pointRadius} fill={COLORS.point} />
-        ))}
+        {/* All points as one <path> (one DOM node) — round caps draw each as a dot. */}
+        {scene.points.length > 0 && (
+          <path
+            className="svg-points"
+            d={pointsPathD(scene.points)}
+            fill="none"
+            stroke={COLORS.point}
+            strokeWidth={pointRadius * 2}
+            strokeLinecap="round"
+          />
+        )}
       </g>
     </svg>
   );

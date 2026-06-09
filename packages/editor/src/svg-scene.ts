@@ -27,6 +27,20 @@ export interface SvgScene {
   bounds: SvgBounds;
 }
 
+/**
+ * Build a single SVG path `d` that draws every point as a dot — one `M x y l 0 0`
+ * subpath per point. Rendered with `stroke-linecap="round"`, each zero-length
+ * segment paints a round dot, so N points become a single `<path>` element
+ * (one React/DOM node) instead of N `<circle>`s.
+ */
+export function pointsPathD(points: readonly Point2[]): string {
+  let d = '';
+  for (const [x, y] of points) {
+    d += `M${x} ${y}l0 0`;
+  }
+  return d;
+}
+
 /** Project a 3D vector to the X–Y plane, dropping Z. */
 export function project(v: Vector): Point2 {
   return [v[0], v[1]];
