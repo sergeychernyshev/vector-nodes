@@ -39,6 +39,63 @@
   opacity: 0.85;
 }
 
+/* Inline param editors */
+.vnode__params {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px;
+  border-top: 1px solid #555;
+}
+.vnode__param {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.vnode__param-label {
+  opacity: 0.8;
+}
+.vnode__param-note {
+  opacity: 0.5;
+  font-style: italic;
+}
+.vnode__input {
+  width: 70px;
+  font-size: 12px;
+}
+.vnode__input--axis {
+  width: 44px;
+}
+.vnode__vector {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.vnode__color {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.vnode__opacity {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.vnode__alpha {
+  width: 60px;
+}
+.vnode__bool {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.vnode__bool-label {
+  opacity: 0.7;
+  font-variant: small-caps;
+}
+
 /* Sockets: colored handles; field sockets get a white ring. */
 .vnode__handle {
   width: 10px;

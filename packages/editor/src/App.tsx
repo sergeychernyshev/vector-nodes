@@ -12,6 +12,8 @@ import {
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { checkConnection, type ConnectionLike } from './connection';
+import { NodeEditContext, type NodeEditApi } from './NodeEditContext';
+import { setNodeParam } from './param';
 import {
   canAddNode,
   createFlowNode,
@@ -86,6 +88,13 @@ export function App() {
     [setEdges, clearError],
   );
 
+  const editApi = useMemo<NodeEditApi>(
+    () => ({
+      setParam: (nodeId, name, value) => setNodes((nds) => setNodeParam(nds, nodeId, name, value)),
+    }),
+    [setNodes],
+  );
+
   const addNode = useCallback(
     (type: string) => {
       const def = registry.get(type);
@@ -107,40 +116,42 @@ export function App() {
   );
 
   return (
-    <div
-      style={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-      }}
-    >
-      <Toolbar nodeCount={nodes.length} />
-      <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
-        <Palette items={items} onAdd={addNode} disabledTypes={disabledTypes} />
-        <div style={{ flex: 1, minHeight: 0 }}>
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            nodeTypes={nodeTypes}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            isValidConnection={isValidConnection}
-            onConnectEnd={clearError}
-            fitView
-          >
-            <Background />
-            <MiniMap />
-            <Controls />
-          </ReactFlow>
+    <NodeEditContext.Provider value={editApi}>
+      <div
+        style={{
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative',
+        }}
+      >
+        <Toolbar nodeCount={nodes.length} />
+        <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
+          <Palette items={items} onAdd={addNode} disabledTypes={disabledTypes} />
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              nodeTypes={nodeTypes}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              isValidConnection={isValidConnection}
+              onConnectEnd={clearError}
+              fitView
+            >
+              <Background />
+              <MiniMap />
+              <Controls />
+            </ReactFlow>
+          </div>
         </div>
+        {errorMessage && (
+          <div role="alert" className="connection-toast">
+            {errorMessage}
+          </div>
+        )}
       </div>
-      {errorMessage && (
-        <div role="alert" className="connection-toast">
-          {errorMessage}
-        </div>
-      )}
-    </div>
+    </NodeEditContext.Provider>
   );
 }
