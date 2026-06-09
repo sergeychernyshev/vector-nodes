@@ -6,7 +6,7 @@ export default defineConfig({
     // Default include globbing, resolved relative to the working directory, so
     // both root (`vitest run`) and per-package (`npm test --workspaces`) runs
     // discover the right test files.
-    include: ['**/*.{test,spec}.ts'],
+    include: ['**/*.{test,spec}.{ts,tsx}'],
     exclude: ['**/node_modules/**', '**/dist/**'],
   },
 });
