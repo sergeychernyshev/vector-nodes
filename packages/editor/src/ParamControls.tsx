@@ -28,13 +28,17 @@ function NumberControl({ param, value, onChange }: ControlProps) {
 }
 
 function BooleanControl({ value, onChange }: ControlProps) {
+  const checked = Boolean(value);
   return (
-    <input
-      className="nodrag"
-      type="checkbox"
-      checked={Boolean(value)}
-      onChange={(e) => onChange(e.target.checked)}
-    />
+    <span className="vnode__bool">
+      <input
+        className="nodrag"
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      <span className="vnode__bool-label">{checked ? 'true' : 'false'}</span>
+    </span>
   );
 }
 

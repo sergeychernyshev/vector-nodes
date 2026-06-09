@@ -76,6 +76,15 @@
 .vnode__alpha {
   width: 60px;
 }
+.vnode__bool {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.vnode__bool-label {
+  opacity: 0.7;
+  font-variant: small-caps;
+}
 
 /* Sockets: colored handles; field sockets get a white ring. */
 .vnode__handle {

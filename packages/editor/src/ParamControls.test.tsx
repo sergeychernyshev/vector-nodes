@@ -41,13 +41,21 @@ describe('ParamControls', () => {
     expect(setParam).toHaveBeenCalledWith('n1', 'count', 8);
   });
 
-  it('toggles a boolean param', () => {
-    const { setParam, container } = renderControls(
+  it('toggles a boolean param and shows its value', () => {
+    const { setParam, container, getByText } = renderControls(
       [{ name: 'flag', type: 'Boolean', default: false }],
       { flag: false },
     );
+    expect(getByText('false')).toBeTruthy();
     fireEvent.click(container.querySelector('input[type="checkbox"]')!);
     expect(setParam).toHaveBeenCalledWith('n1', 'flag', true);
+  });
+
+  it('shows "true" when a boolean param is on', () => {
+    const { getByText } = renderControls([{ name: 'flag', type: 'Boolean', default: true }], {
+      flag: true,
+    });
+    expect(getByText('true')).toBeTruthy();
   });
 
   it('edits a string param', () => {
