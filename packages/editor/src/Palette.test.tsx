@@ -31,6 +31,17 @@ describe('Palette', () => {
     expect(queryByText('Point Array')).toBeNull();
   });
 
+  it('disables items in disabledTypes and does not add them on click', () => {
+    const onAdd = vi.fn();
+    const { getByText } = render(
+      <Palette items={items} onAdd={onAdd} disabledTypes={new Set(['Translate'])} />,
+    );
+    const button = getByText('Translate').closest('button')!;
+    expect(button.disabled).toBe(true);
+    fireEvent.click(button);
+    expect(onAdd).not.toHaveBeenCalled();
+  });
+
   it('shows a no-matches message when nothing matches', () => {
     const { getByLabelText, queryByText } = render(<Palette items={items} onAdd={vi.fn()} />);
     fireEvent.change(getByLabelText('Search nodes'), {

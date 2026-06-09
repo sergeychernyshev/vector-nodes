@@ -94,8 +94,12 @@
   cursor: pointer;
   text-align: left;
 }
-.palette__item:hover {
+.palette__item:hover:not(:disabled) {
   background: #ececec;
+}
+.palette__item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 .palette__item-category {
   opacity: 0.6;

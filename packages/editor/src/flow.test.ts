@@ -2,10 +2,12 @@ import { createBasicRegistry, createGraph, socketColor } from '@vector-nodes/cor
 import { describe, expect, it } from 'vitest';
 
 import {
+  canAddNode,
   createFlowNode,
   filterPalette,
   graphToFlowEdges,
   graphToFlowNodes,
+  hasOutputNode,
   paletteItems,
   socketClassName,
   socketsOf,
@@ -89,6 +91,33 @@ describe('createFlowNode', () => {
       data: { nodeType: 'Translate', label: 'Translate' },
     });
     expect(node.data.inputs.map((s) => s.name)).toEqual(['geometry', 'offset']);
+  });
+});
+
+describe('single-output rule', () => {
+  const withOutput = graphToFlowNodes(
+    createGraph({ nodes: [{ id: 'out', type: 'OutputGeometry' }] }),
+    registry,
+  );
+  const withoutOutput = graphToFlowNodes(
+    createGraph({ nodes: [{ id: 'pa', type: 'PointArray' }] }),
+    registry,
+  );
+
+  it('detects an existing output node', () => {
+    expect(hasOutputNode(withOutput)).toBe(true);
+    expect(hasOutputNode(withoutOutput)).toBe(false);
+  });
+
+  it('blocks adding a second OutputGeometry with a reason', () => {
+    const res = canAddNode('OutputGeometry', withOutput);
+    expect(res.ok).toBe(false);
+    expect(res.reason).toMatch(/only be one/i);
+  });
+
+  it('allows the first OutputGeometry and other nodes', () => {
+    expect(canAddNode('OutputGeometry', withoutOutput).ok).toBe(true);
+    expect(canAddNode('PointArray', withOutput).ok).toBe(true);
   });
 });
 
