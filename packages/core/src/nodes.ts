@@ -40,7 +40,12 @@ const xyzInputs = [
 ];
 
 const pointArrayParams: ParamDefinition[] = [
-  { name: 'mode', type: 'String', default: 'grid' },
+  {
+    name: 'mode',
+    type: 'String',
+    default: 'grid',
+    options: ['grid', 'line', 'circle', 'random'],
+  },
   { name: 'countX', type: 'Integer', default: 3, min: 1 },
   { name: 'countY', type: 'Integer', default: 3, min: 1 },
   { name: 'spacingX', type: 'Float', default: 1 },
@@ -123,7 +128,14 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
       { name: 'vector', type: 'Vector' },
       { name: 'value', type: 'Float' },
     ],
-    params: [{ name: 'operation', type: 'String', default: 'add' }],
+    params: [
+      {
+        name: 'operation',
+        type: 'String',
+        default: 'add',
+        options: ['add', 'subtract', 'scale', 'dot', 'cross', 'normalize', 'length', 'distance'],
+      },
+    ],
   },
   {
     type: 'VectorArray',
@@ -153,7 +165,12 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
     inputs: [{ name: 'geometry', type: 'Geometry' }],
     outputs: [{ name: 'geometry', type: 'Geometry' }],
     params: [
-      { name: 'mode', type: 'String', default: 'orthographic' },
+      {
+        name: 'mode',
+        type: 'String',
+        default: 'orthographic',
+        options: ['orthographic', 'perspective'],
+      },
       { name: 'distance', type: 'Float', default: 10 },
     ],
   },

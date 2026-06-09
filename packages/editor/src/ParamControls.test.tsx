@@ -91,6 +91,25 @@ describe('ParamControls', () => {
     expect(setParam).toHaveBeenLastCalledWith('n1', 'tint', [1, 0, 0, 0.25]);
   });
 
+  it('renders a dropdown for params with options', () => {
+    const { setParam, container } = renderControls(
+      [
+        {
+          name: 'operation',
+          type: 'String',
+          default: 'add',
+          options: ['add', 'cross'],
+        },
+      ],
+      { operation: 'add' },
+    );
+    const select = container.querySelector('select')!;
+    expect(select).toBeTruthy();
+    expect(select.querySelectorAll('option')).toHaveLength(2);
+    fireEvent.change(select, { target: { value: 'cross' } });
+    expect(setParam).toHaveBeenCalledWith('n1', 'operation', 'cross');
+  });
+
   it('renders nothing when there are no params', () => {
     const { container } = renderControls([], {});
     expect(container.querySelector('.vnode__params')).toBeNull();

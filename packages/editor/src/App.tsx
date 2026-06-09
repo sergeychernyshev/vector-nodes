@@ -1,4 +1,10 @@
-import { createBasicRegistry, createGraph, OUTPUT_NODE_TYPE } from '@vector-nodes/core';
+import {
+  createBasicRegistry,
+  createGraph,
+  OUTPUT_NODE_TYPE,
+  parseVnodes,
+  serializeVnodes,
+} from '@vector-nodes/core';
 import {
   addEdge,
   Background,
@@ -12,6 +18,7 @@ import {
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { checkConnection, type ConnectionLike } from './connection';
+import { downloadText, flowToGraph, maxAutoId } from './graph-io';
 import { NodeEditContext, type NodeEditApi } from './NodeEditContext';
 import { setNodeParam } from './param';
 import {
@@ -95,6 +102,26 @@ export function App() {
     [setNodes],
   );
 
+  const onSave = useCallback(() => {
+    downloadText('network.vnodes', serializeVnodes(flowToGraph(nodes, edges)));
+  }, [nodes, edges]);
+
+  const onOpen = useCallback(
+    async (file: File) => {
+      try {
+        const graph = parseVnodes(await file.text());
+        const loaded = graphToFlowNodes(graph, registry);
+        setNodes(loaded);
+        setEdges(graphToFlowEdges(graph));
+        idCounter.current = maxAutoId(loaded);
+        clearError();
+      } catch (err) {
+        setErrorMessage(`Failed to open file: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    },
+    [setNodes, setEdges, clearError],
+  );
+
   const addNode = useCallback(
     (type: string) => {
       const def = registry.get(type);
@@ -125,7 +152,7 @@ export function App() {
           position: 'relative',
         }}
       >
-        <Toolbar nodeCount={nodes.length} />
+        <Toolbar nodeCount={nodes.length} onSave={onSave} onOpen={onOpen} />
         <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
           <Palette items={items} onAdd={addNode} disabledTypes={disabledTypes} />
           <div style={{ flex: 1, minHeight: 0 }}>
