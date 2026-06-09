@@ -92,7 +92,7 @@ export const VNODES_SCHEMA = {
         },
         type: {
           type: 'string',
-          description: 'Node type from the node library (e.g. "PointArray", "OutputGeometry").',
+          description: 'Node type from the node library (e.g. "PointCircle", "OutputGeometry").',
         },
         position: {
           type: 'array',

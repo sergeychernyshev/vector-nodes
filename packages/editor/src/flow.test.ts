@@ -19,7 +19,7 @@ const registry = createBasicRegistry();
 
 const graph = createGraph({
   nodes: [
-    { id: 'pa', type: 'PointArray', position: [10, 20] },
+    { id: 'pa', type: 'PointCircle', position: [10, 20] },
     { id: 'out', type: 'OutputGeometry' },
   ],
   links: [{ from: ['pa', 'geometry'], to: ['out', 'geometry'] }],
@@ -32,9 +32,9 @@ describe('graphToFlowNodes', () => {
       id: 'pa',
       type: VNODE_TYPE,
       position: { x: 10, y: 20 },
-      data: { label: 'Point Array', nodeType: 'PointArray' },
+      data: { label: 'Point Circle', nodeType: 'PointCircle' },
     });
-    // PointArray exposes a geometry output and a field "points" output.
+    // PointCircle exposes a geometry output and a field "points" output.
     expect(pa!.data.outputs).toEqual([
       { name: 'geometry', type: 'Geometry', isArray: false },
       { name: 'points', type: 'Vector', isArray: true },
@@ -45,7 +45,7 @@ describe('graphToFlowNodes', () => {
 
 describe('socketsOf', () => {
   it('defaults isArray to false and preserves field flags', () => {
-    const def = registry.require('PointArray');
+    const def = registry.require('PointCircle');
     const { outputs } = socketsOf(def);
     expect(outputs.find((s) => s.name === 'points')?.isArray).toBe(true);
     expect(outputs.find((s) => s.name === 'geometry')?.isArray).toBe(false);
@@ -100,7 +100,7 @@ describe('single-output rule', () => {
     registry,
   );
   const withoutOutput = graphToFlowNodes(
-    createGraph({ nodes: [{ id: 'pa', type: 'PointArray' }] }),
+    createGraph({ nodes: [{ id: 'pa', type: 'PointCircle' }] }),
     registry,
   );
 
@@ -117,7 +117,7 @@ describe('single-output rule', () => {
 
   it('allows the first OutputGeometry and other nodes', () => {
     expect(canAddNode('OutputGeometry', withoutOutput).ok).toBe(true);
-    expect(canAddNode('PointArray', withOutput).ok).toBe(true);
+    expect(canAddNode('PointCircle', withOutput).ok).toBe(true);
   });
 });
 

@@ -10,9 +10,9 @@ describe('evaluatePreview', () => {
       nodes: [
         {
           id: 'pa',
-          type: 'PointArray',
+          type: 'PointCircle',
           position: [0, 0],
-          params: { mode: 'circle', radius: 1, count: 8 },
+          params: { radius: 1, count: 8 },
         },
         { id: 'out', type: 'OutputGeometry', position: [200, 0] },
       ],

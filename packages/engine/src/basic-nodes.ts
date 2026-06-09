@@ -70,36 +70,34 @@ const vectorMath: NodeEvaluator = ({ inputs, params }) => {
   }
 };
 
-const pointArray: NodeEvaluator = ({ params }) => {
-  let points: Vector[];
-  switch (params.mode as string) {
-    case 'grid':
-      points = gridPoints(
-        params.countX as number,
-        params.countY as number,
-        params.spacingX as number,
-        params.spacingY as number,
-      );
-      break;
-    case 'line':
-      points = linePoints(params.start as Vector, params.end as Vector, params.count as number);
-      break;
-    case 'circle':
-      points = circlePoints(params.radius as number, params.count as number);
-      break;
-    case 'random':
-      points = randomPoints(
-        params.count as number,
-        params.min as Vector,
-        params.max as Vector,
-        params.seed as number,
-      );
-      break;
-    default:
-      throw new Error(`Unknown PointArray mode "${params.mode}".`);
-  }
-  return { geometry: geometryOf(points), points };
-};
+/** Point-source nodes share these outputs: the bundle and the raw field. */
+const pointsResult = (points: Vector[]) => ({ geometry: geometryOf(points), points });
+
+const pointGrid: NodeEvaluator = ({ params }) =>
+  pointsResult(
+    gridPoints(
+      params.countX as number,
+      params.countY as number,
+      params.spacingX as number,
+      params.spacingY as number,
+    ),
+  );
+
+const pointLine: NodeEvaluator = ({ params }) =>
+  pointsResult(linePoints(params.start as Vector, params.end as Vector, params.count as number));
+
+const pointCircle: NodeEvaluator = ({ params }) =>
+  pointsResult(circlePoints(params.radius as number, params.count as number));
+
+const pointRandom: NodeEvaluator = ({ params }) =>
+  pointsResult(
+    randomPoints(
+      params.count as number,
+      params.min as Vector,
+      params.max as Vector,
+      params.seed as number,
+    ),
+  );
 
 const vectorArray: NodeEvaluator = ({ params }) => ({
   vectors: fromList(params.values as Vector[]),
@@ -158,7 +156,10 @@ export const BASIC_OPERATORS: OperatorTable = {
   },
   VectorMath: vectorMath,
   VectorArray: vectorArray,
-  PointArray: pointArray,
+  PointGrid: pointGrid,
+  PointLine: pointLine,
+  PointCircle: pointCircle,
+  PointRandom: pointRandom,
   Project: project,
   Translate: translate,
   BezierCurve: bezierCurve,

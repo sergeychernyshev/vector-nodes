@@ -8,7 +8,7 @@
   },
   "parameters": [{ "id": "turns", "type": "Float", "default": 3, "min": 1, "max": 10 }],
   "nodes": [
-    { "id": "n1", "type": "PointArray", "position": [120, 80], "params": { "count": 200 } },
+    { "id": "n1", "type": "PointCircle", "position": [120, 80], "params": { "count": 200 } },
     { "id": "out", "type": "OutputGeometry", "position": [600, 80], "label": "Result" }
   ],
   "links": [{ "from": ["n1", "points"], "to": ["out", "geometry"] }],

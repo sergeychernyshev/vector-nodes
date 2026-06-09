@@ -45,9 +45,9 @@ const seed = createGraph({
   nodes: [
     {
       id: 'pa',
-      type: 'PointArray',
+      type: 'PointCircle',
       position: [80, 120],
-      params: { mode: 'circle', radius: 1, count: 8 },
+      params: { radius: 1, count: 8 },
     },
     { id: 'out', type: 'OutputGeometry', position: [440, 160] },
   ],

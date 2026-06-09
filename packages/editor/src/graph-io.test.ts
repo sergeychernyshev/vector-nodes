@@ -10,9 +10,9 @@ const graph = createGraph({
   nodes: [
     {
       id: 'pa',
-      type: 'PointArray',
+      type: 'PointCircle',
       position: [10, 20],
-      params: { mode: 'circle', radius: 2, count: 6 },
+      params: { radius: 2, count: 6 },
     },
     { id: 'out', type: 'OutputGeometry', position: [300, 40] },
   ],
@@ -28,9 +28,9 @@ describe('flowToGraph', () => {
     expect(result.nodes).toEqual([
       {
         id: 'pa',
-        type: 'PointArray',
+        type: 'PointCircle',
         position: [10, 20],
-        params: { mode: 'circle', radius: 2, count: 6 },
+        params: { radius: 2, count: 6 },
       },
       { id: 'out', type: 'OutputGeometry', position: [300, 40] },
     ]);
@@ -57,7 +57,7 @@ describe('maxAutoId', () => {
     const nodes = graphToFlowNodes(
       createGraph({
         nodes: [
-          { id: 'pa', type: 'PointArray' },
+          { id: 'pa', type: 'PointCircle' },
           { id: 'n3', type: 'ConstFloat' },
           { id: 'n1', type: 'ConstFloat' },
           { id: 'out', type: 'OutputGeometry' },

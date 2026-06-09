@@ -31,8 +31,17 @@ describe('BASIC_NODE_DEFINITIONS', () => {
     const registry = createBasicRegistry();
     const operation = registry.require('VectorMath').params.find((p) => p.name === 'operation');
     expect(operation?.options).toContain('cross');
-    const mode = registry.require('PointArray').params.find((p) => p.name === 'mode');
-    expect(mode?.options).toEqual(['grid', 'line', 'circle', 'random']);
+  });
+
+  it('exposes one point-source node per pattern (no combined PointArray)', () => {
+    const registry = createBasicRegistry();
+    expect(registry.get('PointArray')).toBeUndefined();
+    for (const type of ['PointGrid', 'PointLine', 'PointCircle', 'PointRandom']) {
+      const def = registry.require(type);
+      expect(def.params.some((p) => p.name === 'mode')).toBe(false);
+      expect(def.outputs.map((o) => o.name)).toEqual(['geometry', 'points']);
+    }
+    expect(registry.require('PointCircle').params.map((p) => p.name)).toEqual(['radius', 'count']);
   });
 });
 

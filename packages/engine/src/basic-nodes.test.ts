@@ -108,17 +108,17 @@ describe('arrays and geometry sources', () => {
     });
   });
 
-  it('PointArray grid mode matches the runtime op', () => {
-    const out = run('PointArray', {
-      params: { mode: 'grid', countX: 2, countY: 2, spacingX: 1, spacingY: 1 },
+  it('PointGrid matches the runtime op', () => {
+    const out = run('PointGrid', {
+      params: { countX: 2, countY: 2, spacingX: 1, spacingY: 1 },
     });
     expect((out.geometry as Geometry).points).toEqual(gridPoints(2, 2, 1));
     expect(out.points).toEqual(gridPoints(2, 2, 1));
   });
 
-  it('PointArray circle mode matches the runtime op', () => {
-    const out = run('PointArray', {
-      params: { mode: 'circle', radius: 2, count: 6 },
+  it('PointCircle matches the runtime op', () => {
+    const out = run('PointCircle', {
+      params: { radius: 2, count: 6 },
     });
     expect((out.geometry as Geometry).points).toEqual(circlePoints(2, 6));
   });
@@ -168,13 +168,13 @@ describe('Parameter nodes', () => {
 });
 
 describe('end-to-end evaluation with the basic registry', () => {
-  it('evaluates PointArray(circle) -> Translate -> Output', () => {
+  it('evaluates PointCircle -> Translate -> Output', () => {
     const graph = createGraph({
       nodes: [
         {
           id: 'pa',
-          type: 'PointArray',
-          params: { mode: 'circle', radius: 1, count: 4 },
+          type: 'PointCircle',
+          params: { radius: 1, count: 4 },
         },
         { id: 't', type: 'Translate', params: {} },
         { id: 'out', type: 'OutputGeometry' },
@@ -195,8 +195,8 @@ describe('end-to-end evaluation with the basic registry', () => {
       nodes: [
         {
           id: 'pa',
-          type: 'PointArray',
-          params: { mode: 'circle', radius: 1, count: 3 },
+          type: 'PointCircle',
+          params: { radius: 1, count: 3 },
         },
         { id: 'p', type: parameterNodeType('Vector'), params: { name: 'shift' } },
         { id: 't', type: 'Translate' },

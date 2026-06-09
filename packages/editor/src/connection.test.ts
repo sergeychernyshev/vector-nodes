@@ -11,7 +11,7 @@ const registry = createBasicRegistry();
 const nodes = graphToFlowNodes(
   createGraph({
     nodes: [
-      { id: 'pa', type: 'PointArray' }, // out: geometry (Geometry), points (Vector field)
+      { id: 'pa', type: 'PointCircle' }, // out: geometry (Geometry), points (Vector field)
       { id: 'cf', type: 'ConstFloat' }, // out: value (Float)
       { id: 't', type: 'Translate' }, // in: geometry (Geometry), offset (Vector)
       { id: 'out', type: 'OutputGeometry' }, // in: geometry (Geometry)
