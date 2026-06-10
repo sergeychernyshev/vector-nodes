@@ -1,4 +1,4 @@
-import type { NodeDefinition, ParamDefinition } from './node-definition.js';
+import type { NodeDefinition, SocketDefinition } from './node-definition.js';
 import { NodeRegistry } from './registry.js';
 import { SOCKET_TYPES, type SocketType } from './socket-types.js';
 
@@ -46,9 +46,19 @@ const pointSourceOutputs = [
   { name: 'points', type: 'Vector' as const, isArray: true },
 ];
 
-/** A point-source node definition: shared outputs, mode-specific params. */
-function pointSourceDef(type: string, label: string, params: ParamDefinition[]): NodeDefinition {
-  return { type, label, category: 'Geometry', inputs: [], outputs: pointSourceOutputs, params };
+/**
+ * A point-source node definition: shared outputs, mode-specific config. The
+ * config fields are input sockets (issue #58) so they can be typed in or wired.
+ */
+function pointSourceDef(type: string, label: string, config: SocketDefinition[]): NodeDefinition {
+  return {
+    type,
+    label,
+    category: 'Geometry',
+    inputs: config,
+    outputs: pointSourceOutputs,
+    params: [],
+  };
 }
 
 const parameterDefs: NodeDefinition[] = SOCKET_TYPES.map((type) => ({
@@ -164,7 +174,10 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
     type: 'Project',
     label: 'Project',
     category: 'Geometry',
-    inputs: [{ name: 'geometry', type: 'Geometry' }],
+    inputs: [
+      { name: 'geometry', type: 'Geometry' },
+      { name: 'distance', type: 'Float', default: 10 },
+    ],
     outputs: [{ name: 'geometry', type: 'Geometry' }],
     params: [
       {
@@ -173,7 +186,6 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
         default: 'orthographic',
         options: ['orthographic', 'perspective'],
       },
-      { name: 'distance', type: 'Float', default: 10 },
     ],
   },
   {
@@ -196,12 +208,13 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
       { name: 'p1', type: 'Vector', default: [0, 0, 0] },
       { name: 'p2', type: 'Vector', default: [0, 0, 0] },
       { name: 'p3', type: 'Vector', default: [0, 0, 0] },
+      { name: 'segments', type: 'Integer', default: 16, min: 1 },
     ],
     outputs: [
       { name: 'geometry', type: 'Geometry' },
       { name: 'points', type: 'Vector', isArray: true },
     ],
-    params: [{ name: 'segments', type: 'Integer', default: 16, min: 1 }],
+    params: [],
   },
 
   // Transforms (Phase 7)
@@ -234,22 +247,25 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
     type: 'CircleCurve',
     label: 'Circle',
     category: 'Geometry',
-    inputs: [],
-    outputs: [{ name: 'geometry', type: 'Geometry' }],
-    params: [
+    inputs: [
       { name: 'radius', type: 'Float', default: 1 },
       { name: 'count', type: 'Integer', default: 16, min: 3 },
     ],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
   },
   {
     type: 'Polyline',
     label: 'Polyline',
     category: 'Geometry',
-    // `points` is a Vector field input (with a handle), not a static param, so a
-    // point field can be wired in (issue #56).
-    inputs: [{ name: 'points', type: 'Vector', isArray: true, default: [] }],
+    // `points` is a Vector field input (issue #56); `closed` is a Boolean input
+    // (issue #58) — both wirable or set inline.
+    inputs: [
+      { name: 'points', type: 'Vector', isArray: true, default: [] },
+      { name: 'closed', type: 'Boolean', default: false },
+    ],
     outputs: [{ name: 'geometry', type: 'Geometry' }],
-    params: [{ name: 'closed', type: 'Boolean', default: false }],
+    params: [],
   },
 
   // Combinators (Phase 7)
@@ -345,73 +361,73 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
     type: 'PlaneMesh',
     label: 'Plane',
     category: 'Mesh',
-    inputs: [],
-    outputs: [{ name: 'geometry', type: 'Geometry' }],
-    params: [
+    inputs: [
       { name: 'width', type: 'Float', default: 1 },
       { name: 'height', type: 'Float', default: 1 },
     ],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
   },
   {
     type: 'BoxMesh',
     label: 'Cube',
     category: 'Mesh',
-    inputs: [],
-    outputs: [{ name: 'geometry', type: 'Geometry' }],
-    params: [
+    inputs: [
       { name: 'width', type: 'Float', default: 1 },
       { name: 'height', type: 'Float', default: 1 },
       { name: 'depth', type: 'Float', default: 1 },
     ],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
   },
   {
     type: 'GridMesh',
     label: 'Grid',
     category: 'Mesh',
-    inputs: [],
-    outputs: [{ name: 'geometry', type: 'Geometry' }],
-    params: [
+    inputs: [
       { name: 'countX', type: 'Integer', default: 4, min: 1 },
       { name: 'countY', type: 'Integer', default: 4, min: 1 },
       { name: 'sizeX', type: 'Float', default: 2 },
       { name: 'sizeY', type: 'Float', default: 2 },
     ],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
   },
   {
     type: 'UVSphere',
     label: 'UV Sphere',
     category: 'Mesh',
-    inputs: [],
-    outputs: [{ name: 'geometry', type: 'Geometry' }],
-    params: [
+    inputs: [
       { name: 'radius', type: 'Float', default: 1 },
       { name: 'segments', type: 'Integer', default: 16, min: 3 },
       { name: 'rings', type: 'Integer', default: 8, min: 2 },
     ],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
   },
   {
     type: 'CylinderMesh',
     label: 'Cylinder',
     category: 'Mesh',
-    inputs: [],
-    outputs: [{ name: 'geometry', type: 'Geometry' }],
-    params: [
+    inputs: [
       { name: 'radius', type: 'Float', default: 1 },
       { name: 'height', type: 'Float', default: 2 },
       { name: 'segments', type: 'Integer', default: 16, min: 3 },
     ],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
   },
   {
     type: 'ConeMesh',
     label: 'Cone',
     category: 'Mesh',
-    inputs: [],
-    outputs: [{ name: 'geometry', type: 'Geometry' }],
-    params: [
+    inputs: [
       { name: 'radius', type: 'Float', default: 1 },
       { name: 'height', type: 'Float', default: 2 },
       { name: 'segments', type: 'Integer', default: 16, min: 3 },
     ],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
   },
 
   // Mesh ops (Phase 8)

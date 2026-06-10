@@ -51,6 +51,25 @@ describe('conformance: compiled output equals interpreter output', () => {
     expect(runCompiled(graph, [])).toEqual(interpret(graph));
   });
 
+  it('a config field wired from another node (issue #58)', () => {
+    // PointCircle.radius is an input socket now: feed it from a ConstFloat.
+    const graph = createGraph({
+      nodes: [
+        { id: 'r', type: 'ConstFloat', params: { value: 3 } },
+        { id: 'pc', type: 'PointCircle', params: { count: 8 } },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [
+        { from: ['r', 'value'], to: ['pc', 'radius'] },
+        { from: ['pc', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    });
+    const result = runCompiled(graph, []) as { points: [number, number, number][] };
+    expect(result).toEqual(interpret(graph));
+    // radius 3 → every point is distance 3 from the origin.
+    expect(Math.hypot(result.points[0]![0], result.points[0]![1])).toBeCloseTo(3, 9);
+  });
+
   it('per-instance inputDefaults on an unconnected input', () => {
     const graph = createGraph({
       nodes: [

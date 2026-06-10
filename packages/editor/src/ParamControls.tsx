@@ -217,7 +217,13 @@ export function InputDefaultField({
   connected: boolean;
 }) {
   const { setInputDefault } = useNodeEdit();
-  const param: ParamDefinition = { name: socket.name, type: socket.type, isArray: socket.isArray };
+  const param: ParamDefinition = {
+    name: socket.name,
+    type: socket.type,
+    isArray: socket.isArray,
+    ...(socket.min !== undefined ? { min: socket.min } : {}),
+    ...(socket.max !== undefined ? { max: socket.max } : {}),
+  };
   return (
     <label className={`vnode__input-default${connected ? ' vnode__input-default--connected' : ''}`}>
       <span className="vnode__socket-label">{socket.name}</span>

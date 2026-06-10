@@ -41,7 +41,9 @@ describe('BASIC_NODE_DEFINITIONS', () => {
       expect(def.params.some((p) => p.name === 'mode')).toBe(false);
       expect(def.outputs.map((o) => o.name)).toEqual(['geometry', 'points']);
     }
-    expect(registry.require('PointCircle').params.map((p) => p.name)).toEqual(['radius', 'count']);
+    // Config fields are input sockets now (issue #58), not params.
+    expect(registry.require('PointCircle').inputs.map((s) => s.name)).toEqual(['radius', 'count']);
+    expect(registry.require('PointCircle').params).toEqual([]);
   });
 });
 
