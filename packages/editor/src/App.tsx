@@ -11,6 +11,7 @@ import {
 import {
   addEdge,
   Background,
+  ControlButton,
   Controls,
   getNodesBounds,
   getViewportForBounds,
@@ -27,13 +28,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { checkConnection, edgesWithoutInput, type ConnectionLike } from './connection';
 import { ConnectMenu } from './ConnectMenu';
-import {
-  captureViewport,
-  downloadDataUrl,
-  exportImageSize,
-  IMAGE_PADDING,
-  type ImageFormat,
-} from './export-image';
+import { captureViewport, downloadDataUrl, exportImageSize, IMAGE_PADDING } from './export-image';
 import { downloadText, maxAutoId } from './graph-io';
 import {
   downstreamNodeIds,
@@ -130,10 +125,6 @@ export function App() {
   // Target language for code generation, persisted (issue #67).
   const [codeLanguage, setCodeLanguage] = useState(() =>
     loadString('vn:codegen-language', 'typescript'),
-  );
-  // Format for the node-network image export, persisted (issue #82).
-  const [imageFormat, setImageFormat] = useState<ImageFormat>(() =>
-    loadString('vn:image-format', 'png') === 'svg' ? 'svg' : 'png',
   );
   // Per-node preview boxes that are open, persisted (issue #79).
   const [openPreviews, setOpenPreviews] = useState<Set<string>>(() => {
@@ -301,35 +292,25 @@ export function App() {
     }
   }, [graph, registry, codeLanguage, clearError]);
 
-  // Export the node network as a faithful PNG/SVG image of the canvas (issue
-  // #82): frame all nodes, then rasterize/serialize the React Flow viewport DOM.
-  const onExportImage = useCallback(
-    async (format: ImageFormat) => {
-      const viewport = document.querySelector<HTMLElement>('.react-flow__viewport');
-      if (!viewport || nodes.length === 0) {
-        setErrorMessage('Nothing to export yet — add a node first.');
-        return;
-      }
-      const bounds = getNodesBounds(nodes);
-      const size = exportImageSize(bounds);
-      const transform = getViewportForBounds(
-        bounds,
-        size.width,
-        size.height,
-        0.5,
-        2,
-        IMAGE_PADDING,
-      );
-      try {
-        const dataUrl = await captureViewport(viewport, format, size, transform, '#ffffff');
-        downloadDataUrl(`vector-nodes.${format}`, dataUrl);
-        clearError();
-      } catch (err) {
-        setErrorMessage(`Cannot export image: ${err instanceof Error ? err.message : String(err)}`);
-      }
-    },
-    [nodes, clearError],
-  );
+  // Export the node network as a faithful PNG of the canvas (issue #82): frame
+  // all nodes, then rasterize the React Flow viewport DOM.
+  const onExportImage = useCallback(async () => {
+    const viewport = document.querySelector<HTMLElement>('.react-flow__viewport');
+    if (!viewport || nodes.length === 0) {
+      setErrorMessage('Nothing to export yet — add a node first.');
+      return;
+    }
+    const bounds = getNodesBounds(nodes);
+    const size = exportImageSize(bounds);
+    const transform = getViewportForBounds(bounds, size.width, size.height, 0.5, 2, IMAGE_PADDING);
+    try {
+      const dataUrl = await captureViewport(viewport, size, transform, '#ffffff');
+      downloadDataUrl('vector-nodes.png', dataUrl);
+      clearError();
+    } catch (err) {
+      setErrorMessage(`Cannot export image: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }, [nodes, clearError]);
 
   // Cmd/Ctrl+S saves, +O opens, +Z undoes, +Shift+Z / Ctrl+Y redoes —
   // overriding the browser defaults.
@@ -657,12 +638,6 @@ export function App() {
               saveString('vn:codegen-language', lang);
               setCodeLanguage(lang);
             }}
-            imageFormat={imageFormat}
-            onImageFormatChange={(format) => {
-              saveString('vn:image-format', format);
-              setImageFormat(format);
-            }}
-            onExportImage={onExportImage}
           />
           <div className={sidebarsSwapped ? 'app-main app-main--swapped' : 'app-main'}>
             <Palette
@@ -739,7 +714,18 @@ export function App() {
               >
                 <Background />
                 <MiniMap />
-                <Controls />
+                <Controls>
+                  <ControlButton
+                    onClick={onExportImage}
+                    title="Export network as PNG"
+                    aria-label="Export network as PNG"
+                  >
+                    {/* Image/export glyph; React Flow sizes the svg to the control button. */}
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Zm0 16H5l4-5 2.5 3L15 12l4 7Z" />
+                    </svg>
+                  </ControlButton>
+                </Controls>
               </ReactFlow>
             </div>
             <PreviewPane

@@ -1,7 +1,5 @@
 import { forwardRef, useImperativeHandle, useRef } from 'react';
 
-import type { ImageFormat } from './export-image';
-
 export interface ToolbarProps {
   nodeCount: number;
   onSave?: () => void;
@@ -23,12 +21,6 @@ export interface ToolbarProps {
   codeLanguage?: string;
   /** Change the code-generation language. */
   onCodeLanguageChange?: (language: string) => void;
-  /** Export the node network as an image in this format (issue #82). */
-  onExportImage?: (format: ImageFormat) => void;
-  /** Currently selected image-export format. */
-  imageFormat?: ImageFormat;
-  /** Change the image-export format. */
-  onImageFormatChange?: (format: ImageFormat) => void;
 }
 
 /** Imperative handle exposed by {@link Toolbar} for keyboard shortcuts. */
@@ -54,9 +46,6 @@ export const Toolbar = forwardRef<ToolbarHandle, ToolbarProps>(function Toolbar(
     onGenerate,
     codeLanguage,
     onCodeLanguageChange,
-    onExportImage,
-    imageFormat,
-    onImageFormatChange,
   },
   ref,
 ) {
@@ -101,21 +90,6 @@ export const Toolbar = forwardRef<ToolbarHandle, ToolbarProps>(function Toolbar(
             </select>
             <button type="button" onClick={onGenerate}>
               Generate code
-            </button>
-          </span>
-        )}
-        {onExportImage && (
-          <span className="toolbar__export">
-            <select
-              aria-label="Image format"
-              value={imageFormat ?? 'png'}
-              onChange={(e) => onImageFormatChange?.(e.target.value as ImageFormat)}
-            >
-              <option value="png">PNG</option>
-              <option value="svg">SVG</option>
-            </select>
-            <button type="button" onClick={() => onExportImage(imageFormat ?? 'png')}>
-              Export image
             </button>
           </span>
         )}
