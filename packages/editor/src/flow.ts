@@ -24,6 +24,9 @@ export interface FlowSocket {
   isArray: boolean;
   /** Definition default for an unconnected input socket, if any. */
   default?: unknown;
+  /** Numeric range for the inline editor of a value input (issue #58). */
+  min?: number;
+  max?: number;
 }
 
 /** Data carried on a React Flow node mirroring a graph node. */
@@ -54,11 +57,15 @@ export function socketsOf(def: NodeDefinition): {
     type: SocketType;
     isArray?: boolean;
     default?: unknown;
+    min?: number;
+    max?: number;
   }): FlowSocket => ({
     name: s.name,
     type: s.type,
     isArray: s.isArray ?? false,
     ...(s.default !== undefined ? { default: s.default } : {}),
+    ...(s.min !== undefined ? { min: s.min } : {}),
+    ...(s.max !== undefined ? { max: s.max } : {}),
   });
   return {
     inputs: def.inputs.map(toSocket),
@@ -144,6 +151,16 @@ export function graphToFlowNodes(graph: Graph, registry: NodeRegistry): VNodeFlo
   }
   return graph.nodes.map((node) => {
     const def = registry.get(node.type);
+    // Config that's now an input socket may still live under `params` in older
+    // graphs (issue #58): surface it as the socket's inline default, and keep
+    // only genuine params (enums, constant value, Parameter name) as params.
+    const inputNames = new Set((def?.inputs ?? []).map((s) => s.name));
+    const rawParams = node.params ?? {};
+    const params: Record<string, unknown> = {};
+    const seededDefaults: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(rawParams)) {
+      (inputNames.has(key) ? seededDefaults : params)[key] = value;
+    }
     return {
       id: node.id,
       type: VNODE_TYPE,
@@ -151,11 +168,11 @@ export function graphToFlowNodes(graph: Graph, registry: NodeRegistry): VNodeFlo
       data: {
         label: node.label ?? def?.label ?? node.type,
         nodeType: node.type,
-        params: node.params ?? {},
+        params,
         paramDefs: def?.params ?? [],
         inputs: def ? instanceInputs(def, incoming.get(node.id) ?? []) : [],
         outputs: def ? socketsOf(def).outputs : [],
-        inputDefaults: node.inputDefaults ?? {},
+        inputDefaults: { ...seededDefaults, ...(node.inputDefaults ?? {}) },
       },
     };
   });

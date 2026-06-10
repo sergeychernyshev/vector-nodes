@@ -12,6 +12,9 @@ export interface SocketDefinition {
   readonly type: SocketType;
   readonly isArray?: boolean;
   readonly default?: unknown;
+  /** Numeric min/max for the inline editor of a value input (issue #58). */
+  readonly min?: number;
+  readonly max?: number;
   readonly description?: string;
 }
 

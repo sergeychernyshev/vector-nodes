@@ -6,23 +6,23 @@ Plus a **Parameter** node per socket type (`ParameterFloat` … `ParameterGeomet
 
 ## Geometry
 
-| Node                                        | Inputs                                                 | Outputs                                  | Params                                        |
-| ------------------------------------------- | ------------------------------------------------------ | ---------------------------------------- | --------------------------------------------- |
-| **Bezier Curve** (`BezierCurve`)            | `p0`: Vector, `p1`: Vector, `p2`: Vector, `p3`: Vector | `geometry`: Geometry, `points`[]: Vector | `segments`                                    |
-| **Bounding Box** (`BoundingBox`)            | `geometry`: Geometry                                   | `geometry`: Geometry                     | —                                             |
-| **Circle** (`CircleCurve`)                  | —                                                      | `geometry`: Geometry                     | `radius`, `count`                             |
-| **Set Color** (`ColorGeometry`)             | `geometry`: Geometry, `color`: Color                   | `geometry`: Geometry                     | —                                             |
-| **Instance on Points** (`InstanceOnPoints`) | `geometry`: Geometry, `points`[]: Vector               | `geometry`: Geometry                     | —                                             |
-| **Merge** (`MergeGeometry`)                 | `geometry0`, `geometry1`, … : Geometry (variadic)      | `geometry`: Geometry                     | —                                             |
-| **Point Circle** (`PointCircle`)            | —                                                      | `geometry`: Geometry, `points`[]: Vector | `radius`, `count`                             |
-| **Point Grid** (`PointGrid`)                | —                                                      | `geometry`: Geometry, `points`[]: Vector | `countX`, `countY`, `spacingX`, `spacingY`    |
-| **Point Line** (`PointLine`)                | —                                                      | `geometry`: Geometry, `points`[]: Vector | `start`, `end`, `count`                       |
-| **Point Random** (`PointRandom`)            | —                                                      | `geometry`: Geometry, `points`[]: Vector | `count`, `min`, `max`, `seed`                 |
-| **Polyline** (`Polyline`)                   | `points`[]: Vector                                     | `geometry`: Geometry                     | `closed`                                      |
-| **Project** (`Project`)                     | `geometry`: Geometry                                   | `geometry`: Geometry                     | `mode` (orthographic/perspective), `distance` |
-| **Rotate** (`RotateGeometry`)               | `geometry`: Geometry, `axis`: Vector, `angle`: Float   | `geometry`: Geometry                     | —                                             |
-| **Scale** (`ScaleGeometry`)                 | `geometry`: Geometry, `factor`: Vector                 | `geometry`: Geometry                     | —                                             |
-| **Translate** (`Translate`)                 | `geometry`: Geometry, `offset`: Vector                 | `geometry`: Geometry                     | —                                             |
+| Node                                        | Inputs                                                                      | Outputs                                  | Params                            |
+| ------------------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------- | --------------------------------- |
+| **Bezier Curve** (`BezierCurve`)            | `p0`: Vector, `p1`: Vector, `p2`: Vector, `p3`: Vector, `segments`: Integer | `geometry`: Geometry, `points`[]: Vector | —                                 |
+| **Bounding Box** (`BoundingBox`)            | `geometry`: Geometry                                                        | `geometry`: Geometry                     | —                                 |
+| **Circle** (`CircleCurve`)                  | `radius`: Float, `count`: Integer                                           | `geometry`: Geometry                     | —                                 |
+| **Set Color** (`ColorGeometry`)             | `geometry`: Geometry, `color`: Color                                        | `geometry`: Geometry                     | —                                 |
+| **Instance on Points** (`InstanceOnPoints`) | `geometry`: Geometry, `points`[]: Vector                                    | `geometry`: Geometry                     | —                                 |
+| **Merge** (`MergeGeometry`)                 | `geometry0`, `geometry1`, … : Geometry (variadic)                           | `geometry`: Geometry                     | —                                 |
+| **Point Circle** (`PointCircle`)            | `radius`: Float, `count`: Integer                                           | `geometry`: Geometry, `points`[]: Vector | —                                 |
+| **Point Grid** (`PointGrid`)                | `countX`: Integer, `countY`: Integer, `spacingX`: Float, `spacingY`: Float  | `geometry`: Geometry, `points`[]: Vector | —                                 |
+| **Point Line** (`PointLine`)                | `start`: Vector, `end`: Vector, `count`: Integer                            | `geometry`: Geometry, `points`[]: Vector | —                                 |
+| **Point Random** (`PointRandom`)            | `count`: Integer, `min`: Vector, `max`: Vector, `seed`: Integer             | `geometry`: Geometry, `points`[]: Vector | —                                 |
+| **Polyline** (`Polyline`)                   | `points`[]: Vector, `closed`: Boolean                                       | `geometry`: Geometry                     | —                                 |
+| **Project** (`Project`)                     | `geometry`: Geometry, `distance`: Float                                     | `geometry`: Geometry                     | `mode` (orthographic/perspective) |
+| **Rotate** (`RotateGeometry`)               | `geometry`: Geometry, `axis`: Vector, `angle`: Float                        | `geometry`: Geometry                     | —                                 |
+| **Scale** (`ScaleGeometry`)                 | `geometry`: Geometry, `factor`: Vector                                      | `geometry`: Geometry                     | —                                 |
+| **Translate** (`Translate`)                 | `geometry`: Geometry, `offset`: Vector                                      | `geometry`: Geometry                     | —                                 |
 
 ## Input
 
@@ -37,15 +37,15 @@ Plus a **Parameter** node per socket type (`ParameterFloat` … `ParameterGeomet
 
 ## Mesh
 
-| Node                                | Inputs               | Outputs              | Params                               |
-| ----------------------------------- | -------------------- | -------------------- | ------------------------------------ |
-| **Cone** (`ConeMesh`)               | —                    | `geometry`: Geometry | `radius`, `height`, `segments`       |
-| **Cube** (`BoxMesh`)                | —                    | `geometry`: Geometry | `width`, `height`, `depth`           |
-| **Cylinder** (`CylinderMesh`)       | —                    | `geometry`: Geometry | `radius`, `height`, `segments`       |
-| **Grid** (`GridMesh`)               | —                    | `geometry`: Geometry | `countX`, `countY`, `sizeX`, `sizeY` |
-| **Plane** (`PlaneMesh`)             | —                    | `geometry`: Geometry | `width`, `height`                    |
-| **Triangulate** (`TriangulateMesh`) | `geometry`: Geometry | `geometry`: Geometry | —                                    |
-| **UV Sphere** (`UVSphere`)          | —                    | `geometry`: Geometry | `radius`, `segments`, `rings`        |
+| Node                                | Inputs                                                               | Outputs              | Params |
+| ----------------------------------- | -------------------------------------------------------------------- | -------------------- | ------ |
+| **Cone** (`ConeMesh`)               | `radius`: Float, `height`: Float, `segments`: Integer                | `geometry`: Geometry | —      |
+| **Cube** (`BoxMesh`)                | `width`: Float, `height`: Float, `depth`: Float                      | `geometry`: Geometry | —      |
+| **Cylinder** (`CylinderMesh`)       | `radius`: Float, `height`: Float, `segments`: Integer                | `geometry`: Geometry | —      |
+| **Grid** (`GridMesh`)               | `countX`: Integer, `countY`: Integer, `sizeX`: Float, `sizeY`: Float | `geometry`: Geometry | —      |
+| **Plane** (`PlaneMesh`)             | `width`: Float, `height`: Float                                      | `geometry`: Geometry | —      |
+| **Triangulate** (`TriangulateMesh`) | `geometry`: Geometry                                                 | `geometry`: Geometry | —      |
+| **UV Sphere** (`UVSphere`)          | `radius`: Float, `segments`: Integer, `rings`: Integer               | `geometry`: Geometry | —      |
 
 ## Output
 

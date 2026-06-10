@@ -20,17 +20,19 @@ const graph = createGraph({
 });
 
 describe('flowToGraph', () => {
-  it('maps nodes (id/type/position/params) and edges to links', () => {
+  it('maps nodes/edges and migrates legacy config params to input defaults (#58)', () => {
     const nodes = graphToFlowNodes(graph, registry);
     const edges = graphToFlowEdges(graph);
     const result = flowToGraph(nodes, edges);
 
+    // PointCircle's radius/count are input sockets now (issue #58), so a graph
+    // that stored them under `params` round-trips them as inputDefaults.
     expect(result.nodes).toEqual([
       {
         id: 'pa',
         type: 'PointCircle',
         position: [10, 20],
-        params: { radius: 2, count: 6 },
+        inputDefaults: { radius: 2, count: 6 },
       },
       { id: 'out', type: 'OutputGeometry', position: [300, 40] },
     ]);

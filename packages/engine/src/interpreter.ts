@@ -78,6 +78,10 @@ export function evaluateGraph(
       } else if (node.inputDefaults?.[socket.name] !== undefined) {
         // Per-instance override for this unconnected input.
         inputs[socket.name] = node.inputDefaults[socket.name];
+      } else if (node.params?.[socket.name] !== undefined) {
+        // Backward compat: config moved from params to inputs (issue #58) is
+        // still honored when an older graph stores it under `params`.
+        inputs[socket.name] = node.params[socket.name];
       } else if (socket.default !== undefined) {
         inputs[socket.name] = socket.default;
       }
@@ -104,7 +108,10 @@ export function evaluateGraph(
     const node = nodeById.get(nodeId)!;
     const def = registry.require(node.type);
     const inputs = resolveInputs(node, def);
-    const params = { ...resolveParamDefaults(def), ...(node.params ?? {}) };
+    // Config that became input sockets (issue #58) is exposed to operators via
+    // `params` too, so operators reading `params.x` keep working whether the
+    // value is typed in or wired from another node.
+    const params = { ...resolveParamDefaults(def), ...(node.params ?? {}), ...inputs };
 
     const evaluator = operators[node.type];
     if (evaluator === undefined) {

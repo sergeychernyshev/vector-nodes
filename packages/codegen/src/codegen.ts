@@ -119,10 +119,11 @@ const xyz =
   });
 
 const pointSource = (
-  call: (p: Record<string, unknown>) => { expr: string; use: string },
+  call: (input: Record<string, string>) => { expr: string; use: string },
 ): Emitter => {
-  return ({ varName, params }) => {
-    const { expr, use } = call(params);
+  return ({ varName, inputs }) => {
+    // Config fields are inputs (issue #58); `inputs.x` is already an expression.
+    const { expr, use } = call(inputs);
     const pts = `${varName}_pts`;
     return {
       pre: [`const ${pts} = ${expr};`],
@@ -171,25 +172,25 @@ const EMITTERS: Record<string, Emitter> = {
     uses: ['fromList'],
   }),
   PointGrid: pointSource((p) => ({
-    expr: `gridPoints(${lit(p.countX)}, ${lit(p.countY)}, ${lit(p.spacingX)}, ${lit(p.spacingY)})`,
+    expr: `gridPoints(${p.countX}, ${p.countY}, ${p.spacingX}, ${p.spacingY})`,
     use: 'gridPoints',
   })),
   PointLine: pointSource((p) => ({
-    expr: `linePoints(${lit(p.start)}, ${lit(p.end)}, ${lit(p.count)})`,
+    expr: `linePoints(${p.start}, ${p.end}, ${p.count})`,
     use: 'linePoints',
   })),
   PointCircle: pointSource((p) => ({
-    expr: `circlePoints(${lit(p.radius)}, ${lit(p.count)})`,
+    expr: `circlePoints(${p.radius}, ${p.count})`,
     use: 'circlePoints',
   })),
   PointRandom: pointSource((p) => ({
-    expr: `randomPoints(${lit(p.count)}, ${lit(p.min)}, ${lit(p.max)}, ${lit(p.seed)})`,
+    expr: `randomPoints(${p.count}, ${p.min}, ${p.max}, ${p.seed})`,
     use: 'randomPoints',
   })),
   Project: ({ inputs, params }) =>
     String(params.mode) === 'perspective'
       ? {
-          expr: `{ geometry: transformGeometry(${inputs.geometry}, (p) => projectPerspective(p, ${lit(params.distance)})) }`,
+          expr: `{ geometry: transformGeometry(${inputs.geometry}, (p) => projectPerspective(p, ${inputs.distance})) }`,
           uses: ['transformGeometry', 'projectPerspective'],
         }
       : {
@@ -200,11 +201,11 @@ const EMITTERS: Record<string, Emitter> = {
     expr: `{ geometry: transformGeometry(${inputs.geometry}, (p) => add(p, ${inputs.offset})) }`,
     uses: ['transformGeometry', 'add'],
   }),
-  BezierCurve: ({ varName, inputs, params }) => {
+  BezierCurve: ({ varName, inputs }) => {
     const pts = `${varName}_pts`;
     return {
       pre: [
-        `const ${pts} = sampleCubicBezier(${inputs.p0}, ${inputs.p1}, ${inputs.p2}, ${inputs.p3}, ${lit(params.segments)});`,
+        `const ${pts} = sampleCubicBezier(${inputs.p0}, ${inputs.p1}, ${inputs.p2}, ${inputs.p3}, ${inputs.segments});`,
       ],
       expr: `{ geometry: { points: ${pts}, curves: [{ points: ${pts}, closed: false }], meshes: [] }, points: ${pts} }`,
       uses: ['sampleCubicBezier'],
@@ -218,12 +219,12 @@ const EMITTERS: Record<string, Emitter> = {
     expr: `{ geometry: transformGeometry(${inputs.geometry}, (p) => scaleAxes(p, ${inputs.factor})) }`,
     uses: ['transformGeometry', 'scaleAxes'],
   }),
-  CircleCurve: ({ params }) => ({
-    expr: `{ geometry: curveGeometry(circleCurve(${lit(params.radius)}, ${lit(params.count)})) }`,
+  CircleCurve: ({ inputs }) => ({
+    expr: `{ geometry: curveGeometry(circleCurve(${inputs.radius}, ${inputs.count})) }`,
     uses: ['curveGeometry', 'circleCurve'],
   }),
-  Polyline: ({ inputs, params }) => ({
-    expr: `{ geometry: curveGeometry(polyline(${inputs.points}, ${lit(params.closed)})) }`,
+  Polyline: ({ inputs }) => ({
+    expr: `{ geometry: curveGeometry(polyline(${inputs.points}, ${inputs.closed})) }`,
     uses: ['curveGeometry', 'polyline'],
   }),
   MergeGeometry: ({ inputs }) => ({
@@ -269,28 +270,28 @@ const EMITTERS: Record<string, Emitter> = {
     expr: `{ value: clamp(${inputs.value}, ${inputs.min}, ${inputs.max}) }`,
     uses: ['clamp'],
   }),
-  PlaneMesh: ({ params }) => ({
-    expr: `{ geometry: meshGeometry(planeMesh(${lit(params.width)}, ${lit(params.height)})) }`,
+  PlaneMesh: ({ inputs }) => ({
+    expr: `{ geometry: meshGeometry(planeMesh(${inputs.width}, ${inputs.height})) }`,
     uses: ['meshGeometry', 'planeMesh'],
   }),
-  BoxMesh: ({ params }) => ({
-    expr: `{ geometry: meshGeometry(boxMesh(${lit(params.width)}, ${lit(params.height)}, ${lit(params.depth)})) }`,
+  BoxMesh: ({ inputs }) => ({
+    expr: `{ geometry: meshGeometry(boxMesh(${inputs.width}, ${inputs.height}, ${inputs.depth})) }`,
     uses: ['meshGeometry', 'boxMesh'],
   }),
-  GridMesh: ({ params }) => ({
-    expr: `{ geometry: meshGeometry(gridMesh(${lit(params.countX)}, ${lit(params.countY)}, ${lit(params.sizeX)}, ${lit(params.sizeY)})) }`,
+  GridMesh: ({ inputs }) => ({
+    expr: `{ geometry: meshGeometry(gridMesh(${inputs.countX}, ${inputs.countY}, ${inputs.sizeX}, ${inputs.sizeY})) }`,
     uses: ['meshGeometry', 'gridMesh'],
   }),
-  UVSphere: ({ params }) => ({
-    expr: `{ geometry: meshGeometry(uvSphere(${lit(params.radius)}, ${lit(params.segments)}, ${lit(params.rings)})) }`,
+  UVSphere: ({ inputs }) => ({
+    expr: `{ geometry: meshGeometry(uvSphere(${inputs.radius}, ${inputs.segments}, ${inputs.rings})) }`,
     uses: ['meshGeometry', 'uvSphere'],
   }),
-  CylinderMesh: ({ params }) => ({
-    expr: `{ geometry: meshGeometry(cylinderMesh(${lit(params.radius)}, ${lit(params.height)}, ${lit(params.segments)})) }`,
+  CylinderMesh: ({ inputs }) => ({
+    expr: `{ geometry: meshGeometry(cylinderMesh(${inputs.radius}, ${inputs.height}, ${inputs.segments})) }`,
     uses: ['meshGeometry', 'cylinderMesh'],
   }),
-  ConeMesh: ({ params }) => ({
-    expr: `{ geometry: meshGeometry(coneMesh(${lit(params.radius)}, ${lit(params.height)}, ${lit(params.segments)})) }`,
+  ConeMesh: ({ inputs }) => ({
+    expr: `{ geometry: meshGeometry(coneMesh(${inputs.radius}, ${inputs.height}, ${inputs.segments})) }`,
     uses: ['meshGeometry', 'coneMesh'],
   }),
   TriangulateMesh: ({ inputs }) => ({
@@ -334,6 +335,9 @@ export function generate(graph: Graph, registry: NodeRegistry): GeneratedModule 
       const override = node.inputDefaults?.[socket.name];
       if (link) inputs[socket.name] = `${emitNode(link.from[0])}.${link.from[1]}`;
       else if (override !== undefined) inputs[socket.name] = lit(override);
+      else if (node.params?.[socket.name] !== undefined)
+        // Backward compat: config moved from params to inputs (issue #58).
+        inputs[socket.name] = lit(node.params[socket.name]);
       else if (socket.default !== undefined) inputs[socket.name] = lit(socket.default);
       else inputs[socket.name] = 'undefined';
     }
