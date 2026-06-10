@@ -14,7 +14,7 @@ import {
  * The compatible `@vector-nodes/runtime` semver range that generated modules
  * import from. Kept in lockstep with this package's version by Changesets.
  */
-export const RUNTIME_RANGE = '^0.1.0';
+export const RUNTIME_RANGE = '^0.2.0';
 
 /** A function parameter of the generated module. */
 export interface GeneratedParam {

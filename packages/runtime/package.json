@@ -1,6 +1,6 @@
 {
   "name": "@vector-nodes/runtime",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Geometry and math runtime operations for Vector Nodes.",
   "license": "Apache-2.0",
   "author": "Sergey Chernyshev <sergey.chernyshev@gmail.com>",

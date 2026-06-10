@@ -8,7 +8,7 @@ import { createBasicRegistry, createGraph } from '@vector-nodes/core';
 import { BASIC_OPERATORS, evaluateGraph } from '@vector-nodes/engine';
 import { afterAll, describe, expect, it } from 'vitest';
 
-import { generate, generatedPackageJson } from './codegen.js';
+import { generate, generatedPackageJson, RUNTIME_RANGE } from './codegen.js';
 
 const repoRoot = fileURLToPath(new URL('../../..', import.meta.url));
 const registry = createBasicRegistry();
@@ -51,9 +51,7 @@ describe('packed-tarball conformance', () => {
       ],
     });
     const mod = generate(graph, registry);
-    expect(mod.runtimeDependency).toEqual({
-      '@vector-nodes/runtime': expect.stringContaining('0.1'),
-    });
+    expect(mod.runtimeDependency).toEqual({ '@vector-nodes/runtime': RUNTIME_RANGE });
     writeFileSync(join(workDir, `${mod.name}.js`), mod.js);
     writeFileSync(join(workDir, `${mod.name}.package.json`), generatedPackageJson(mod));
     writeFileSync(
