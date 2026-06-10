@@ -90,6 +90,8 @@ export function App() {
   const [library] = useState(() => loadLibrary());
   // Node-list sidebar collapse, persisted (issue #60).
   const [paletteCollapsed, setPaletteCollapsed] = useState(() => loadFlag('vn:palette-collapsed'));
+  // Preview sidebar collapse, persisted (issue #64).
+  const [previewCollapsed, setPreviewCollapsed] = useState(() => loadFlag('vn:preview-collapsed'));
   // A node type armed for placement (issue #44): a ghost follows the cursor and
   // the node is dropped on the next canvas click. `ghost` is its screen position.
   const [pending, setPending] = useState<string | null>(null);
@@ -585,7 +587,16 @@ export function App() {
               <Controls />
             </ReactFlow>
           </div>
-          <PreviewPane result={preview} />
+          <PreviewPane
+            result={preview}
+            collapsed={previewCollapsed}
+            onToggleCollapse={() =>
+              setPreviewCollapsed((c) => {
+                saveFlag('vn:preview-collapsed', !c);
+                return !c;
+              })
+            }
+          />
         </div>
         {pending && ghost && ghostData && (
           <div className="node-ghost" style={{ left: ghost.x, top: ghost.y }} aria-hidden="true">

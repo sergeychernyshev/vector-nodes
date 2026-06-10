@@ -158,9 +158,26 @@
 .preview__resize:hover {
   background: rgba(74, 144, 217, 0.35);
 }
+.preview--collapsed {
+  width: auto;
+  align-items: center;
+  padding-top: 8px;
+}
+.preview__collapse {
+  border: 1px solid #ccc;
+  background: #f6f6f6;
+  border-radius: 4px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 8px;
+}
+.preview__collapse:hover {
+  background: #ececec;
+}
 .preview__header {
   display: flex;
   align-items: center;
+  gap: 8px;
   justify-content: space-between;
   padding: 8px 12px;
   font-weight: 600;
