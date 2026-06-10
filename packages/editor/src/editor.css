@@ -35,10 +35,50 @@
   box-shadow: 0 0 0 2px #4a90d9;
 }
 .vnode__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
   padding: 4px 8px;
   font-weight: 600;
   background: #3a3a3a;
   border-bottom: 1px solid #555;
+}
+.vnode__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Per-node preview box and its show/hide toggle (issue #79). */
+.vnode__preview-toggle {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  line-height: 1;
+  font-size: 11px;
+  color: #eee;
+  background: #2b2b2b;
+  border: 1px solid #555;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.vnode__preview-toggle:hover {
+  background: #3f3f3f;
+}
+.vnode__preview {
+  border-bottom: 1px solid #555;
+  background: #1e1e1e;
+}
+.vnode__preview .preview__svg {
+  height: 96px;
+}
+.vnode__preview-empty {
+  display: block;
+  padding: 12px 8px;
+  text-align: center;
+  opacity: 0.6;
 }
 .vnode__body {
   display: flex;

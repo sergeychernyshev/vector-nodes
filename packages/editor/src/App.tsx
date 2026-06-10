@@ -53,6 +53,7 @@ import {
   type MetaNodes,
 } from './meta';
 import { loadLibrary } from './meta-library';
+import { NodePreviewContext, type NodePreviewApi } from './NodePreviewContext';
 import { SubgraphEditor } from './SubgraphEditor';
 import { NodeEditContext, type NodeEditApi } from './NodeEditContext';
 import { setNodeInputDefault, setNodeParam } from './param';
@@ -134,6 +135,11 @@ export function App() {
   const [imageFormat, setImageFormat] = useState<ImageFormat>(() =>
     loadString('vn:image-format', 'png') === 'svg' ? 'svg' : 'png',
   );
+  // Per-node preview boxes that are open, persisted (issue #79).
+  const [openPreviews, setOpenPreviews] = useState<Set<string>>(() => {
+    const saved = loadString('vn:preview-nodes', '');
+    return new Set(saved ? saved.split(',') : []);
+  });
   // A node type armed for placement (issue #44): a ghost follows the cursor and
   // the node is dropped on the next canvas click. `ghost` is its screen position.
   const [pending, setPending] = useState<string | null>(null);
@@ -191,8 +197,26 @@ export function App() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const lastReason = useRef<string | null>(null);
 
-  // Evaluate the graph for the preview off the main thread (Web Worker).
-  const preview = usePreview(graph);
+  // Evaluate the graph for the preview off the main thread (Web Worker). Open
+  // per-node previews (issue #79) request their node's geometry too.
+  const previewIds = useMemo(() => [...openPreviews], [openPreviews]);
+  const preview = usePreview(graph, previewIds);
+
+  // Show/hide a node's preview box, persisting the open set (issue #79).
+  const togglePreview = useCallback((id: string) => {
+    setOpenPreviews((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      saveString('vn:preview-nodes', [...next].join(','));
+      return next;
+    });
+  }, []);
+
+  const previewApi = useMemo<NodePreviewApi>(
+    () => ({ geometries: preview.nodeGeometries ?? {}, open: openPreviews, toggle: togglePreview }),
+    [preview.nodeGeometries, openPreviews, togglePreview],
+  );
 
   const items = useMemo(() => {
     const base = paletteItems(registry);
@@ -600,175 +624,177 @@ export function App() {
 
   return (
     <NodeEditContext.Provider value={editApi}>
-      <div
-        style={{
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'relative',
-        }}
-      >
-        <Toolbar
-          ref={toolbarRef}
-          nodeCount={nodes.length}
-          onSave={onSave}
-          onOpen={onOpen}
-          onReset={onReset}
-          onGroup={canGroup ? onGroup : undefined}
-          onUngroup={ungroupId ? onUngroup : undefined}
-          onUndo={history.undo}
-          onRedo={history.redo}
-          canUndo={history.canUndo}
-          canRedo={history.canRedo}
-          onSwapSidebars={() =>
-            setSidebarsSwapped((s) => {
-              saveFlag('vn:sidebars-swapped', !s);
-              return !s;
-            })
-          }
-          onGenerate={onGenerate}
-          codeLanguage={codeLanguage}
-          onCodeLanguageChange={(lang) => {
-            saveString('vn:codegen-language', lang);
-            setCodeLanguage(lang);
+      <NodePreviewContext.Provider value={previewApi}>
+        <div
+          style={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            position: 'relative',
           }}
-          imageFormat={imageFormat}
-          onImageFormatChange={(format) => {
-            saveString('vn:image-format', format);
-            setImageFormat(format);
-          }}
-          onExportImage={onExportImage}
-        />
-        <div className={sidebarsSwapped ? 'app-main app-main--swapped' : 'app-main'}>
-          <Palette
-            items={items}
-            onAdd={armNode}
-            disabledTypes={disabledTypes}
-            armedType={pending}
-            collapsed={paletteCollapsed}
-            onToggleCollapse={() =>
-              setPaletteCollapsed((c) => {
-                saveFlag('vn:palette-collapsed', !c);
-                return !c;
+        >
+          <Toolbar
+            ref={toolbarRef}
+            nodeCount={nodes.length}
+            onSave={onSave}
+            onOpen={onOpen}
+            onReset={onReset}
+            onGroup={canGroup ? onGroup : undefined}
+            onUngroup={ungroupId ? onUngroup : undefined}
+            onUndo={history.undo}
+            onRedo={history.redo}
+            canUndo={history.canUndo}
+            canRedo={history.canRedo}
+            onSwapSidebars={() =>
+              setSidebarsSwapped((s) => {
+                saveFlag('vn:sidebars-swapped', !s);
+                return !s;
               })
             }
-          />
-          <div
-            className="canvas-wrap"
-            style={{ cursor: pending ? 'copy' : undefined }}
-            onPointerMove={pending ? (e) => setGhost({ x: e.clientX, y: e.clientY }) : undefined}
-            onPointerDown={
-              pending
-                ? (e) => {
-                    placeDown.current = {
-                      x: e.clientX,
-                      y: e.clientY,
-                      onPane:
-                        (e.target as Element).classList?.contains('react-flow__pane') ?? false,
-                    };
-                  }
-                : undefined
-            }
-            onPointerUp={
-              pending
-                ? (e) => {
-                    const down = placeDown.current;
-                    placeDown.current = null;
-                    // Place only on a tap that began on the empty pane — not after
-                    // a pan, and not on a node/edge (edges are handled separately).
-                    if (down?.onPane && isTap(down.x, down.y, e.clientX, e.clientY)) {
-                      placeNode(e.clientX, e.clientY);
-                    }
-                  }
-                : undefined
-            }
-            onPointerLeave={
-              pending
-                ? () => {
-                    setGhost(null);
-                    placeDown.current = null;
-                  }
-                : undefined
-            }
-          >
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              nodeTypes={nodeTypes}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onNodesDelete={onNodesDelete}
-              onNodeDragStart={onDragStart}
-              onSelectionDragStart={onDragStart}
-              onConnect={onConnect}
-              onConnectStart={onConnectStart}
-              onEdgeClick={onEdgeClick}
-              onSelectionChange={({ nodes: sel }) => setSelectedIds(sel.map((n) => n.id))}
-              onNodeDoubleClick={(_, node) => {
-                const name = metaNodeName(node.data.nodeType);
-                if (name && metaNodes[name]) setEditingMeta(name);
-              }}
-              isValidConnection={isValidConnection}
-              onConnectEnd={onConnectEnd}
-              fitView
-            >
-              <Background />
-              <MiniMap />
-              <Controls />
-            </ReactFlow>
-          </div>
-          <PreviewPane
-            result={preview}
-            side={sidebarsSwapped ? 'left' : 'right'}
-            collapsed={previewCollapsed}
-            onToggleCollapse={() =>
-              setPreviewCollapsed((c) => {
-                saveFlag('vn:preview-collapsed', !c);
-                return !c;
-              })
-            }
-          />
-        </div>
-        {pending && ghost && ghostData && (
-          <PlacementGhost data={ghostData} x={ghost.x} y={ghost.y} />
-        )}
-        {connectMenu && (
-          <ConnectMenu
-            x={connectMenu.x}
-            y={connectMenu.y}
-            suggestions={connectMenu.suggestions}
-            onPick={onPickSource}
-            onClose={() => setConnectMenu(null)}
-          />
-        )}
-        {errorMessage && (
-          <div role="alert" className="connection-toast">
-            {errorMessage}
-          </div>
-        )}
-        {editingMeta && metaNodes[editingMeta] && (
-          <SubgraphEditor
-            name={editingMeta}
-            definition={metaNodes[editingMeta]}
-            registry={registry}
-            onSave={(name, def) => setMetaNodes((m) => ({ ...m, [name]: def }))}
-            onClose={() => setEditingMeta(null)}
-            onRename={(oldName, newName) => {
-              const trimmed = newName.trim();
-              if (!trimmed) return 'Name cannot be empty.';
-              if (trimmed !== oldName && metaNodes[trimmed]) {
-                return `A group named “${trimmed}” already exists.`;
-              }
-              takeSnapshot();
-              const next = renameMetaNode({ nodes, edges, metaNodes }, oldName, trimmed);
-              setNodes(next.nodes);
-              setMetaNodes(next.metaNodes);
-              setEditingMeta(trimmed);
-              return null;
+            onGenerate={onGenerate}
+            codeLanguage={codeLanguage}
+            onCodeLanguageChange={(lang) => {
+              saveString('vn:codegen-language', lang);
+              setCodeLanguage(lang);
             }}
+            imageFormat={imageFormat}
+            onImageFormatChange={(format) => {
+              saveString('vn:image-format', format);
+              setImageFormat(format);
+            }}
+            onExportImage={onExportImage}
           />
-        )}
-      </div>
+          <div className={sidebarsSwapped ? 'app-main app-main--swapped' : 'app-main'}>
+            <Palette
+              items={items}
+              onAdd={armNode}
+              disabledTypes={disabledTypes}
+              armedType={pending}
+              collapsed={paletteCollapsed}
+              onToggleCollapse={() =>
+                setPaletteCollapsed((c) => {
+                  saveFlag('vn:palette-collapsed', !c);
+                  return !c;
+                })
+              }
+            />
+            <div
+              className="canvas-wrap"
+              style={{ cursor: pending ? 'copy' : undefined }}
+              onPointerMove={pending ? (e) => setGhost({ x: e.clientX, y: e.clientY }) : undefined}
+              onPointerDown={
+                pending
+                  ? (e) => {
+                      placeDown.current = {
+                        x: e.clientX,
+                        y: e.clientY,
+                        onPane:
+                          (e.target as Element).classList?.contains('react-flow__pane') ?? false,
+                      };
+                    }
+                  : undefined
+              }
+              onPointerUp={
+                pending
+                  ? (e) => {
+                      const down = placeDown.current;
+                      placeDown.current = null;
+                      // Place only on a tap that began on the empty pane — not after
+                      // a pan, and not on a node/edge (edges are handled separately).
+                      if (down?.onPane && isTap(down.x, down.y, e.clientX, e.clientY)) {
+                        placeNode(e.clientX, e.clientY);
+                      }
+                    }
+                  : undefined
+              }
+              onPointerLeave={
+                pending
+                  ? () => {
+                      setGhost(null);
+                      placeDown.current = null;
+                    }
+                  : undefined
+              }
+            >
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                nodeTypes={nodeTypes}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onNodesDelete={onNodesDelete}
+                onNodeDragStart={onDragStart}
+                onSelectionDragStart={onDragStart}
+                onConnect={onConnect}
+                onConnectStart={onConnectStart}
+                onEdgeClick={onEdgeClick}
+                onSelectionChange={({ nodes: sel }) => setSelectedIds(sel.map((n) => n.id))}
+                onNodeDoubleClick={(_, node) => {
+                  const name = metaNodeName(node.data.nodeType);
+                  if (name && metaNodes[name]) setEditingMeta(name);
+                }}
+                isValidConnection={isValidConnection}
+                onConnectEnd={onConnectEnd}
+                fitView
+              >
+                <Background />
+                <MiniMap />
+                <Controls />
+              </ReactFlow>
+            </div>
+            <PreviewPane
+              result={preview}
+              side={sidebarsSwapped ? 'left' : 'right'}
+              collapsed={previewCollapsed}
+              onToggleCollapse={() =>
+                setPreviewCollapsed((c) => {
+                  saveFlag('vn:preview-collapsed', !c);
+                  return !c;
+                })
+              }
+            />
+          </div>
+          {pending && ghost && ghostData && (
+            <PlacementGhost data={ghostData} x={ghost.x} y={ghost.y} />
+          )}
+          {connectMenu && (
+            <ConnectMenu
+              x={connectMenu.x}
+              y={connectMenu.y}
+              suggestions={connectMenu.suggestions}
+              onPick={onPickSource}
+              onClose={() => setConnectMenu(null)}
+            />
+          )}
+          {errorMessage && (
+            <div role="alert" className="connection-toast">
+              {errorMessage}
+            </div>
+          )}
+          {editingMeta && metaNodes[editingMeta] && (
+            <SubgraphEditor
+              name={editingMeta}
+              definition={metaNodes[editingMeta]}
+              registry={registry}
+              onSave={(name, def) => setMetaNodes((m) => ({ ...m, [name]: def }))}
+              onClose={() => setEditingMeta(null)}
+              onRename={(oldName, newName) => {
+                const trimmed = newName.trim();
+                if (!trimmed) return 'Name cannot be empty.';
+                if (trimmed !== oldName && metaNodes[trimmed]) {
+                  return `A group named “${trimmed}” already exists.`;
+                }
+                takeSnapshot();
+                const next = renameMetaNode({ nodes, edges, metaNodes }, oldName, trimmed);
+                setNodes(next.nodes);
+                setMetaNodes(next.metaNodes);
+                setEditingMeta(trimmed);
+                return null;
+              }}
+            />
+          )}
+        </div>
+      </NodePreviewContext.Provider>
     </NodeEditContext.Provider>
   );
 }

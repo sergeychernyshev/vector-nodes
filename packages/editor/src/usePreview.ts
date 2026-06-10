@@ -12,10 +12,12 @@ import type { PreviewRequest, PreviewResponse } from './preview-protocol';
  * Falls back to synchronous evaluation when Workers are unavailable (e.g. the
  * jsdom test environment).
  */
-export function usePreview(graph: Graph): PreviewResult {
+export function usePreview(graph: Graph, previewIds: string[] = []): PreviewResult {
   const [result, setResult] = useState<PreviewResult>({});
   const workerRef = useRef<Worker | null>(null);
   const requestId = useRef(0);
+  // A stable string key so the send effect tracks the id set, not the array ref.
+  const previewKey = previewIds.join(',');
 
   // Spin up the worker once; tear it down on unmount.
   useEffect(() => {
@@ -34,16 +36,18 @@ export function usePreview(graph: Graph): PreviewResult {
     };
   }, []);
 
-  // Send each new graph to the worker (or evaluate inline as a fallback).
+  // Send each new graph (or change to the open per-node previews) to the worker,
+  // or evaluate inline as a fallback.
   useEffect(() => {
     const id = (requestId.current += 1);
+    const ids = previewKey === '' ? [] : previewKey.split(',');
     const worker = workerRef.current;
     if (worker) {
-      worker.postMessage({ id, graph } satisfies PreviewRequest);
+      worker.postMessage({ id, graph, previewIds: ids } satisfies PreviewRequest);
     } else {
-      setResult(evaluatePreview(graph));
+      setResult(evaluatePreview(graph, ids));
     }
-  }, [graph]);
+  }, [graph, previewKey]);
 
   return result;
 }

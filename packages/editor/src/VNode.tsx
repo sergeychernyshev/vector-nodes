@@ -8,12 +8,19 @@ import {
   type FlowSocket,
   type VNodeFlowNode,
 } from './flow';
+import { useNodePreview } from './NodePreviewContext';
 import {
   InputDefaultField,
   isEditableInput,
   ParamControlField,
   ParamControls,
 } from './ParamControls';
+import { SvgView } from './SvgView';
+
+/** A node is previewable (issue #79) when it emits a Geometry output. */
+export function isPreviewable(data: FlowNodeData): boolean {
+  return data.outputs.some((s) => s.type === 'Geometry' && !s.isArray);
+}
 
 function SocketRow({
   socket,
@@ -73,13 +80,42 @@ function NodeCard({ id, data, selected, ghost, connectedInputs }: NodeCardProps)
   );
   const blockParams = data.paramDefs.filter((p) => !inlineParams.has(p.name));
 
+  // Per-node preview state (issue #79). The ghost copy never previews.
+  const preview = useNodePreview();
+  const previewable = !ghost && isPreviewable(data);
+  const previewOpen = previewable && preview.open.has(id);
+  const previewGeometry = preview.geometries[id];
+
   const classes = ['vnode'];
   if (selected) classes.push('vnode--selected');
   if (data.nodeType.startsWith('Meta:')) classes.push('vnode--meta');
 
   return (
     <div className={classes.join(' ')}>
-      <div className="vnode__header">{data.label}</div>
+      {previewOpen && (
+        <div className="vnode__preview nodrag nowheel">
+          {previewGeometry ? (
+            <SvgView geometry={previewGeometry} />
+          ) : (
+            <span className="vnode__preview-empty">No preview</span>
+          )}
+        </div>
+      )}
+      <div className="vnode__header">
+        <span className="vnode__title">{data.label}</span>
+        {previewable && (
+          <button
+            type="button"
+            className="vnode__preview-toggle nodrag"
+            aria-label={previewOpen ? 'Hide preview' : 'Show preview'}
+            aria-pressed={previewOpen}
+            title={previewOpen ? 'Hide preview' : 'Show preview'}
+            onClick={() => preview.toggle(id)}
+          >
+            {previewOpen ? '▾' : '▸'}
+          </button>
+        )}
+      </div>
       <div className="vnode__body">
         <div className="vnode__col">
           {data.inputs.map((s) => (
