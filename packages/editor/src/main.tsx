@@ -1,3 +1,4 @@
+import { ReactFlowProvider } from '@xyflow/react';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -11,6 +12,8 @@ if (!rootElement) throw new Error('Root element #root not found');
 
 createRoot(rootElement).render(
   <StrictMode>
-    <App />
+    <ReactFlowProvider>
+      <App />
+    </ReactFlowProvider>
   </StrictMode>,
 );

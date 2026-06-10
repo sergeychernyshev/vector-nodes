@@ -7,10 +7,12 @@ export interface PaletteProps {
   onAdd: (type: string) => void;
   /** Node types that cannot currently be added (rendered disabled). */
   disabledTypes?: ReadonlySet<string>;
+  /** Node type currently armed for placement (rendered highlighted). */
+  armedType?: string | null;
 }
 
-/** Searchable node palette; clicking an entry adds that node to the canvas. */
-export function Palette({ items, onAdd, disabledTypes }: PaletteProps) {
+/** Searchable node palette; clicking an entry arms that node for placement. */
+export function Palette({ items, onAdd, disabledTypes, armedType }: PaletteProps) {
   const [query, setQuery] = useState('');
   const filtered = useMemo(() => filterPalette(items, query), [items, query]);
 
@@ -27,11 +29,13 @@ export function Palette({ items, onAdd, disabledTypes }: PaletteProps) {
       <ul className="palette__list">
         {filtered.map((item) => {
           const disabled = disabledTypes?.has(item.type) ?? false;
+          const armed = item.type === armedType;
           return (
             <li key={item.type}>
               <button
                 type="button"
-                className="palette__item"
+                className={armed ? 'palette__item palette__item--armed' : 'palette__item'}
+                aria-pressed={armed}
                 onClick={() => onAdd(item.type)}
                 disabled={disabled}
               >

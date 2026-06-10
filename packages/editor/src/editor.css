@@ -301,6 +301,32 @@
 .palette__item:hover:not(:disabled) {
   background: #ececec;
 }
+.palette__item--armed {
+  background: #4a90d9;
+  color: #fff;
+  border-color: #357ab8;
+}
+.palette__item--armed:hover:not(:disabled) {
+  background: #4385c9;
+}
+.palette__item--armed .palette__item-category {
+  color: #fff;
+  opacity: 0.85;
+}
+
+/* Ghost preview of a node armed for placement (issue #44). */
+.node-ghost {
+  position: fixed;
+  z-index: 20;
+  transform: translate(12px, 12px);
+  padding: 6px 10px;
+  background: rgba(74, 144, 217, 0.85);
+  color: #fff;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
 .palette__item:disabled {
   opacity: 0.45;
   cursor: not-allowed;
