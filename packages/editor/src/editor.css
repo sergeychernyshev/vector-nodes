@@ -68,16 +68,23 @@
   background: #3f3f3f;
 }
 .vnode__preview {
+  /* The SVG is taken out of flow so its intrinsic width doesn't widen the node:
+     the box (and node) stay as wide as the node's own content (issue #79). */
+  position: relative;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-bottom: 1px solid #555;
   background: #1e1e1e;
 }
 .vnode__preview .preview__svg {
-  height: 96px;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 .vnode__preview-empty {
-  display: block;
-  padding: 12px 8px;
-  text-align: center;
   opacity: 0.6;
 }
 .vnode__body {
