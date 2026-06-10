@@ -1,0 +1,86 @@
+{
+  "format": "vector-nodes",
+  "version": "1.0",
+  "parameters": [],
+  "nodes": [
+    {
+      "id": "cone",
+      "type": "ConeMesh",
+      "position": [
+        60,
+        60
+      ],
+      "params": {
+        "radius": 0.3,
+        "height": 0.8,
+        "segments": 8
+      }
+    },
+    {
+      "id": "grid",
+      "type": "PointGrid",
+      "position": [
+        60,
+        240
+      ],
+      "params": {
+        "countX": 4,
+        "countY": 4,
+        "spacingX": 1.5,
+        "spacingY": 1.5
+      }
+    },
+    {
+      "id": "inst",
+      "type": "InstanceOnPoints",
+      "position": [
+        360,
+        140
+      ]
+    },
+    {
+      "id": "out",
+      "type": "OutputGeometry",
+      "position": [
+        640,
+        140
+      ]
+    }
+  ],
+  "links": [
+    {
+      "from": [
+        "cone",
+        "geometry"
+      ],
+      "to": [
+        "inst",
+        "geometry"
+      ]
+    },
+    {
+      "from": [
+        "grid",
+        "points"
+      ],
+      "to": [
+        "inst",
+        "points"
+      ]
+    },
+    {
+      "from": [
+        "inst",
+        "geometry"
+      ],
+      "to": [
+        "out",
+        "geometry"
+      ]
+    }
+  ],
+  "metadata": {
+    "name": "instancedArray",
+    "description": "A small mesh instanced over a grid of points."
+  }
+}

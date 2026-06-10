@@ -1,0 +1,44 @@
+{
+  "format": "vector-nodes",
+  "version": "1.0",
+  "parameters": [],
+  "nodes": [
+    {
+      "id": "s",
+      "type": "UVSphere",
+      "position": [
+        80,
+        120
+      ],
+      "params": {
+        "radius": 1.5,
+        "segments": 20,
+        "rings": 12
+      }
+    },
+    {
+      "id": "out",
+      "type": "OutputGeometry",
+      "position": [
+        400,
+        120
+      ]
+    }
+  ],
+  "links": [
+    {
+      "from": [
+        "s",
+        "geometry"
+      ],
+      "to": [
+        "out",
+        "geometry"
+      ]
+    }
+  ],
+  "metadata": {
+    "name": "sphere",
+    "description": "A UV sphere mesh."
+  }
+}

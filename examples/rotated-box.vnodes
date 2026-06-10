@@ -1,0 +1,83 @@
+{
+  "format": "vector-nodes",
+  "version": "1.0",
+  "parameters": [],
+  "nodes": [
+    {
+      "id": "box",
+      "type": "BoxMesh",
+      "position": [
+        60,
+        60
+      ],
+      "params": {
+        "width": 1,
+        "height": 1,
+        "depth": 1
+      }
+    },
+    {
+      "id": "a",
+      "type": "ConstFloat",
+      "position": [
+        60,
+        260
+      ],
+      "params": {
+        "value": 0.6
+      }
+    },
+    {
+      "id": "rot",
+      "type": "RotateGeometry",
+      "position": [
+        360,
+        120
+      ]
+    },
+    {
+      "id": "out",
+      "type": "OutputGeometry",
+      "position": [
+        640,
+        120
+      ]
+    }
+  ],
+  "links": [
+    {
+      "from": [
+        "box",
+        "geometry"
+      ],
+      "to": [
+        "rot",
+        "geometry"
+      ]
+    },
+    {
+      "from": [
+        "a",
+        "value"
+      ],
+      "to": [
+        "rot",
+        "angle"
+      ]
+    },
+    {
+      "from": [
+        "rot",
+        "geometry"
+      ],
+      "to": [
+        "out",
+        "geometry"
+      ]
+    }
+  ],
+  "metadata": {
+    "name": "rotatedBox",
+    "description": "A cube rotated about Z by an angle."
+  }
+}

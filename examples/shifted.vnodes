@@ -1,0 +1,92 @@
+{
+  "format": "vector-nodes",
+  "version": "1.0",
+  "parameters": [
+    {
+      "id": "shift",
+      "type": "Vector",
+      "default": [
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "cc",
+      "type": "CircleCurve",
+      "position": [
+        60,
+        60
+      ],
+      "params": {
+        "radius": 1,
+        "count": 24
+      }
+    },
+    {
+      "id": "p",
+      "type": "ParameterVector",
+      "position": [
+        60,
+        260
+      ],
+      "params": {
+        "name": "shift"
+      }
+    },
+    {
+      "id": "t",
+      "type": "Translate",
+      "position": [
+        360,
+        120
+      ]
+    },
+    {
+      "id": "out",
+      "type": "OutputGeometry",
+      "position": [
+        640,
+        120
+      ]
+    }
+  ],
+  "links": [
+    {
+      "from": [
+        "cc",
+        "geometry"
+      ],
+      "to": [
+        "t",
+        "geometry"
+      ]
+    },
+    {
+      "from": [
+        "p",
+        "value"
+      ],
+      "to": [
+        "t",
+        "offset"
+      ]
+    },
+    {
+      "from": [
+        "t",
+        "geometry"
+      ],
+      "to": [
+        "out",
+        "geometry"
+      ]
+    }
+  ],
+  "metadata": {
+    "name": "shifted",
+    "description": "A parameterized translate — `shift` becomes a function argument."
+  }
+}
