@@ -45,6 +45,7 @@ import {
   graphToFlowEdges,
   graphToFlowNodes,
   hasOutputNode,
+  isTap,
   paletteItems,
   resolveAddableDef,
   VNODE_TYPE,
@@ -101,6 +102,9 @@ export function App() {
     suggestions: SourceSuggestion[];
   } | null>(null);
   const connecting = useRef<OnConnectStartParams | null>(null);
+  // Pointer-down state for tap-to-place: where it started and whether it began on
+  // the empty pane (issue #59 — works for mouse, touch, and pen alike).
+  const placeDown = useRef<{ x: number; y: number; onPane: boolean } | null>(null);
   const idCounter = useRef(maxAutoId(initialNodes));
   const toolbarRef = useRef<ToolbarHandle>(null);
   const { screenToFlowPosition } = useReactFlow();
@@ -512,7 +516,39 @@ export function App() {
           <div
             style={{ flex: 1, minHeight: 0, cursor: pending ? 'copy' : undefined }}
             onPointerMove={pending ? (e) => setGhost({ x: e.clientX, y: e.clientY }) : undefined}
-            onPointerLeave={pending ? () => setGhost(null) : undefined}
+            onPointerDown={
+              pending
+                ? (e) => {
+                    placeDown.current = {
+                      x: e.clientX,
+                      y: e.clientY,
+                      onPane:
+                        (e.target as Element).classList?.contains('react-flow__pane') ?? false,
+                    };
+                  }
+                : undefined
+            }
+            onPointerUp={
+              pending
+                ? (e) => {
+                    const down = placeDown.current;
+                    placeDown.current = null;
+                    // Place only on a tap that began on the empty pane — not after
+                    // a pan, and not on a node/edge (edges are handled separately).
+                    if (down?.onPane && isTap(down.x, down.y, e.clientX, e.clientY)) {
+                      placeNode(e.clientX, e.clientY);
+                    }
+                  }
+                : undefined
+            }
+            onPointerLeave={
+              pending
+                ? () => {
+                    setGhost(null);
+                    placeDown.current = null;
+                  }
+                : undefined
+            }
           >
             <ReactFlow
               nodes={nodes}
@@ -525,7 +561,6 @@ export function App() {
               onSelectionDragStart={onDragStart}
               onConnect={onConnect}
               onConnectStart={onConnectStart}
-              onPaneClick={(e) => placeNode(e.clientX, e.clientY)}
               onEdgeClick={onEdgeClick}
               onSelectionChange={({ nodes: sel }) => setSelectedIds(sel.map((n) => n.id))}
               onNodeDoubleClick={(_, node) => {

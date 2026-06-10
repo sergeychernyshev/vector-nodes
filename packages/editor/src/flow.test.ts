@@ -8,6 +8,7 @@ import {
   graphToFlowEdges,
   graphToFlowNodes,
   hasOutputNode,
+  isTap,
   paletteItems,
   resolveAddableDef,
   socketClassName,
@@ -170,5 +171,18 @@ describe('palette', () => {
     expect(filterPalette(items, 'GEOMETRY').length).toBeGreaterThan(0);
     expect(filterPalette(items, '')).toHaveLength(items.length);
     expect(filterPalette(items, 'zzz-nope')).toHaveLength(0);
+  });
+});
+
+describe('isTap', () => {
+  it('treats small movement as a tap and larger movement as a drag', () => {
+    expect(isTap(100, 100, 100, 100)).toBe(true);
+    expect(isTap(100, 100, 103, 104)).toBe(true); // 5px < 6
+    expect(isTap(100, 100, 110, 110)).toBe(false); // ~14px
+  });
+
+  it('honors a custom threshold', () => {
+    expect(isTap(0, 0, 0, 20, 25)).toBe(true);
+    expect(isTap(0, 0, 0, 20, 10)).toBe(false);
   });
 });

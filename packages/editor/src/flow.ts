@@ -202,6 +202,15 @@ export function paletteItems(registry: NodeRegistry): PaletteItem[] {
     .sort((a, b) => a.category.localeCompare(b.category) || a.label.localeCompare(b.label));
 }
 
+/**
+ * Whether a pointer-up at `(bx, by)` is close enough to its pointer-down at
+ * `(ax, ay)` to count as a tap rather than a drag/pan. Used so placing a node
+ * works with mouse, touch, and pen alike (issue #59) without firing after a pan.
+ */
+export function isTap(ax: number, ay: number, bx: number, by: number, threshold = 6): boolean {
+  return Math.hypot(bx - ax, by - ay) <= threshold;
+}
+
 /** Case-insensitive filter of palette items by label, type, or category. */
 export function filterPalette(items: PaletteItem[], query: string): PaletteItem[] {
   const q = query.trim().toLowerCase();
