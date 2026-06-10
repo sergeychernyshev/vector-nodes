@@ -74,6 +74,9 @@ export function evaluateGraph(
       if (link) {
         const sourceOutputs = evaluateNode(link.from[0]);
         inputs[socket.name] = sourceOutputs[link.from[1]];
+      } else if (node.inputDefaults?.[socket.name] !== undefined) {
+        // Per-instance override for this unconnected input.
+        inputs[socket.name] = node.inputDefaults[socket.name];
       } else if (socket.default !== undefined) {
         inputs[socket.name] = socket.default;
       }

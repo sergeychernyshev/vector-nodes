@@ -106,6 +106,12 @@ export const VNODES_SCHEMA = {
           description: 'Static parameter values baked into the node.',
           additionalProperties: true,
         },
+        inputDefaults: {
+          type: 'object',
+          description:
+            'Per-instance values for unconnected input sockets; override the definition defaults and are ignored when the input is connected.',
+          additionalProperties: true,
+        },
         label: { type: 'string' },
       },
     },

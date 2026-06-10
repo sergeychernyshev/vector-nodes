@@ -2,7 +2,7 @@ import { createBasicRegistry, createGraph } from '@vector-nodes/core';
 import { describe, expect, it } from 'vitest';
 
 import { graphToFlowNodes } from './flow';
-import { asRgba, asVec3, hexToRgb, rgbToHex, setNodeParam } from './param';
+import { asRgba, asVec3, hexToRgb, rgbToHex, setNodeInputDefault, setNodeParam } from './param';
 
 const registry = createBasicRegistry();
 const nodes = graphToFlowNodes(
@@ -22,6 +22,20 @@ describe('setNodeParam', () => {
     expect(next.find((n) => n.id === 'b')!.data.params.value).toBe(2);
     // Original is untouched.
     expect(nodes.find((n) => n.id === 'a')!.data.params.value).toBe(1);
+  });
+});
+
+describe('setNodeInputDefault', () => {
+  const tnodes = graphToFlowNodes(
+    createGraph({ nodes: [{ id: 't', type: 'Translate' }] }),
+    registry,
+  );
+
+  it('sets an input default on only the target node, immutably', () => {
+    const next = setNodeInputDefault(tnodes, 't', 'offset', [1, 2, 3]);
+    expect(next.find((n) => n.id === 't')!.data.inputDefaults.offset).toEqual([1, 2, 3]);
+    // Original untouched.
+    expect(tnodes.find((n) => n.id === 't')!.data.inputDefaults.offset).toBeUndefined();
   });
 });
 

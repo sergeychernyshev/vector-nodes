@@ -1,15 +1,18 @@
 import type { ParamDefinition } from '@vector-nodes/core';
 
 import { useNodeEdit } from './NodeEditContext';
+import type { FlowSocket } from './flow';
 import { asNumber, asRgba, asVec3, hexToRgb, rgbToHex, type Vec3 } from './param';
 
 interface ControlProps {
   param: ParamDefinition;
   value: unknown;
   onChange: (value: unknown) => void;
+  /** When true, the control is shown read-only (e.g. an input is connected). */
+  disabled?: boolean;
 }
 
-function NumberControl({ param, value, onChange }: ControlProps) {
+function NumberControl({ param, value, onChange, disabled }: ControlProps) {
   const isInt = param.type === 'Integer';
   return (
     <input
@@ -18,6 +21,7 @@ function NumberControl({ param, value, onChange }: ControlProps) {
       step={isInt ? 1 : 'any'}
       min={param.min}
       max={param.max}
+      disabled={disabled}
       value={asNumber(value)}
       onChange={(e) => {
         const n = Number(e.target.value);
@@ -27,7 +31,7 @@ function NumberControl({ param, value, onChange }: ControlProps) {
   );
 }
 
-function BooleanControl({ value, onChange }: ControlProps) {
+function BooleanControl({ value, onChange, disabled }: ControlProps) {
   const checked = Boolean(value);
   return (
     <span className="vnode__bool">
@@ -35,6 +39,7 @@ function BooleanControl({ value, onChange }: ControlProps) {
         className="nodrag"
         type="checkbox"
         checked={checked}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.checked)}
       />
       <span className="vnode__bool-label">{checked ? 'true' : 'false'}</span>
@@ -42,21 +47,23 @@ function BooleanControl({ value, onChange }: ControlProps) {
   );
 }
 
-function StringControl({ value, onChange }: ControlProps) {
+function StringControl({ value, onChange, disabled }: ControlProps) {
   return (
     <input
       className="nodrag vnode__input"
       type="text"
+      disabled={disabled}
       value={typeof value === 'string' ? value : ''}
       onChange={(e) => onChange(e.target.value)}
     />
   );
 }
 
-function SelectControl({ param, value, onChange }: ControlProps) {
+function SelectControl({ param, value, onChange, disabled }: ControlProps) {
   return (
     <select
       className="nodrag vnode__input"
+      disabled={disabled}
       value={typeof value === 'string' ? value : ''}
       onChange={(e) => onChange(e.target.value)}
     >
@@ -69,7 +76,7 @@ function SelectControl({ param, value, onChange }: ControlProps) {
   );
 }
 
-function VectorControl({ value, onChange }: ControlProps) {
+function VectorControl({ value, onChange, disabled }: ControlProps) {
   const v = asVec3(value);
   const setAxis = (axis: number, n: number) => {
     const next = [...v] as Vec3;
@@ -85,6 +92,7 @@ function VectorControl({ value, onChange }: ControlProps) {
           type="number"
           step="any"
           aria-label={['x', 'y', 'z'][axis]}
+          disabled={disabled}
           value={v[axis]}
           onChange={(e) => setAxis(axis, Number(e.target.value))}
         />
@@ -93,7 +101,7 @@ function VectorControl({ value, onChange }: ControlProps) {
   );
 }
 
-function ColorControl({ value, onChange }: ControlProps) {
+function ColorControl({ value, onChange, disabled }: ControlProps) {
   const [r, g, b, a] = asRgba(value);
   const setAlpha = (n: number) => onChange([r, g, b, Math.max(0, Math.min(1, n))]);
   return (
@@ -102,6 +110,7 @@ function ColorControl({ value, onChange }: ControlProps) {
         className="nodrag"
         type="color"
         aria-label="color"
+        disabled={disabled}
         value={rgbToHex([r, g, b])}
         onChange={(e) => {
           const [nr, ng, nb] = hexToRgb(e.target.value);
@@ -117,6 +126,7 @@ function ColorControl({ value, onChange }: ControlProps) {
           max={1}
           step={0.01}
           aria-label="opacity"
+          disabled={disabled}
           value={a}
           onChange={(e) => setAlpha(Number(e.target.value))}
         />
@@ -127,6 +137,7 @@ function ColorControl({ value, onChange }: ControlProps) {
           min={0}
           max={1}
           aria-label="opacity value"
+          disabled={disabled}
           value={a}
           onChange={(e) => setAlpha(Number(e.target.value))}
         />
@@ -159,6 +170,14 @@ function ParamControl(props: ControlProps) {
   }
 }
 
+/** Input socket types that get an inline default editor (issue #23). */
+const EDITABLE_INPUT_TYPES = new Set(['Float', 'Integer', 'Boolean', 'String', 'Vector', 'Color']);
+
+/** Whether an input socket should show an inline default editor. */
+export function isEditableInput(socket: FlowSocket): boolean {
+  return !socket.isArray && EDITABLE_INPUT_TYPES.has(socket.type);
+}
+
 export interface ParamControlsProps {
   nodeId: string;
   paramDefs: readonly ParamDefinition[];
@@ -178,6 +197,37 @@ export function ParamControlField({
   const { setParam } = useNodeEdit();
   return (
     <ParamControl param={param} value={value} onChange={(v) => setParam(nodeId, param.name, v)} />
+  );
+}
+
+/**
+ * Inline editor for an input socket's default value (issue #23). Shows the
+ * socket name and a type-appropriate control; when `connected` the control is
+ * disabled because the link supplies the value instead.
+ */
+export function InputDefaultField({
+  nodeId,
+  socket,
+  value,
+  connected,
+}: {
+  nodeId: string;
+  socket: FlowSocket;
+  value: unknown;
+  connected: boolean;
+}) {
+  const { setInputDefault } = useNodeEdit();
+  const param: ParamDefinition = { name: socket.name, type: socket.type, isArray: socket.isArray };
+  return (
+    <label className={`vnode__input-default${connected ? ' vnode__input-default--connected' : ''}`}>
+      <span className="vnode__socket-label">{socket.name}</span>
+      <ParamControl
+        param={param}
+        value={value}
+        disabled={connected}
+        onChange={(v) => setInputDefault(nodeId, socket.name, v)}
+      />
+    </label>
   );
 }
 

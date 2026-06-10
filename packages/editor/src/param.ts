@@ -22,6 +22,26 @@ export function setNodeParam(
   );
 }
 
+/** Return a new nodes array with `nodeId`'s unconnected-input `name` set to `value`. */
+export function setNodeInputDefault(
+  nodes: VNodeFlowNode[],
+  nodeId: string,
+  name: string,
+  value: unknown,
+): VNodeFlowNode[] {
+  return nodes.map((node) =>
+    node.id === nodeId
+      ? {
+          ...node,
+          data: {
+            ...node.data,
+            inputDefaults: { ...node.data.inputDefaults, [name]: value },
+          },
+        }
+      : node,
+  );
+}
+
 /** Coerce a param value to a number, falling back to 0. */
 export function asNumber(value: unknown): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : 0;

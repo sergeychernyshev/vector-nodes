@@ -106,7 +106,15 @@ function boundaryNode(
     type: VNODE_TYPE,
     position,
     deletable: false,
-    data: { label: id, nodeType: id, params: {}, paramDefs: [], inputs, outputs },
+    data: {
+      label: id,
+      nodeType: id,
+      params: {},
+      paramDefs: [],
+      inputs,
+      outputs,
+      inputDefaults: {},
+    },
   };
 }
 
@@ -158,6 +166,8 @@ export function flowToSubgraph(
       position: [node.position.x, node.position.y],
     };
     if (Object.keys(node.data.params).length > 0) graphNode.params = { ...node.data.params };
+    if (Object.keys(node.data.inputDefaults).length > 0)
+      graphNode.inputDefaults = { ...node.data.inputDefaults };
     return graphNode;
   });
   const links: GraphLink[] = edges.map((edge) => ({

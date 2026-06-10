@@ -40,6 +40,12 @@ export interface GraphNode {
   position?: [number, number];
   /** Static parameter values baked into this node. */
   params?: Record<string, unknown>;
+  /**
+   * Per-instance values for unconnected input sockets, keyed by socket name.
+   * They override the definition's socket defaults and are ignored when the
+   * input is connected (the link supplies the value instead).
+   */
+  inputDefaults?: Record<string, unknown>;
   label?: string;
 }
 

@@ -15,7 +15,7 @@ import { VNODE_TYPE, type VNodeFlowNode } from './flow';
 import { addToLibrary } from './meta-library';
 import { flowToSubgraph, subgraphToFlow } from './meta';
 import { NodeEditContext, type NodeEditApi } from './NodeEditContext';
-import { setNodeParam } from './param';
+import { setNodeInputDefault, setNodeParam } from './param';
 import { VNode } from './VNode';
 
 const nodeTypes = { [VNODE_TYPE]: VNode };
@@ -49,6 +49,8 @@ export function SubgraphEditor({
   const editApi = useMemo<NodeEditApi>(
     () => ({
       setParam: (id, key, value) => setNodes((nds) => setNodeParam(nds, id, key, value)),
+      setInputDefault: (id, key, value) =>
+        setNodes((nds) => setNodeInputDefault(nds, id, key, value)),
     }),
     [setNodes],
   );

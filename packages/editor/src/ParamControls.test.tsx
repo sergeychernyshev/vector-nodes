@@ -4,19 +4,31 @@ import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { NodeEditContext, type NodeEditApi } from './NodeEditContext';
-import { ParamControls } from './ParamControls';
+import type { FlowSocket } from './flow';
+import { InputDefaultField, isEditableInput, ParamControls } from './ParamControls';
 
 afterEach(cleanup);
 
 function renderControls(paramDefs: ParamDefinition[], values: Record<string, unknown>) {
   const setParam = vi.fn();
-  const api: NodeEditApi = { setParam };
+  const api: NodeEditApi = { setParam, setInputDefault: vi.fn() };
   const utils = render(
     <NodeEditContext.Provider value={api}>
       <ParamControls nodeId="n1" paramDefs={paramDefs} values={values} />
     </NodeEditContext.Provider>,
   );
   return { setParam, ...utils };
+}
+
+function renderInputDefault(socket: FlowSocket, value: unknown, connected: boolean) {
+  const setInputDefault = vi.fn();
+  const api: NodeEditApi = { setParam: vi.fn(), setInputDefault };
+  const utils = render(
+    <NodeEditContext.Provider value={api}>
+      <InputDefaultField nodeId="n1" socket={socket} value={value} connected={connected} />
+    </NodeEditContext.Provider>,
+  );
+  return { setInputDefault, ...utils };
 }
 
 describe('ParamControls', () => {
@@ -113,5 +125,32 @@ describe('ParamControls', () => {
   it('renders nothing when there are no params', () => {
     const { container } = renderControls([], {});
     expect(container.querySelector('.vnode__params')).toBeNull();
+  });
+});
+
+describe('isEditableInput', () => {
+  it('accepts scalar value types and rejects arrays and Geometry', () => {
+    expect(isEditableInput({ name: 'offset', type: 'Vector', isArray: false })).toBe(true);
+    expect(isEditableInput({ name: 'r', type: 'Float', isArray: false })).toBe(true);
+    expect(isEditableInput({ name: 'geometry', type: 'Geometry', isArray: false })).toBe(false);
+    expect(isEditableInput({ name: 'points', type: 'Vector', isArray: true })).toBe(false);
+  });
+});
+
+describe('InputDefaultField', () => {
+  const offset: FlowSocket = { name: 'offset', type: 'Vector', isArray: false };
+
+  it('edits an unconnected input default', () => {
+    const { setInputDefault, getByLabelText } = renderInputDefault(offset, [0, 0, 0], false);
+    fireEvent.change(getByLabelText('y'), { target: { value: '5' } });
+    expect(setInputDefault).toHaveBeenCalledWith('n1', 'offset', [0, 5, 0]);
+  });
+
+  it('disables the control when the input is connected', () => {
+    const { container } = renderInputDefault(offset, [0, 0, 0], true);
+    const inputs = container.querySelectorAll('input');
+    expect(inputs.length).toBeGreaterThan(0);
+    inputs.forEach((input) => expect((input as HTMLInputElement).disabled).toBe(true));
+    expect(container.querySelector('.vnode__input-default--connected')).not.toBeNull();
   });
 });
