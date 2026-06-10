@@ -229,3 +229,38 @@ describe('conformance: Phase 7 nodes', () => {
     expect(runCompiled(g, [])).toEqual(interpret(g));
   });
 });
+
+describe('conformance: Phase 8 mesh primitives', () => {
+  it.each([
+    { id: 'm', type: 'PlaneMesh', params: { width: 2, height: 3 } },
+    { id: 'm', type: 'BoxMesh', params: { width: 1, height: 2, depth: 3 } },
+    { id: 'm', type: 'GridMesh', params: { countX: 3, countY: 2, sizeX: 4, sizeY: 2 } },
+    { id: 'm', type: 'UVSphere', params: { radius: 2, segments: 8, rings: 4 } },
+    { id: 'm', type: 'CylinderMesh', params: { radius: 1, height: 3, segments: 6 } },
+    { id: 'm', type: 'ConeMesh', params: { radius: 1, height: 2, segments: 5 } },
+  ])('$type', (source) => {
+    const g = geoGraph(
+      [source, { id: 'out', type: 'OutputGeometry' }],
+      [{ from: ['m', 'geometry'], to: ['out', 'geometry'] }],
+    );
+    expect(runCompiled(g, [])).toEqual(interpret(g));
+  });
+
+  it('TriangulateMesh', () => {
+    const g = geoGraph(
+      [
+        { id: 'm', type: 'BoxMesh', params: { width: 1, height: 1, depth: 1 } },
+        { id: 'tri', type: 'TriangulateMesh' },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      [
+        { from: ['m', 'geometry'], to: ['tri', 'geometry'] },
+        { from: ['tri', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    );
+    const result = runCompiled(g, []) as { meshes: { faces: number[][] }[] };
+    expect(result).toEqual(interpret(g));
+    // A cube's 6 quads become 12 triangles.
+    expect(result.meshes[0]!.faces).toHaveLength(12);
+  });
+});
