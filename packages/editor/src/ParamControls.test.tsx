@@ -63,6 +63,27 @@ describe('ParamControls', () => {
     expect(setParam).toHaveBeenCalledWith('n1', 'flag', true);
   });
 
+  it('toggles the boolean once when its label text is clicked (issue #97)', () => {
+    const { setParam, getByText } = renderControls(
+      [{ name: 'flag', type: 'Boolean', default: false }],
+      { flag: false },
+    );
+    fireEvent.click(getByText('false'));
+    expect(setParam).toHaveBeenCalledTimes(1);
+    expect(setParam).toHaveBeenCalledWith('n1', 'flag', true);
+  });
+
+  it('renders the boolean label before the checkbox (issue #97)', () => {
+    const { container } = renderControls([{ name: 'flag', type: 'Boolean', default: false }], {
+      flag: false,
+    });
+    const bool = container.querySelector('.vnode__bool')!;
+    const label = bool.querySelector('.vnode__bool-label')!;
+    const checkbox = bool.querySelector('input[type="checkbox"]')!;
+    // Label appears before the checkbox in document order (label left, box right).
+    expect(label.compareDocumentPosition(checkbox) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('shows "true" when a boolean param is on', () => {
     const { getByText } = renderControls([{ name: 'flag', type: 'Boolean', default: true }], {
       flag: true,
