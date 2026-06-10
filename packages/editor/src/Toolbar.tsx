@@ -15,6 +15,12 @@ export interface ToolbarProps {
   canRedo?: boolean;
   /** Swap the node-list and preview sidebars (issue #62). */
   onSwapSidebars?: () => void;
+  /** Generate code for the current network (issue #67). */
+  onGenerate?: () => void;
+  /** Currently selected code-generation language. */
+  codeLanguage?: string;
+  /** Change the code-generation language. */
+  onCodeLanguageChange?: (language: string) => void;
 }
 
 /** Imperative handle exposed by {@link Toolbar} for keyboard shortcuts. */
@@ -37,6 +43,9 @@ export const Toolbar = forwardRef<ToolbarHandle, ToolbarProps>(function Toolbar(
     canUndo,
     canRedo,
     onSwapSidebars,
+    onGenerate,
+    codeLanguage,
+    onCodeLanguageChange,
   },
   ref,
 ) {
@@ -69,6 +78,21 @@ export const Toolbar = forwardRef<ToolbarHandle, ToolbarProps>(function Toolbar(
         <button type="button" onClick={onUngroup} disabled={!onUngroup}>
           Ungroup
         </button>
+        {onGenerate && (
+          <span className="toolbar__generate">
+            <select
+              aria-label="Code language"
+              value={codeLanguage ?? 'typescript'}
+              onChange={(e) => onCodeLanguageChange?.(e.target.value)}
+            >
+              <option value="typescript">TypeScript</option>
+              <option value="javascript">JavaScript</option>
+            </select>
+            <button type="button" onClick={onGenerate}>
+              Generate code
+            </button>
+          </span>
+        )}
         {onSwapSidebars && (
           <button type="button" onClick={onSwapSidebars} title="Swap sidebars">
             Swap sides

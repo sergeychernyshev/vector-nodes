@@ -304,6 +304,10 @@
   padding: 8px 12px;
   border-bottom: 1px solid #ddd;
 }
+.toolbar__generate {
+  display: inline-flex;
+  gap: 4px;
+}
 .subgraph__name {
   display: flex;
   align-items: center;
