@@ -27,6 +27,15 @@ function findSocket(sockets: FlowSocket[], name: string): FlowSocket | undefined
 }
 
 /**
+ * Whether an output socket may feed an input socket: field/single must agree and
+ * the types must be implicitly convertible. The shared rule behind link
+ * validation ({@link checkConnection}) and node injection.
+ */
+export function socketsCompatible(out: FlowSocket, input: FlowSocket): boolean {
+  return out.isArray === input.isArray && canConvertImplicitly(out.type, input.type);
+}
+
+/**
  * Validate a proposed connection against the editor's node sockets, mirroring
  * core's static link rules: types must match or be implicitly convertible, and
  * field/single must agree. A new link into an already-connected input is allowed
@@ -72,6 +81,8 @@ export function checkConnection(
     return reject(`Cannot connect ${outSocket.type} to ${inSocket.type} (no implicit conversion).`);
   }
 
+  // Equivalent to socketsCompatible(outSocket, inSocket); kept split above so each
+  // failure carries its own reason.
   return { ok: true };
 }
 

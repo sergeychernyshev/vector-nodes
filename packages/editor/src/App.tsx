@@ -18,11 +18,13 @@ import {
   useNodesState,
   useReactFlow,
   type Connection,
+  type Edge,
 } from '@xyflow/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { checkConnection, edgesWithoutInput, type ConnectionLike } from './connection';
 import { downloadText, maxAutoId } from './graph-io';
+import { planInjection, spliceEdge } from './inject';
 import { augmentedRegistry, collapse, currentGraph, expand, type MetaNodes } from './meta';
 import { loadLibrary } from './meta-library';
 import { SubgraphEditor } from './SubgraphEditor';
@@ -219,26 +221,62 @@ export function App() {
     [registry, library, nodes, clearError],
   );
 
-  // Drop the armed node at a screen point (the click location).
-  const placeNode = useCallback(
-    (screenX: number, screenY: number) => {
-      if (!pending) return;
-      const { def, metaToAdd } = resolveAddableDef(pending, registry, library);
-      setPending(null);
-      setGhost(null);
-      if (!def) return;
-      const check = canAddNode(pending, nodes);
+  // Create a node of `type` at a screen point, registering its library
+  // definition if needed. Returns the new node id, or null if it can't be added.
+  const createNodeAt = useCallback(
+    (type: string, screenX: number, screenY: number): string | null => {
+      const { def, metaToAdd } = resolveAddableDef(type, registry, library);
+      if (!def) return null;
+      const check = canAddNode(type, nodes);
       if (!check.ok) {
         setErrorMessage(check.reason ?? 'Cannot add this node.');
-        return;
+        return null;
       }
       if (metaToAdd) setMetaNodes((m) => ({ ...m, [metaToAdd[0]]: metaToAdd[1] }));
       const position = screenToFlowPosition({ x: screenX, y: screenY });
       const id = `n${(idCounter.current += 1)}`;
       setNodes((nds) => [...nds, createFlowNode(def, position, id)]);
+      return id;
+    },
+    [registry, library, nodes, screenToFlowPosition, setNodes],
+  );
+
+  // Drop the armed node at a screen point (the click location).
+  const placeNode = useCallback(
+    (screenX: number, screenY: number) => {
+      if (!pending) return;
+      const placed = createNodeAt(pending, screenX, screenY);
+      setPending(null);
+      setGhost(null);
+      if (placed) clearError();
+    },
+    [pending, createNodeAt, clearError],
+  );
+
+  // Clicking a connection while a node is armed injects it onto that connection
+  // if the node has a matching input/output (issue #43); otherwise it just drops
+  // the node where clicked.
+  const onEdgeClick = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      if (!pending) return;
+      const { def } = resolveAddableDef(pending, registry, library);
+      const sourceNode = nodes.find((n) => n.id === edge.source);
+      const targetNode = nodes.find((n) => n.id === edge.target);
+      const source = sourceNode?.data.outputs.find((s) => s.name === edge.sourceHandle);
+      const dest = targetNode?.data.inputs.find((s) => s.name === edge.targetHandle);
+      const plan = def && source && dest ? planInjection(def, source, dest) : null;
+      if (!plan) {
+        placeNode(event.clientX, event.clientY);
+        return;
+      }
+      const id = createNodeAt(pending, event.clientX, event.clientY);
+      setPending(null);
+      setGhost(null);
+      if (!id) return;
+      setEdges((eds) => spliceEdge(eds, edge, id, plan));
       clearError();
     },
-    [pending, registry, library, nodes, screenToFlowPosition, setNodes, clearError],
+    [pending, registry, library, nodes, placeNode, createNodeAt, setEdges, clearError],
   );
 
   // Esc cancels an armed placement.
@@ -324,6 +362,7 @@ export function App() {
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
               onPaneClick={(e) => placeNode(e.clientX, e.clientY)}
+              onEdgeClick={onEdgeClick}
               onSelectionChange={({ nodes: sel }) => setSelectedIds(sel.map((n) => n.id))}
               onNodeDoubleClick={(_, node) => {
                 const name = metaNodeName(node.data.nodeType);
