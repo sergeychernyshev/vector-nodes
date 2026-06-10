@@ -5,6 +5,10 @@ export interface ToolbarProps {
   onSave?: () => void;
   onOpen?: (file: File) => void;
   onReset?: () => void;
+  /** Collapse the current selection into a meta-node (omit to disable). */
+  onGroup?: () => void;
+  /** Expand the selected meta-node instance (omit to disable). */
+  onUngroup?: () => void;
 }
 
 /** Imperative handle exposed by {@link Toolbar} for keyboard shortcuts. */
@@ -15,7 +19,7 @@ export interface ToolbarHandle {
 
 /** Top app bar: product name, node count, and Save/Open/Reset actions. */
 export const Toolbar = forwardRef<ToolbarHandle, ToolbarProps>(function Toolbar(
-  { nodeCount, onSave, onOpen, onReset },
+  { nodeCount, onSave, onOpen, onReset, onGroup, onUngroup },
   ref,
 ) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -35,6 +39,12 @@ export const Toolbar = forwardRef<ToolbarHandle, ToolbarProps>(function Toolbar(
       <strong>Vector Nodes</strong>
       <span data-testid="node-count">{nodeCount} nodes</span>
       <span style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+        <button type="button" onClick={onGroup} disabled={!onGroup}>
+          Group
+        </button>
+        <button type="button" onClick={onUngroup} disabled={!onUngroup}>
+          Ungroup
+        </button>
         <button type="button" onClick={onReset}>
           Reset
         </button>
