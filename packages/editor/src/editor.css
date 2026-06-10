@@ -281,10 +281,34 @@
 /* Palette */
 .palette {
   width: 220px;
+  flex-shrink: 0;
   border-right: 1px solid #ddd;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+.palette--collapsed {
+  width: auto;
+  align-items: center;
+  padding-top: 8px;
+}
+.palette__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px 0;
+  font-weight: 600;
+}
+.palette__collapse {
+  border: 1px solid #ccc;
+  background: #f6f6f6;
+  border-radius: 4px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 8px;
+}
+.palette__collapse:hover {
+  background: #ececec;
 }
 .palette__search {
   margin: 8px;

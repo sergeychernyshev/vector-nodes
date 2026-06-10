@@ -39,6 +39,35 @@ export function loadGraph(store: KeyValueStore | null = defaultStore()): Graph |
   }
 }
 
+/** Load a persisted boolean UI flag, falling back to `fallback`. */
+export function loadFlag(
+  key: string,
+  fallback = false,
+  store: KeyValueStore | null = defaultStore(),
+): boolean {
+  if (!store) return fallback;
+  try {
+    const value = store.getItem(key);
+    return value === null ? fallback : value === 'true';
+  } catch {
+    return fallback;
+  }
+}
+
+/** Persist a boolean UI flag. Silently no-ops if storage is unavailable. */
+export function saveFlag(
+  key: string,
+  value: boolean,
+  store: KeyValueStore | null = defaultStore(),
+): void {
+  if (!store) return;
+  try {
+    store.setItem(key, String(value));
+  } catch {
+    // Ignore.
+  }
+}
+
 /** Remove the autosaved graph. */
 export function clearGraph(store: KeyValueStore | null = defaultStore()): void {
   if (!store) return;
