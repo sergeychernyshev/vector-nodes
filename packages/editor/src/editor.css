@@ -314,6 +314,63 @@
   opacity: 0.85;
 }
 
+/* Node menu for a connection dragged off an input (issue #45). */
+.connect-menu__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+}
+.connect-menu {
+  position: fixed;
+  z-index: 31;
+  width: 220px;
+  max-height: 320px;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+.connect-menu__search {
+  margin: 6px;
+  padding: 5px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font: inherit;
+}
+.connect-menu__list {
+  list-style: none;
+  margin: 0;
+  padding: 0 6px 6px;
+  overflow: auto;
+}
+.connect-menu__item {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  margin-bottom: 2px;
+  background: #f6f6f6;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+}
+.connect-menu__item:hover {
+  background: #ececec;
+}
+.connect-menu__item-category {
+  opacity: 0.6;
+  font-size: 11px;
+}
+.connect-menu__empty {
+  padding: 8px;
+  opacity: 0.6;
+}
+
 /* Ghost preview of a node armed for placement (issue #44). */
 .node-ghost {
   position: fixed;

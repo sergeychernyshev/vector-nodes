@@ -19,12 +19,14 @@ import {
   useReactFlow,
   type Connection,
   type Edge,
+  type OnConnectStartParams,
 } from '@xyflow/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { checkConnection, edgesWithoutInput, type ConnectionLike } from './connection';
+import { ConnectMenu } from './ConnectMenu';
 import { downloadText, maxAutoId } from './graph-io';
-import { planInjection, spliceEdge } from './inject';
+import { planInjection, spliceEdge, suggestSourceNodes, type SourceSuggestion } from './inject';
 import { augmentedRegistry, collapse, currentGraph, expand, type MetaNodes } from './meta';
 import { loadLibrary } from './meta-library';
 import { SubgraphEditor } from './SubgraphEditor';
@@ -82,6 +84,16 @@ export function App() {
   // the node is dropped on the next canvas click. `ghost` is its screen position.
   const [pending, setPending] = useState<string | null>(null);
   const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
+  // A connection dragged off an input and dropped on empty space (issue #45):
+  // open a node menu filtered to compatible sources, then wire the chosen node.
+  const [connectMenu, setConnectMenu] = useState<{
+    x: number;
+    y: number;
+    nodeId: string;
+    handleId: string;
+    suggestions: SourceSuggestion[];
+  } | null>(null);
+  const connecting = useRef<OnConnectStartParams | null>(null);
   const idCounter = useRef(maxAutoId(initialNodes));
   const toolbarRef = useRef<ToolbarHandle>(null);
   const { screenToFlowPosition } = useReactFlow();
@@ -292,6 +304,61 @@ export function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, [pending]);
 
+  const onConnectStart = useCallback((_: unknown, params: OnConnectStartParams) => {
+    connecting.current = params;
+  }, []);
+
+  // Dropping a connection dragged off an input into empty space opens a node
+  // menu filtered to sources whose output matches that input (issue #45).
+  const onConnectEnd = useCallback(
+    (event: MouseEvent | TouchEvent) => {
+      const info = connecting.current;
+      connecting.current = null;
+      clearError();
+      if (!info || info.handleType !== 'target' || !info.nodeId || !info.handleId) return;
+      const targetEl = event.target as Element | null;
+      if (!targetEl?.classList?.contains('react-flow__pane')) return;
+      const node = nodes.find((n) => n.id === info.nodeId);
+      const input = node?.data.inputs.find((s) => s.name === info.handleId);
+      if (!input) return;
+      const point = 'changedTouches' in event ? event.changedTouches[0] : (event as MouseEvent);
+      if (!point) return;
+      setConnectMenu({
+        x: point.clientX,
+        y: point.clientY,
+        nodeId: info.nodeId,
+        handleId: info.handleId,
+        suggestions: suggestSourceNodes(registry, input),
+      });
+    },
+    [nodes, registry, clearError],
+  );
+
+  // Choosing a source from the connect menu creates it and wires its output to
+  // the dragged input.
+  const onPickSource = useCallback(
+    (suggestion: SourceSuggestion) => {
+      if (!connectMenu) return;
+      const { x, y, nodeId, handleId } = connectMenu;
+      setConnectMenu(null);
+      const id = createNodeAt(suggestion.type, x, y);
+      if (!id) return;
+      setEdges((eds) =>
+        addEdge(
+          {
+            source: id,
+            sourceHandle: suggestion.outputHandle,
+            target: nodeId,
+            targetHandle: handleId,
+          },
+          edgesWithoutInput(eds, nodeId, handleId),
+        ),
+      );
+      clearError();
+    },
+    [connectMenu, createNodeAt, setEdges, clearError],
+  );
+
   // Group: a selection may collapse if it has no Output Geometry node.
   const canGroup =
     selectedIds.length >= 1 &&
@@ -361,6 +428,7 @@ export function App() {
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
+              onConnectStart={onConnectStart}
               onPaneClick={(e) => placeNode(e.clientX, e.clientY)}
               onEdgeClick={onEdgeClick}
               onSelectionChange={({ nodes: sel }) => setSelectedIds(sel.map((n) => n.id))}
@@ -369,7 +437,7 @@ export function App() {
                 if (name && metaNodes[name]) setEditingMeta(name);
               }}
               isValidConnection={isValidConnection}
-              onConnectEnd={clearError}
+              onConnectEnd={onConnectEnd}
               fitView
             >
               <Background />
@@ -383,6 +451,15 @@ export function App() {
           <div className="node-ghost" style={{ left: ghost.x, top: ghost.y }} aria-hidden="true">
             {items.find((i) => i.type === pending)?.label ?? pending}
           </div>
+        )}
+        {connectMenu && (
+          <ConnectMenu
+            x={connectMenu.x}
+            y={connectMenu.y}
+            suggestions={connectMenu.suggestions}
+            onPick={onPickSource}
+            onClose={() => setConnectMenu(null)}
+          />
         )}
         {errorMessage && (
           <div role="alert" className="connection-toast">

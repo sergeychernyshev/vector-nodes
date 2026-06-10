@@ -3,7 +3,7 @@ import type { Edge } from '@xyflow/react';
 import { describe, expect, it } from 'vitest';
 
 import { socketsOf } from './flow';
-import { planInjection, spliceEdge } from './inject';
+import { planInjection, spliceEdge, suggestSourceNodes } from './inject';
 
 const registry = createBasicRegistry();
 
@@ -27,6 +27,37 @@ describe('planInjection', () => {
   it('returns null when the node has no compatible input for the source', () => {
     // ConstFloat has no inputs, so nothing can feed it.
     expect(planInjection(registry.require('ConstFloat'), geomOut, geomIn)).toBeNull();
+  });
+});
+
+describe('suggestSourceNodes', () => {
+  it('only includes nodes with an output compatible with the input', () => {
+    const geomInput = socketsOf(registry.require('Translate')).inputs.find(
+      (s) => s.name === 'geometry',
+    )!;
+    const suggestions = suggestSourceNodes(registry, geomInput);
+    // Every suggestion exposes the named output and it accepts Geometry.
+    expect(suggestions.length).toBeGreaterThan(0);
+    for (const s of suggestions) {
+      const out = socketsOf(registry.require(s.type)).outputs.find(
+        (o) => o.name === s.outputHandle,
+      );
+      expect(out?.type).toBe('Geometry');
+    }
+    // PointCircle (Geometry out) qualifies; ConstFloat (Float out) does not.
+    expect(suggestions.map((s) => s.type)).toContain('PointCircle');
+    expect(suggestions.map((s) => s.type)).not.toContain('ConstFloat');
+  });
+
+  it('matches field inputs only to field outputs', () => {
+    const fieldInput = { name: 'points', type: 'Vector' as const, isArray: true };
+    const suggestions = suggestSourceNodes(registry, fieldInput);
+    for (const s of suggestions) {
+      const out = socketsOf(registry.require(s.type)).outputs.find(
+        (o) => o.name === s.outputHandle,
+      );
+      expect(out?.isArray).toBe(true);
+    }
   });
 });
 
