@@ -74,7 +74,7 @@ import { PreviewPane } from './PreviewPane';
 import { Toolbar, type ToolbarHandle } from './Toolbar';
 import { useUndoRedo } from './useUndoRedo';
 import { usePreview } from './usePreview';
-import { GhostNode, VNode } from './VNode';
+import { PlacementGhost, VNode } from './VNode';
 
 const baseRegistry = createBasicRegistry();
 
@@ -656,9 +656,7 @@ export function App() {
           />
         </div>
         {pending && ghost && ghostData && (
-          <div className="node-ghost" style={{ left: ghost.x, top: ghost.y }} aria-hidden="true">
-            <GhostNode data={ghostData} />
-          </div>
+          <PlacementGhost data={ghostData} x={ghost.x} y={ghost.y} />
         )}
         {connectMenu && (
           <ConnectMenu
