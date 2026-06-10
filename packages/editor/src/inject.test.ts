@@ -1,9 +1,9 @@
-import { createBasicRegistry } from '@vector-nodes/core';
+import { createBasicRegistry, createGraph } from '@vector-nodes/core';
 import type { Edge } from '@xyflow/react';
 import { describe, expect, it } from 'vitest';
 
-import { socketsOf } from './flow';
-import { planInjection, spliceEdge, suggestSourceNodes } from './inject';
+import { graphToFlowNodes, socketsOf } from './flow';
+import { planInjection, planReconnects, spliceEdge, suggestSourceNodes } from './inject';
 
 const registry = createBasicRegistry();
 
@@ -97,5 +97,46 @@ describe('spliceEdge', () => {
       outputHandle: 'geometry',
     });
     expect(result).toContainEqual(other);
+  });
+});
+
+describe('planReconnects', () => {
+  // pa.geometry → t.geometry → out.geometry; deleting t should bridge pa → out.
+  const nodes = graphToFlowNodes(
+    createGraph({
+      nodes: [
+        { id: 'pa', type: 'PointCircle' },
+        { id: 't', type: 'Translate' },
+        { id: 'cf', type: 'ConstFloat' },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+    }),
+    registry,
+  );
+  const chain: Edge[] = [
+    { id: 'e0', source: 'pa', sourceHandle: 'geometry', target: 't', targetHandle: 'geometry' },
+    { id: 'e1', source: 't', sourceHandle: 'geometry', target: 'out', targetHandle: 'geometry' },
+  ];
+
+  it('bridges a deleted pass-through node when sockets are compatible', () => {
+    expect(planReconnects(chain, nodes, new Set(['t']))).toEqual([
+      { source: 'pa', sourceHandle: 'geometry', target: 'out', targetHandle: 'geometry' },
+    ]);
+  });
+
+  it('does not bridge when the upstream output is incompatible with the downstream input', () => {
+    // cf.value (Float) → t.geometry is not a real link; build an incompatible chain:
+    // cf.value → t.offset (Vector input, Float ok via conversion) is compatible, but
+    // t.geometry → out.geometry downstream needs a Geometry source. cf is Float.
+    const incompatible: Edge[] = [
+      { id: 'e0', source: 'cf', sourceHandle: 'value', target: 't', targetHandle: 'offset' },
+      { id: 'e1', source: 't', sourceHandle: 'geometry', target: 'out', targetHandle: 'geometry' },
+    ];
+    expect(planReconnects(incompatible, nodes, new Set(['t']))).toEqual([]);
+  });
+
+  it('ignores links to or from other deleted nodes (no chain healing)', () => {
+    // Deleting both pa and t: the pa→t link is internal, so nothing bridges to out.
+    expect(planReconnects(chain, nodes, new Set(['pa', 't']))).toEqual([]);
   });
 });
