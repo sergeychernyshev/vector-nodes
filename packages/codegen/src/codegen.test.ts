@@ -67,6 +67,24 @@ describe('generate', () => {
     expect(pkg.dependencies['@vector-nodes/runtime']).toBe(RUNTIME_RANGE);
   });
 
+  it('emits a per-instance inputDefaults override for an unconnected input', () => {
+    const withOverride = createGraph({
+      metadata: { name: 'shifted' },
+      nodes: [
+        { id: 'pc', type: 'PointCircle', params: { radius: 1, count: 4 } },
+        // offset is unconnected; the instance overrides its default with [5,0,0].
+        { id: 't', type: 'Translate', inputDefaults: { offset: [5, 0, 0] } },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [
+        { from: ['pc', 'geometry'], to: ['t', 'geometry'] },
+        { from: ['t', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    });
+    const mod = generate(withOverride, registry);
+    expect(mod.js).toContain('[5, 0, 0]');
+  });
+
   it('derives typed arguments from network parameters', () => {
     const parameterized = createGraph({
       metadata: { name: 'shifted' },

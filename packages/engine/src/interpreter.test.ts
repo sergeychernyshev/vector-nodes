@@ -107,6 +107,47 @@ describe('evaluateGraph', () => {
     expect(out.points).toHaveLength(3);
   });
 
+  it("uses a node's per-instance inputDefaults over the socket default", () => {
+    const graph = createGraph({
+      nodes: [
+        { id: 'c', type: 'Circle', params: { radius: 1, count: 3 } },
+        { id: 't', type: 'Translate', inputDefaults: { offset: [10, 0, 0] } },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [
+        { from: ['c', 'geometry'], to: ['t', 'geometry'] },
+        { from: ['t', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    });
+    const out = evaluateGraph(graph, registry(), operators).output.geometry as Geometry;
+    const expected = translatePoints(circlePoints(1, 3), [10, 0, 0]);
+    out.points.forEach((p, i) => {
+      p.forEach((c, axis) => expect(c).toBeCloseTo(expected[i]![axis]!, 12));
+    });
+  });
+
+  it('ignores inputDefaults when the input is connected (the link wins)', () => {
+    const graph = createGraph({
+      nodes: [
+        { id: 'c', type: 'Circle', params: { radius: 1, count: 3 } },
+        // geometry has both a connection (to c, 3 points) and a stray override
+        // (a 99-point geometry). The link must win.
+        {
+          id: 't',
+          type: 'Translate',
+          inputDefaults: { geometry: geom(new Array(99).fill([0, 0, 0]) as Vector[]) },
+        },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [
+        { from: ['c', 'geometry'], to: ['t', 'geometry'] },
+        { from: ['t', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    });
+    const out = evaluateGraph(graph, registry(), operators).output.geometry as Geometry;
+    expect(out.points).toHaveLength(3);
+  });
+
   it('evaluates each node exactly once (memoized within a run)', () => {
     const circleSpy = vi.fn(operators.Circle);
     const ops: OperatorTable = { ...operators, Circle: circleSpy };

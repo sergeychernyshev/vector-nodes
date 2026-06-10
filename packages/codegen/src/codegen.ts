@@ -322,7 +322,9 @@ export function generate(graph: Graph, registry: NodeRegistry): GeneratedModule 
     const inputs: Record<string, string> = {};
     for (const socket of def.inputs) {
       const link = flat.links.find((l) => l.to[0] === id && l.to[1] === socket.name);
+      const override = node.inputDefaults?.[socket.name];
       if (link) inputs[socket.name] = `${emitNode(link.from[0])}.${link.from[1]}`;
+      else if (override !== undefined) inputs[socket.name] = lit(override);
       else if (socket.default !== undefined) inputs[socket.name] = lit(socket.default);
       else inputs[socket.name] = 'undefined';
     }

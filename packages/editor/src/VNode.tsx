@@ -1,8 +1,13 @@
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import { Handle, Position, useNodeConnections, type NodeProps } from '@xyflow/react';
 import type { ReactNode } from 'react';
 
 import { socketClassName, socketStyle, type FlowSocket, type VNodeFlowNode } from './flow';
-import { ParamControlField, ParamControls } from './ParamControls';
+import {
+  InputDefaultField,
+  isEditableInput,
+  ParamControlField,
+  ParamControls,
+} from './ParamControls';
 
 function SocketRow({
   socket,
@@ -38,6 +43,11 @@ export function VNode({ id, data, selected }: NodeProps<VNodeFlowNode>) {
   );
   const blockParams = data.paramDefs.filter((p) => !inlineParams.has(p.name));
 
+  // Inputs that currently have a link feeding them — their inline default editor
+  // is disabled, since the connection supplies the value (issue #23).
+  const connections = useNodeConnections({ handleType: 'target' });
+  const connectedInputs = new Set(connections.map((c) => c.targetHandle));
+
   const classes = ['vnode'];
   if (selected) classes.push('vnode--selected');
   if (data.nodeType.startsWith('Meta:')) classes.push('vnode--meta');
@@ -48,7 +58,21 @@ export function VNode({ id, data, selected }: NodeProps<VNodeFlowNode>) {
       <div className="vnode__body">
         <div className="vnode__col">
           {data.inputs.map((s) => (
-            <SocketRow key={s.name} socket={s} side="input" />
+            <SocketRow
+              key={s.name}
+              socket={s}
+              side="input"
+              control={
+                isEditableInput(s) ? (
+                  <InputDefaultField
+                    nodeId={id}
+                    socket={s}
+                    value={data.inputDefaults[s.name] ?? s.default}
+                    connected={connectedInputs.has(s.name)}
+                  />
+                ) : undefined
+              }
+            />
           ))}
         </div>
         <div className="vnode__col vnode__col--outputs">

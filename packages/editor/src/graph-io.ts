@@ -19,6 +19,9 @@ export function flowToGraph(nodes: VNodeFlowNode[], edges: Edge[]): Graph {
       if (Object.keys(node.data.params).length > 0) {
         graphNode.params = { ...node.data.params };
       }
+      if (Object.keys(node.data.inputDefaults).length > 0) {
+        graphNode.inputDefaults = { ...node.data.inputDefaults };
+      }
       return graphNode;
     }),
     links: edges.map((edge) => ({

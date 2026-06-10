@@ -39,6 +39,17 @@
   opacity: 0.85;
 }
 
+/* Inline default editor on an input socket row (issue #23). */
+.vnode__input-default {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.vnode__input-default--connected {
+  opacity: 0.4;
+}
+
 /* Inline param editors */
 .vnode__params {
   display: flex;

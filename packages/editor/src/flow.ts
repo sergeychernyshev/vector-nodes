@@ -21,6 +21,8 @@ export interface FlowSocket {
   name: string;
   type: SocketType;
   isArray: boolean;
+  /** Definition default for an unconnected input socket, if any. */
+  default?: unknown;
 }
 
 /** Data carried on a React Flow node mirroring a graph node. */
@@ -35,6 +37,8 @@ export interface FlowNodeData extends Record<string, unknown> {
   paramDefs: readonly ParamDefinition[];
   inputs: FlowSocket[];
   outputs: FlowSocket[];
+  /** Per-instance values for unconnected input sockets, keyed by socket name. */
+  inputDefaults: Record<string, unknown>;
 }
 
 export type VNodeFlowNode = Node<FlowNodeData>;
@@ -44,10 +48,16 @@ export function socketsOf(def: NodeDefinition): {
   inputs: FlowSocket[];
   outputs: FlowSocket[];
 } {
-  const toSocket = (s: { name: string; type: SocketType; isArray?: boolean }): FlowSocket => ({
+  const toSocket = (s: {
+    name: string;
+    type: SocketType;
+    isArray?: boolean;
+    default?: unknown;
+  }): FlowSocket => ({
     name: s.name,
     type: s.type,
     isArray: s.isArray ?? false,
+    ...(s.default !== undefined ? { default: s.default } : {}),
   });
   return {
     inputs: def.inputs.map(toSocket),
@@ -81,6 +91,7 @@ export function graphToFlowNodes(graph: Graph, registry: NodeRegistry): VNodeFlo
         paramDefs: def?.params ?? [],
         inputs: sockets.inputs,
         outputs: sockets.outputs,
+        inputDefaults: node.inputDefaults ?? {},
       },
     };
   });
@@ -118,6 +129,7 @@ export function createFlowNode(
       paramDefs: def.params,
       inputs: sockets.inputs,
       outputs: sockets.outputs,
+      inputDefaults: {},
     },
   };
 }

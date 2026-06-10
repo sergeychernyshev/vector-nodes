@@ -31,7 +31,7 @@ import { augmentedRegistry, collapse, currentGraph, expand, type MetaNodes } fro
 import { loadLibrary } from './meta-library';
 import { SubgraphEditor } from './SubgraphEditor';
 import { NodeEditContext, type NodeEditApi } from './NodeEditContext';
-import { setNodeParam } from './param';
+import { setNodeInputDefault, setNodeParam } from './param';
 import { clearGraph, loadGraph, saveGraph } from './storage';
 import {
   canAddNode,
@@ -162,6 +162,8 @@ export function App() {
   const editApi = useMemo<NodeEditApi>(
     () => ({
       setParam: (nodeId, name, value) => setNodes((nds) => setNodeParam(nds, nodeId, name, value)),
+      setInputDefault: (nodeId, name, value) =>
+        setNodes((nds) => setNodeInputDefault(nds, nodeId, name, value)),
     }),
     [setNodes],
   );

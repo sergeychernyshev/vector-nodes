@@ -42,6 +42,19 @@ describe('graphToFlowNodes', () => {
     ]);
     expect(out!.data.inputs).toEqual([{ name: 'geometry', type: 'Geometry', isArray: false }]);
   });
+
+  it('carries input socket defaults and per-instance input defaults (issue #23)', () => {
+    const [t] = graphToFlowNodes(
+      createGraph({
+        nodes: [{ id: 't', type: 'Translate', inputDefaults: { offset: [9, 0, 0] } }],
+      }),
+      registry,
+    );
+    // Definition default surfaces on the socket…
+    expect(t!.data.inputs.find((s) => s.name === 'offset')?.default).toEqual([0, 0, 0]);
+    // …and the per-instance override is carried in data.inputDefaults.
+    expect(t!.data.inputDefaults).toEqual({ offset: [9, 0, 0] });
+  });
 });
 
 describe('socketsOf', () => {

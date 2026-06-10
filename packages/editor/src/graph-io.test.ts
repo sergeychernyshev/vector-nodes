@@ -36,6 +36,20 @@ describe('flowToGraph', () => {
     ]);
     expect(result.links).toEqual([{ from: ['pa', 'geometry'], to: ['out', 'geometry'] }]);
   });
+
+  it('persists per-instance input defaults (issue #23)', () => {
+    const withDefaults = createGraph({
+      nodes: [
+        { id: 't', type: 'Translate', inputDefaults: { offset: [1, 2, 3] } },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [{ from: ['t', 'geometry'], to: ['out', 'geometry'] }],
+    });
+    const result = flowToGraph(graphToFlowNodes(withDefaults, registry), []);
+    expect(result.nodes.find((n) => n.id === 't')!.inputDefaults).toEqual({ offset: [1, 2, 3] });
+    // Nodes without overrides omit the field entirely.
+    expect(result.nodes.find((n) => n.id === 'out')!.inputDefaults).toBeUndefined();
+  });
 });
 
 describe('save → reopen round-trip', () => {

@@ -51,6 +51,22 @@ describe('conformance: compiled output equals interpreter output', () => {
     expect(runCompiled(graph, [])).toEqual(interpret(graph));
   });
 
+  it('per-instance inputDefaults on an unconnected input', () => {
+    const graph = createGraph({
+      nodes: [
+        { id: 'pc', type: 'PointCircle', params: { radius: 1, count: 6 } },
+        // offset is unconnected; the instance overrides its default.
+        { id: 't', type: 'Translate', inputDefaults: { offset: [4, -1, 2] } },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [
+        { from: ['pc', 'geometry'], to: ['t', 'geometry'] },
+        { from: ['t', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    });
+    expect(runCompiled(graph, [])).toEqual(interpret(graph));
+  });
+
   it('parameterized translate (function argument)', () => {
     const graph = createGraph({
       metadata: { name: 'shifted' },
