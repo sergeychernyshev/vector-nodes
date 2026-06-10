@@ -150,27 +150,40 @@ describe('conformance: Phase 7 nodes', () => {
     expect(runCompiled(g, [])).toEqual(interpret(g));
   });
 
-  it('CircleCurve and Polyline', () => {
-    for (const source of [
-      { id: 'c', type: 'CircleCurve', params: { radius: 2, count: 6 } },
-      {
-        id: 'c',
-        type: 'Polyline',
-        params: {
-          points: [
-            [0, 0, 0],
-            [1, 1, 0],
-          ],
-          closed: true,
+  it('CircleCurve', () => {
+    const g = geoGraph(
+      [
+        { id: 'c', type: 'CircleCurve', params: { radius: 2, count: 6 } },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      [{ from: ['c', 'geometry'], to: ['out', 'geometry'] }],
+    );
+    expect(runCompiled(g, [])).toEqual(interpret(g));
+  });
+
+  it('Polyline with a wired point field (issue #56)', () => {
+    // points is a Vector field input now, fed by a VectorArray source.
+    const g = geoGraph(
+      [
+        {
+          id: 'va',
+          type: 'VectorArray',
+          params: {
+            values: [
+              [0, 0, 0],
+              [1, 1, 0],
+            ],
+          },
         },
-      },
-    ]) {
-      const g = geoGraph(
-        [source, { id: 'out', type: 'OutputGeometry' }],
-        [{ from: ['c', 'geometry'], to: ['out', 'geometry'] }],
-      );
-      expect(runCompiled(g, [])).toEqual(interpret(g));
-    }
+        { id: 'c', type: 'Polyline', params: { closed: true } },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      [
+        { from: ['va', 'vectors'], to: ['c', 'points'] },
+        { from: ['c', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    );
+    expect(runCompiled(g, [])).toEqual(interpret(g));
   });
 
   it('MergeGeometry and BoundingBox', () => {

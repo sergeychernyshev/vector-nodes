@@ -17,7 +17,7 @@ Plus a **Parameter** node per socket type (`ParameterFloat` … `ParameterGeomet
 | **Point Grid** (`PointGrid`)                | —                                                      | `geometry`: Geometry, `points`[]: Vector | `countX`, `countY`, `spacingX`, `spacingY`    |
 | **Point Line** (`PointLine`)                | —                                                      | `geometry`: Geometry, `points`[]: Vector | `start`, `end`, `count`                       |
 | **Point Random** (`PointRandom`)            | —                                                      | `geometry`: Geometry, `points`[]: Vector | `count`, `min`, `max`, `seed`                 |
-| **Polyline** (`Polyline`)                   | —                                                      | `geometry`: Geometry                     | `points`, `closed`                            |
+| **Polyline** (`Polyline`)                   | `points`[]: Vector                                     | `geometry`: Geometry                     | `closed`                                      |
 | **Project** (`Project`)                     | `geometry`: Geometry                                   | `geometry`: Geometry                     | `mode` (orthographic/perspective), `distance` |
 | **Rotate** (`RotateGeometry`)               | `geometry`: Geometry, `axis`: Vector, `angle`: Float   | `geometry`: Geometry                     | —                                             |
 | **Scale** (`ScaleGeometry`)                 | `geometry`: Geometry, `factor`: Vector                 | `geometry`: Geometry                     | —                                             |

@@ -245,12 +245,11 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
     type: 'Polyline',
     label: 'Polyline',
     category: 'Geometry',
-    inputs: [],
+    // `points` is a Vector field input (with a handle), not a static param, so a
+    // point field can be wired in (issue #56).
+    inputs: [{ name: 'points', type: 'Vector', isArray: true, default: [] }],
     outputs: [{ name: 'geometry', type: 'Geometry' }],
-    params: [
-      { name: 'points', type: 'Vector', isArray: true, default: [] },
-      { name: 'closed', type: 'Boolean', default: false },
-    ],
+    params: [{ name: 'closed', type: 'Boolean', default: false }],
   },
 
   // Combinators (Phase 7)
