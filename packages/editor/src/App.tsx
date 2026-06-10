@@ -27,8 +27,10 @@ import { checkConnection, edgesWithoutInput, type ConnectionLike } from './conne
 import { ConnectMenu } from './ConnectMenu';
 import { downloadText, maxAutoId } from './graph-io';
 import {
+  downstreamNodeIds,
   planInjection,
   planReconnects,
+  shiftNodesRight,
   spliceEdge,
   suggestSourceNodes,
   type SourceSuggestion,
@@ -77,6 +79,9 @@ import { usePreview } from './usePreview';
 import { PlacementGhost, VNode } from './VNode';
 
 const baseRegistry = createBasicRegistry();
+
+/** Horizontal gap left between an injected node and the subtree it pushes right (issue #86). */
+const INJECT_GAP = 40;
 
 // A small seed network so the canvas opens with draggable nodes.
 const seed = createGraph({
@@ -133,6 +138,9 @@ export function App() {
   // Pointer-down state for tap-to-place: where it started and whether it began on
   // the empty pane (issue #59 — works for mouse, touch, and pen alike).
   const placeDown = useRef<{ x: number; y: number; onPane: boolean } | null>(null);
+  // A node just injected onto a connection (issue #86): once it has been measured
+  // we shift its destination subtree right to make room. Cleared after the shift.
+  const pendingShift = useRef<{ newNodeId: string; downstreamIds: Set<string> } | null>(null);
   const idCounter = useRef(maxAutoId(initialNodes));
   const toolbarRef = useRef<ToolbarHandle>(null);
   const { screenToFlowPosition } = useReactFlow();
@@ -388,10 +396,27 @@ export function App() {
       setGhost(null);
       if (!id) return;
       setEdges((eds) => spliceEdge(eds, edge, id, plan));
+      // Push the destination node and everything downstream of it right once the
+      // new node has been measured, so it doesn't overlap them (issue #86).
+      pendingShift.current = {
+        newNodeId: id,
+        downstreamIds: downstreamNodeIds(edges, edge.target),
+      };
       clearError();
     },
-    [pending, registry, library, nodes, placeNode, createNodeAt, setEdges, clearError],
+    [pending, registry, library, nodes, edges, placeNode, createNodeAt, setEdges, clearError],
   );
+
+  // Once an injected node (issue #86) has a measured width, shift its destination
+  // subtree right by that width plus a gap. Runs once per injection, then clears.
+  useEffect(() => {
+    const shift = pendingShift.current;
+    if (!shift) return;
+    const width = nodes.find((n) => n.id === shift.newNodeId)?.measured?.width;
+    if (!width) return; // not measured yet — wait for the next nodes update
+    pendingShift.current = null;
+    setNodes((nds) => shiftNodesRight(nds, shift.downstreamIds, width + INJECT_GAP));
+  }, [nodes, setNodes]);
 
   // Esc cancels an armed placement.
   useEffect(() => {
