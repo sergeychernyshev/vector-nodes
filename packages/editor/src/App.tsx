@@ -21,7 +21,7 @@ import {
 } from '@xyflow/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { checkConnection, type ConnectionLike } from './connection';
+import { checkConnection, edgesWithoutInput, type ConnectionLike } from './connection';
 import { downloadText, maxAutoId } from './graph-io';
 import { augmentedRegistry, collapse, currentGraph, expand, type MetaNodes } from './meta';
 import { loadLibrary } from './meta-library';
@@ -117,7 +117,7 @@ export function App() {
 
   const isValidConnection = useCallback(
     (connection: ConnectionLike) => {
-      const result = checkConnection(connection, nodes, edges);
+      const result = checkConnection(connection, nodes);
       const reason = result.ok ? null : (result.reason ?? 'Invalid connection.');
       if (lastReason.current !== reason) {
         lastReason.current = reason;
@@ -125,12 +125,15 @@ export function App() {
       }
       return result.ok;
     },
-    [nodes, edges],
+    [nodes],
   );
 
   const onConnect = useCallback(
     (connection: Connection) => {
-      setEdges((eds) => addEdge(connection, eds));
+      // Replace any existing link into this input (issue #41), then add the new one.
+      setEdges((eds) =>
+        addEdge(connection, edgesWithoutInput(eds, connection.target, connection.targetHandle)),
+      );
       clearError();
     },
     [setEdges, clearError],

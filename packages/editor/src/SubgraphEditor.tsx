@@ -10,7 +10,7 @@ import {
 } from '@xyflow/react';
 import { useCallback, useMemo, useState } from 'react';
 
-import { checkConnection, type ConnectionLike } from './connection';
+import { checkConnection, edgesWithoutInput, type ConnectionLike } from './connection';
 import { VNODE_TYPE, type VNodeFlowNode } from './flow';
 import { addToLibrary } from './meta-library';
 import { flowToSubgraph, subgraphToFlow } from './meta';
@@ -54,10 +54,14 @@ export function SubgraphEditor({
   );
 
   const isValidConnection = useCallback(
-    (c: ConnectionLike) => checkConnection(c, nodes, edges).ok,
-    [nodes, edges],
+    (c: ConnectionLike) => checkConnection(c, nodes).ok,
+    [nodes],
   );
-  const onConnect = useCallback((c: Connection) => setEdges((eds) => addEdge(c, eds)), [setEdges]);
+  const onConnect = useCallback(
+    (c: Connection) =>
+      setEdges((eds) => addEdge(c, edgesWithoutInput(eds, c.target, c.targetHandle))),
+    [setEdges],
+  );
 
   const currentDef = useCallback(
     () => flowToSubgraph(definition, nodes, edges),
