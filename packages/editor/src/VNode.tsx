@@ -1,4 +1,4 @@
-import { Handle, Position, useNodeConnections, type NodeProps } from '@xyflow/react';
+import { Handle, Position, useNodeConnections, useViewport, type NodeProps } from '@xyflow/react';
 import type { ReactNode } from 'react';
 
 import {
@@ -140,4 +140,28 @@ export function VNode({ id, data, selected }: NodeProps<VNodeFlowNode>) {
  */
 export function GhostNode({ data }: { data: FlowNodeData }) {
   return <NodeCard id="ghost" data={data} ghost connectedInputs={new Set()} />;
+}
+
+/**
+ * The placement ghost positioned at the cursor and scaled by the canvas zoom, so
+ * it's the same size it will be once dropped onto the canvas. Reads the live
+ * viewport, so only this overlay re-renders on pan/zoom (and only while a node is
+ * armed for placement).
+ */
+export function PlacementGhost({ data, x, y }: { data: FlowNodeData; x: number; y: number }) {
+  const { zoom } = useViewport();
+  return (
+    <div
+      className="node-ghost"
+      style={{
+        left: x + 12,
+        top: y + 12,
+        transform: `scale(${zoom})`,
+        transformOrigin: 'top left',
+      }}
+      aria-hidden="true"
+    >
+      <GhostNode data={data} />
+    </div>
+  );
 }
