@@ -39,6 +39,8 @@ export interface Geometry {
   points: Point[];
   curves: Curve[];
   meshes: Mesh[];
+  /** Optional display color applied to the whole bundle (issue #55). */
+  color?: Color;
 }
 
 /** The origin `[0, 0, 0]`. */

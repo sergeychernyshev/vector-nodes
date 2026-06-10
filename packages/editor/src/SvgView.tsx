@@ -13,6 +13,12 @@ const COLORS = {
   mesh: '#8a8f98',
 };
 
+/** A CSS `rgb(...)` string from an RGBA geometry color (0..1 components). */
+function rgbCss([r, g, b]: readonly number[]): string {
+  const ch = (v = 0) => Math.max(0, Math.min(255, Math.round(v * 255)));
+  return `rgb(${ch(r)}, ${ch(g)}, ${ch(b)})`;
+}
+
 function pointsAttr(points: readonly Point2[]): string {
   return points.map(([x, y]) => `${x},${y}`).join(' ');
 }
@@ -32,6 +38,11 @@ export function SvgView({ geometry }: SvgViewProps) {
   const pointRadius = extent * 0.012;
   // Flip Y for display (SVG y grows downward; we want y-up).
   const flip = `scale(1,-1) translate(0,${-(bounds.minY + bounds.maxY)})`;
+  // A bundle color (issue #55) overrides the per-kind defaults.
+  const tint = geometry.color ? rgbCss(geometry.color) : null;
+  const meshColor = tint ?? COLORS.mesh;
+  const curveColor = tint ?? COLORS.curve;
+  const pointColor = tint ?? COLORS.point;
 
   return (
     <svg
@@ -45,9 +56,9 @@ export function SvgView({ geometry }: SvgViewProps) {
           <polygon
             key={`m${i}`}
             points={pointsAttr(polygon)}
-            fill={COLORS.mesh}
+            fill={meshColor}
             fillOpacity={0.5}
-            stroke={COLORS.mesh}
+            stroke={meshColor}
             strokeWidth={strokeWidth}
           />
         ))}
@@ -57,7 +68,7 @@ export function SvgView({ geometry }: SvgViewProps) {
               key={`c${i}`}
               points={pointsAttr(curve.points)}
               fill="none"
-              stroke={COLORS.curve}
+              stroke={curveColor}
               strokeWidth={strokeWidth}
             />
           ) : (
@@ -65,7 +76,7 @@ export function SvgView({ geometry }: SvgViewProps) {
               key={`c${i}`}
               points={pointsAttr(curve.points)}
               fill="none"
-              stroke={COLORS.curve}
+              stroke={curveColor}
               strokeWidth={strokeWidth}
             />
           ),
@@ -76,7 +87,7 @@ export function SvgView({ geometry }: SvgViewProps) {
             className="svg-points"
             d={pointsPathD(scene.points)}
             fill="none"
-            stroke={COLORS.point}
+            stroke={pointColor}
             strokeWidth={pointRadius * 2}
             strokeLinecap="round"
           />

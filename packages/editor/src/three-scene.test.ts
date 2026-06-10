@@ -2,7 +2,14 @@ import type { Geometry } from '@vector-nodes/runtime';
 import { Line, LineLoop, Mesh as ThreeMesh, Points } from 'three';
 import { describe, expect, it } from 'vitest';
 
-import { buildGeometryGroup, buildMesh, disposeGroup, triangulateFace } from './three-scene';
+import {
+  buildGeometryGroup,
+  buildMesh,
+  colorToHex,
+  disposeGroup,
+  triangulateFace,
+} from './three-scene';
+import { PointsMaterial } from 'three';
 
 function geometry(partial: Partial<Geometry>): Geometry {
   return { points: [], curves: [], meshes: [], ...partial };
@@ -18,7 +25,21 @@ describe('triangulateFace', () => {
   });
 });
 
+describe('colorToHex (issue #55)', () => {
+  it('packs RGBA components (0..1) into 0xRRGGBB, ignoring alpha', () => {
+    expect(colorToHex([1, 0, 0, 1])).toBe(0xff0000);
+    expect(colorToHex([0, 1, 0, 1])).toBe(0x00ff00);
+    expect(colorToHex([0, 0, 1, 0.5])).toBe(0x0000ff);
+  });
+});
+
 describe('buildGeometryGroup', () => {
+  it("applies a bundle color to its objects' materials (issue #55)", () => {
+    const group = buildGeometryGroup(geometry({ points: [[0, 0, 0]], color: [1, 0, 0, 1] }));
+    const points = group.children.find((c) => c instanceof Points) as Points;
+    expect((points.material as PointsMaterial).color.getHex()).toBe(0xff0000);
+  });
+
   it('adds a single Points object for bare points', () => {
     const group = buildGeometryGroup(
       geometry({

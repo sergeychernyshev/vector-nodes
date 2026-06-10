@@ -232,6 +232,11 @@ const EMITTERS: Record<string, Emitter> = {
       .join(', ')}]) }`,
     uses: ['mergeAll'],
   }),
+  ColorGeometry: ({ inputs }) => ({
+    expr: `{ geometry: colorGeometry(${inputs.geometry}, ${inputs.color}) }`,
+    uses: ['colorGeometry'],
+  }),
+
   BoundingBox: ({ inputs }) => ({
     expr: `{ geometry: { points: boundingBox(${inputs.geometry}), curves: [], meshes: [] } }`,
     uses: ['boundingBox'],

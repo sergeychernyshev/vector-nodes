@@ -272,6 +272,17 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
     params: [],
   },
   {
+    type: 'ColorGeometry',
+    label: 'Set Color',
+    category: 'Geometry',
+    inputs: [
+      { name: 'geometry', type: 'Geometry' },
+      { name: 'color', type: 'Color', default: [1, 1, 1, 1] },
+    ],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
+  },
+  {
     type: 'InstanceOnPoints',
     label: 'Instance on Points',
     category: 'Geometry',
