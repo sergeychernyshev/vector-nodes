@@ -90,3 +90,142 @@ describe('conformance: compiled output equals interpreter output', () => {
     expect(runCompiled(graph, [])).toEqual(interpret(graph));
   });
 });
+
+/** A graph whose output is `geometry`, used for one-shot conformance checks. */
+function geoGraph(
+  nodes: Parameters<typeof createGraph>[0]['nodes'],
+  links: Parameters<typeof createGraph>[0]['links'],
+): Graph {
+  return createGraph({ nodes, links });
+}
+
+describe('conformance: Phase 7 nodes', () => {
+  it('RotateGeometry', () => {
+    const g = geoGraph(
+      [
+        { id: 'pc', type: 'PointCircle', params: { radius: 1, count: 5 } },
+        { id: 'a', type: 'ConstFloat', params: { value: 1.2 } },
+        { id: 'r', type: 'RotateGeometry' },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      [
+        { from: ['pc', 'geometry'], to: ['r', 'geometry'] },
+        { from: ['a', 'value'], to: ['r', 'angle'] },
+        { from: ['r', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    );
+    expect(runCompiled(g, [])).toEqual(interpret(g));
+  });
+
+  it('ScaleGeometry', () => {
+    const g = geoGraph(
+      [
+        { id: 'pc', type: 'PointCircle', params: { radius: 1, count: 5 } },
+        { id: 'v', type: 'ConstVector', params: { value: [2, 0.5, 1] } },
+        { id: 's', type: 'ScaleGeometry' },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      [
+        { from: ['pc', 'geometry'], to: ['s', 'geometry'] },
+        { from: ['v', 'value'], to: ['s', 'factor'] },
+        { from: ['s', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    );
+    expect(runCompiled(g, [])).toEqual(interpret(g));
+  });
+
+  it('CircleCurve and Polyline', () => {
+    for (const source of [
+      { id: 'c', type: 'CircleCurve', params: { radius: 2, count: 6 } },
+      {
+        id: 'c',
+        type: 'Polyline',
+        params: {
+          points: [
+            [0, 0, 0],
+            [1, 1, 0],
+          ],
+          closed: true,
+        },
+      },
+    ]) {
+      const g = geoGraph(
+        [source, { id: 'out', type: 'OutputGeometry' }],
+        [{ from: ['c', 'geometry'], to: ['out', 'geometry'] }],
+      );
+      expect(runCompiled(g, [])).toEqual(interpret(g));
+    }
+  });
+
+  it('MergeGeometry and BoundingBox', () => {
+    const g = geoGraph(
+      [
+        { id: 'pc', type: 'PointCircle', params: { radius: 1, count: 4 } },
+        { id: 'cc', type: 'CircleCurve', params: { radius: 3, count: 5 } },
+        { id: 'm', type: 'MergeGeometry' },
+        { id: 'bb', type: 'BoundingBox' },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      [
+        { from: ['pc', 'geometry'], to: ['m', 'a'] },
+        { from: ['cc', 'geometry'], to: ['m', 'b'] },
+        { from: ['m', 'geometry'], to: ['bb', 'geometry'] },
+        { from: ['bb', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    );
+    expect(runCompiled(g, [])).toEqual(interpret(g));
+  });
+
+  it('InstanceOnPoints', () => {
+    const g = geoGraph(
+      [
+        { id: 'cc', type: 'CircleCurve', params: { radius: 0.3, count: 4 } },
+        { id: 'pg', type: 'PointGrid', params: { countX: 2, countY: 2, spacingX: 2, spacingY: 2 } },
+        { id: 'inst', type: 'InstanceOnPoints' },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      [
+        { from: ['cc', 'geometry'], to: ['inst', 'geometry'] },
+        { from: ['pg', 'points'], to: ['inst', 'points'] },
+        { from: ['inst', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    );
+    expect(runCompiled(g, [])).toEqual(interpret(g));
+  });
+
+  it.each([
+    [
+      'MathFloat',
+      { id: 'u', type: 'MathFloat', params: { operation: 'multiply' } },
+      [
+        ['a', 'a'],
+        ['b', 'b'],
+      ],
+    ],
+    ['MapRange', { id: 'u', type: 'MapRange' }, [['a', 'value']]],
+    ['Clamp', { id: 'u', type: 'Clamp' }, [['a', 'value']]],
+  ] as const)('utility node %s routed into geometry', (_label, util, wires) => {
+    const g = geoGraph(
+      [
+        { id: 'a', type: 'ConstFloat', params: { value: 5 } },
+        { id: 'b', type: 'ConstFloat', params: { value: 0.5 } },
+        util,
+        { id: 'cx', type: 'CombineXYZ' },
+        { id: 'pc', type: 'PointCircle', params: { radius: 1, count: 4 } },
+        { id: 't', type: 'Translate' },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      [
+        ...wires.map(([from, to]) => ({
+          from: [from, 'value'] as [string, string],
+          to: ['u', to] as [string, string],
+        })),
+        { from: ['u', 'value'], to: ['cx', 'x'] },
+        { from: ['cx', 'vector'], to: ['t', 'offset'] },
+        { from: ['pc', 'geometry'], to: ['t', 'geometry'] },
+        { from: ['t', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    );
+    expect(runCompiled(g, [])).toEqual(interpret(g));
+  });
+});

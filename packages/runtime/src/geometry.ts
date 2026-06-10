@@ -1,4 +1,4 @@
-import { ORIGIN, type Geometry, type Point, type Vector } from './types.js';
+import { ORIGIN, type Curve, type Geometry, type Point, type Vector } from './types.js';
 import { add } from './vector.js';
 
 /** Apply `fn` to every point in a geometry bundle (points, curves, meshes). */
@@ -164,4 +164,72 @@ export function sampleCubicBezier(
     out.push(cubicBezier(p0, p1, p2, p3, i / n));
   }
   return out;
+}
+
+// --- Curves & combinators -----------------------------------------------------
+
+/** A closed polygon of `count` points on a circle of `radius` in the X–Y plane. */
+export function circleCurve(radius: number, count: number): Curve {
+  return { points: circlePoints(radius, count), closed: true };
+}
+
+/** An open polyline through the given points. */
+export function polyline(points: readonly Vector[], closed = false): Curve {
+  return { points: fromList(points), closed };
+}
+
+/** A geometry bundle containing a single curve. */
+export function curveGeometry(curve: Curve): Geometry {
+  return { points: [], curves: [curve], meshes: [] };
+}
+
+/** Concatenate two geometry bundles. */
+export function mergeGeometry(a: Geometry, b: Geometry): Geometry {
+  return {
+    points: [...a.points, ...b.points],
+    curves: [...a.curves, ...b.curves],
+    meshes: [...a.meshes, ...b.meshes],
+  };
+}
+
+/** Every point referenced by a geometry bundle (points, curves, mesh positions). */
+export function allPoints(geo: Geometry): Point[] {
+  return [
+    ...geo.points,
+    ...geo.curves.flatMap((c) => c.points),
+    ...geo.meshes.flatMap((m) => m.positions),
+  ];
+}
+
+/** The 8 corners of a geometry's axis-aligned bounding box (empty if no points). */
+export function boundingBox(geo: Geometry): Point[] {
+  const pts = allPoints(geo);
+  if (pts.length === 0) return [];
+  let minX = Infinity;
+  let minY = Infinity;
+  let minZ = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  let maxZ = -Infinity;
+  for (const [x, y, z] of pts) {
+    if (x < minX) minX = x;
+    if (y < minY) minY = y;
+    if (z < minZ) minZ = z;
+    if (x > maxX) maxX = x;
+    if (y > maxY) maxY = y;
+    if (z > maxZ) maxZ = z;
+  }
+  const xs = [minX, maxX];
+  const ys = [minY, maxY];
+  const zs = [minZ, maxZ];
+  const corners: Point[] = [];
+  for (const x of xs) for (const y of ys) for (const z of zs) corners.push([x, y, z]);
+  return corners;
+}
+
+/** Place a copy of `instance` at every point in `points`, merged into one bundle. */
+export function instanceOnPoints(instance: Geometry, points: readonly Vector[]): Geometry {
+  return points
+    .map((p) => transformGeometry(instance, (q) => [q[0] + p[0], q[1] + p[1], q[2] + p[2]]))
+    .reduce(mergeGeometry, { points: [], curves: [], meshes: [] });
 }

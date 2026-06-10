@@ -185,6 +185,58 @@ const EMITTERS: Record<string, Emitter> = {
       uses: ['sampleCubicBezier'],
     };
   },
+  RotateGeometry: ({ inputs }) => ({
+    expr: `{ geometry: transformGeometry(${inputs.geometry}, (p) => rotateAxisAngle(p, ${inputs.axis}, ${inputs.angle})) }`,
+    uses: ['transformGeometry', 'rotateAxisAngle'],
+  }),
+  ScaleGeometry: ({ inputs }) => ({
+    expr: `{ geometry: transformGeometry(${inputs.geometry}, (p) => scaleAxes(p, ${inputs.factor})) }`,
+    uses: ['transformGeometry', 'scaleAxes'],
+  }),
+  CircleCurve: ({ params }) => ({
+    expr: `{ geometry: curveGeometry(circleCurve(${lit(params.radius)}, ${lit(params.count)})) }`,
+    uses: ['curveGeometry', 'circleCurve'],
+  }),
+  Polyline: ({ params }) => ({
+    expr: `{ geometry: curveGeometry(polyline(${lit(params.points)}, ${lit(params.closed)})) }`,
+    uses: ['curveGeometry', 'polyline'],
+  }),
+  MergeGeometry: ({ inputs }) => ({
+    expr: `{ geometry: mergeGeometry(${inputs.a}, ${inputs.b}) }`,
+    uses: ['mergeGeometry'],
+  }),
+  BoundingBox: ({ inputs }) => ({
+    expr: `{ geometry: { points: boundingBox(${inputs.geometry}), curves: [], meshes: [] } }`,
+    uses: ['boundingBox'],
+  }),
+  InstanceOnPoints: ({ inputs }) => ({
+    expr: `{ geometry: instanceOnPoints(${inputs.geometry}, ${inputs.points}) }`,
+    uses: ['instanceOnPoints'],
+  }),
+  MathFloat: ({ inputs, params }) => {
+    const a = inputs.a!;
+    const b = inputs.b!;
+    const exprs: Record<string, string> = {
+      add: `${a} + ${b}`,
+      subtract: `${a} - ${b}`,
+      multiply: `${a} * ${b}`,
+      divide: `${a} / ${b}`,
+      min: `Math.min(${a}, ${b})`,
+      max: `Math.max(${a}, ${b})`,
+      power: `Math.pow(${a}, ${b})`,
+    };
+    const op = exprs[String(params.operation)];
+    if (!op) throw new Error(`codegen: unknown MathFloat operation "${String(params.operation)}".`);
+    return { expr: `{ value: ${op} }`, uses: [] };
+  },
+  MapRange: ({ inputs }) => ({
+    expr: `{ value: mapRange(${inputs.value}, ${inputs.fromMin}, ${inputs.fromMax}, ${inputs.toMin}, ${inputs.toMax}) }`,
+    uses: ['mapRange'],
+  }),
+  Clamp: ({ inputs }) => ({
+    expr: `{ value: clamp(${inputs.value}, ${inputs.min}, ${inputs.max}) }`,
+    uses: ['clamp'],
+  }),
 };
 
 /**
