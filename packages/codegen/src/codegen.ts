@@ -3,7 +3,9 @@ import {
   flattenMetaNodes,
   getOutputNode,
   isParameterNodeType,
+  orderedVariadicKeys,
   resolveParamDefaults,
+  variadicSocketIndex,
   type Graph,
   type GraphNode,
   type NodeRegistry,
@@ -225,8 +227,10 @@ const EMITTERS: Record<string, Emitter> = {
     uses: ['curveGeometry', 'polyline'],
   }),
   MergeGeometry: ({ inputs }) => ({
-    expr: `{ geometry: mergeGeometry(${inputs.a}, ${inputs.b}) }`,
-    uses: ['mergeGeometry'],
+    expr: `{ geometry: mergeAll([${orderedVariadicKeys(Object.keys(inputs), 'geometry')
+      .map((k) => inputs[k])
+      .join(', ')}]) }`,
+    uses: ['mergeAll'],
   }),
   BoundingBox: ({ inputs }) => ({
     expr: `{ geometry: { points: boundingBox(${inputs.geometry}), curves: [], meshes: [] } }`,
@@ -327,6 +331,14 @@ export function generate(graph: Graph, registry: NodeRegistry): GeneratedModule 
       else if (override !== undefined) inputs[socket.name] = lit(override);
       else if (socket.default !== undefined) inputs[socket.name] = lit(socket.default);
       else inputs[socket.name] = 'undefined';
+    }
+    // Variadic inputs (issue #65): every link into a `${name}n` socket.
+    if (def.variadicInput) {
+      for (const link of flat.links) {
+        if (link.to[0] === id && variadicSocketIndex(def, link.to[1]) !== null) {
+          inputs[link.to[1]] = `${emitNode(link.from[0])}.${link.from[1]}`;
+        }
+      }
     }
     const params = { ...resolveParamDefaults(def), ...node.params };
 

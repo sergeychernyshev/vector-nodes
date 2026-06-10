@@ -64,6 +64,7 @@ import {
   hasOutputNode,
   isTap,
   paletteItems,
+  reconcileVariadicInputs,
   resolveAddableDef,
   VNODE_TYPE,
   type VNodeFlowNode,
@@ -160,6 +161,12 @@ export function App() {
   useEffect(() => {
     saveGraph(graph);
   }, [graph]);
+
+  // Grow/shrink variadic nodes' input handles as their connections change
+  // (issue #65). reconcile returns the same array when nothing changed.
+  useEffect(() => {
+    setNodes((nds) => reconcileVariadicInputs(nds, edges, registry));
+  }, [edges, registry, setNodes]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const lastReason = useRef<string | null>(null);
 

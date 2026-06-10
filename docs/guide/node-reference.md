@@ -12,7 +12,7 @@ Plus a **Parameter** node per socket type (`ParameterFloat` … `ParameterGeomet
 | **Bounding Box** (`BoundingBox`)            | `geometry`: Geometry                                   | `geometry`: Geometry                     | —                                             |
 | **Circle** (`CircleCurve`)                  | —                                                      | `geometry`: Geometry                     | `radius`, `count`                             |
 | **Instance on Points** (`InstanceOnPoints`) | `geometry`: Geometry, `points`[]: Vector               | `geometry`: Geometry                     | —                                             |
-| **Merge** (`MergeGeometry`)                 | `a`: Geometry, `b`: Geometry                           | `geometry`: Geometry                     | —                                             |
+| **Merge** (`MergeGeometry`)                 | `geometry0`, `geometry1`, … : Geometry (variadic)      | `geometry`: Geometry                     | —                                             |
 | **Point Circle** (`PointCircle`)            | —                                                      | `geometry`: Geometry, `points`[]: Vector | `radius`, `count`                             |
 | **Point Grid** (`PointGrid`)                | —                                                      | `geometry`: Geometry, `points`[]: Vector | `countX`, `countY`, `spacingX`, `spacingY`    |
 | **Point Line** (`PointLine`)                | —                                                      | `geometry`: Geometry, `points`[]: Vector | `start`, `end`, `count`                       |

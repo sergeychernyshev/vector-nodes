@@ -196,13 +196,47 @@ describe('conformance: Phase 7 nodes', () => {
         { id: 'out', type: 'OutputGeometry' },
       ],
       [
-        { from: ['pc', 'geometry'], to: ['m', 'a'] },
-        { from: ['cc', 'geometry'], to: ['m', 'b'] },
+        { from: ['pc', 'geometry'], to: ['m', 'geometry0'] },
+        { from: ['cc', 'geometry'], to: ['m', 'geometry1'] },
         { from: ['m', 'geometry'], to: ['bb', 'geometry'] },
         { from: ['bb', 'geometry'], to: ['out', 'geometry'] },
       ],
     );
     expect(runCompiled(g, [])).toEqual(interpret(g));
+  });
+
+  it('MergeGeometry with three variadic inputs (issue #65)', () => {
+    const g = geoGraph(
+      [
+        { id: 'a', type: 'PointCircle', params: { radius: 1, count: 3 } },
+        { id: 'b', type: 'PointCircle', params: { radius: 2, count: 4 } },
+        { id: 'c', type: 'CircleCurve', params: { radius: 3, count: 5 } },
+        { id: 'm', type: 'MergeGeometry' },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      [
+        { from: ['a', 'geometry'], to: ['m', 'geometry0'] },
+        { from: ['b', 'geometry'], to: ['m', 'geometry1'] },
+        { from: ['c', 'geometry'], to: ['m', 'geometry2'] },
+        { from: ['m', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    );
+    const result = runCompiled(g, []) as { points: unknown[]; curves: unknown[] };
+    expect(result).toEqual(interpret(g));
+    expect(result.points).toHaveLength(7); // 3 + 4
+    expect(result.curves).toHaveLength(1);
+  });
+
+  it('MergeGeometry with no inputs yields empty geometry (issue #65)', () => {
+    const g = geoGraph(
+      [
+        { id: 'm', type: 'MergeGeometry' },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      [{ from: ['m', 'geometry'], to: ['out', 'geometry'] }],
+    );
+    expect(runCompiled(g, [])).toEqual(interpret(g));
+    expect(runCompiled(g, [])).toEqual({ points: [], curves: [], meshes: [] });
   });
 
   it('InstanceOnPoints', () => {

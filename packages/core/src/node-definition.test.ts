@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveParamDefaults, type NodeDefinition } from './node-definition';
+import {
+  orderedVariadicKeys,
+  parseVariadicIndex,
+  resolveInputSocket,
+  resolveParamDefaults,
+  variadicSocketIndex,
+  type NodeDefinition,
+} from './node-definition';
 
 const vectorMath: NodeDefinition = {
   type: 'VectorMath',
@@ -38,5 +45,42 @@ describe('resolveParamDefaults', () => {
       params: [],
     };
     expect(resolveParamDefaults(def)).toEqual({});
+  });
+});
+
+describe('variadic inputs (issue #65)', () => {
+  const merge: NodeDefinition = {
+    type: 'MergeGeometry',
+    inputs: [],
+    variadicInput: { name: 'geometry', type: 'Geometry' },
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
+  };
+
+  it('parseVariadicIndex parses only `${prefix}<digits>`', () => {
+    expect(parseVariadicIndex('geometry', 'geometry0')).toBe(0);
+    expect(parseVariadicIndex('geometry', 'geometry12')).toBe(12);
+    expect(parseVariadicIndex('geometry', 'geometry')).toBeNull();
+    expect(parseVariadicIndex('geometry', 'geometryX')).toBeNull();
+    expect(parseVariadicIndex('geometry', 'other0')).toBeNull();
+  });
+
+  it('variadicSocketIndex respects the definition (null when not variadic)', () => {
+    expect(variadicSocketIndex(merge, 'geometry3')).toBe(3);
+    expect(variadicSocketIndex(vectorMath, 'a')).toBeNull();
+  });
+
+  it('resolveInputSocket synthesizes a variadic socket of the variadic type', () => {
+    expect(resolveInputSocket(merge, 'geometry2')).toEqual({ name: 'geometry2', type: 'Geometry' });
+    expect(resolveInputSocket(merge, 'nope')).toBeUndefined();
+    expect(resolveInputSocket(vectorMath, 'a')).toEqual({ name: 'a', type: 'Vector' });
+  });
+
+  it('orderedVariadicKeys sorts matching keys by numeric index', () => {
+    expect(orderedVariadicKeys(['geometry2', 'geometry0', 'x', 'geometry10'], 'geometry')).toEqual([
+      'geometry0',
+      'geometry2',
+      'geometry10',
+    ]);
   });
 });

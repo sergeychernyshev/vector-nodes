@@ -192,6 +192,11 @@ export function mergeGeometry(a: Geometry, b: Geometry): Geometry {
   };
 }
 
+/** Concatenate any number of geometry bundles (empty when none). */
+export function mergeAll(geometries: readonly Geometry[]): Geometry {
+  return geometries.reduce(mergeGeometry, { points: [], curves: [], meshes: [] });
+}
+
 /** Every point referenced by a geometry bundle (points, curves, mesh positions). */
 export function allPoints(geo: Geometry): Point[] {
   return [

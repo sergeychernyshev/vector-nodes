@@ -7,7 +7,11 @@ import {
   type Graph,
   type GraphLink,
 } from './graph.js';
-import type { NodeDefinition, SocketDefinition } from './node-definition.js';
+import {
+  resolveInputSocket,
+  type NodeDefinition,
+  type SocketDefinition,
+} from './node-definition.js';
 import type { NodeRegistry } from './registry.js';
 
 /** The kinds of static-validation problems a graph can have. */
@@ -153,7 +157,7 @@ export function validateGraph(graph: Graph, registry: NodeRegistry): GraphValida
     if (fromDef === undefined || toDef === undefined) return;
 
     const fromSocket = findSocket(fromDef.outputs, endpointSocket(link.from));
-    const toSocket = findSocket(toDef.inputs, endpointSocket(link.to));
+    const toSocket = resolveInputSocket(toDef, endpointSocket(link.to));
     if (fromSocket === undefined) {
       issues.push({
         code: 'dangling-link-socket',

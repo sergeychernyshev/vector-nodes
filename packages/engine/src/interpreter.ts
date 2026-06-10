@@ -3,6 +3,7 @@ import {
   flattenMetaNodes,
   getOutputNode,
   resolveParamDefaults,
+  variadicSocketIndex,
   type Graph,
   type GraphNode,
   type NodeDefinition,
@@ -79,6 +80,14 @@ export function evaluateGraph(
         inputs[socket.name] = node.inputDefaults[socket.name];
       } else if (socket.default !== undefined) {
         inputs[socket.name] = socket.default;
+      }
+    }
+    // Variadic inputs (issue #65): every link into a `${name}n` socket.
+    if (def.variadicInput) {
+      for (const link of graph.links) {
+        if (link.to[0] === node.id && variadicSocketIndex(def, link.to[1]) !== null) {
+          inputs[link.to[1]] = evaluateNode(link.from[0])[link.from[1]];
+        }
       }
     }
     return inputs;
