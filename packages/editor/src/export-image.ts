@@ -1,7 +1,4 @@
-import { toPng, toSvg } from 'html-to-image';
-
-/** Supported raster/vector formats for the node-network image export (issue #82). */
-export type ImageFormat = 'png' | 'svg';
+import { toPng } from 'html-to-image';
 
 /** Fraction of the export canvas left as a margin around the framed nodes. */
 export const IMAGE_PADDING = 0.12;
@@ -33,18 +30,17 @@ export interface CaptureTransform {
 }
 
 /**
- * Render the React Flow viewport element to a data URL of the requested format,
- * framing the content with the given size and transform. Faithful to the live
- * canvas: html-to-image rasterizes/serializes the actual rendered DOM.
+ * Rasterize the React Flow viewport element to a PNG data URL, framing the
+ * content with the given size and transform. Faithful to the live canvas:
+ * html-to-image rasterizes the actual rendered DOM.
  */
 export function captureViewport(
   viewport: HTMLElement,
-  format: ImageFormat,
   size: { width: number; height: number },
   transform: CaptureTransform,
   backgroundColor: string,
 ): Promise<string> {
-  const options = {
+  return toPng(viewport, {
     backgroundColor,
     width: size.width,
     height: size.height,
@@ -53,8 +49,7 @@ export function captureViewport(
       height: `${size.height}px`,
       transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.zoom})`,
     },
-  };
-  return format === 'png' ? toPng(viewport, options) : toSvg(viewport, options);
+  });
 }
 
 /** Trigger a browser download of a data URL under `filename`. */
