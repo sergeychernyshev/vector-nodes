@@ -29,6 +29,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { checkConnection, edgesWithoutInput, type ConnectionLike } from './connection';
 import { ConnectMenu } from './ConnectMenu';
 import { captureViewport, downloadDataUrl, exportImageSize, IMAGE_PADDING } from './export-image';
+import { cloneFlowNode, rewireForAltDrag } from './duplicate';
 import { downloadText, maxAutoId } from './graph-io';
 import {
   downstreamNodeIds,
@@ -488,6 +489,22 @@ export function App() {
   // store, so a new inline function each render would loop (max update depth).
   const onDragStart = useCallback(() => takeSnapshot(), [takeSnapshot]);
 
+  // Alt+drag duplicates the node (issue #98): a clone is left at the origin with
+  // the original's full wiring, while the dragged node is pulled away as a copy
+  // carrying duplicates of its input connections (no outputs). Built only from
+  // the drag argument + functional updaters, so the handler stays stable.
+  const onNodeDragStart = useCallback(
+    (event: MouseEvent | TouchEvent, node: VNodeFlowNode) => {
+      takeSnapshot();
+      if (!event.altKey) return;
+      const cloneId = `n${(idCounter.current += 1)}`;
+      const clone = cloneFlowNode(node, cloneId);
+      setNodes((nds) => [...nds, clone]);
+      setEdges((eds) => rewireForAltDrag(eds, node.id, cloneId, (e) => `${e.id}__${cloneId}`));
+    },
+    [takeSnapshot, setNodes, setEdges],
+  );
+
   // Dropping a connection dragged off an input into empty space opens a node
   // menu filtered to sources whose output matches that input (issue #45).
   const onConnectEnd = useCallback(
@@ -698,7 +715,7 @@ export function App() {
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onNodesDelete={onNodesDelete}
-                onNodeDragStart={onDragStart}
+                onNodeDragStart={onNodeDragStart}
                 onSelectionDragStart={onDragStart}
                 onConnect={onConnect}
                 onConnectStart={onConnectStart}
