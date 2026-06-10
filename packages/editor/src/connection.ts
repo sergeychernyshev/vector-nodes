@@ -28,14 +28,14 @@ function findSocket(sockets: FlowSocket[], name: string): FlowSocket | undefined
 
 /**
  * Validate a proposed connection against the editor's node sockets, mirroring
- * core's static link rules: an input takes a single link, types must match or be
- * implicitly convertible, and field/single must agree. Returns a rejection
- * reason for display when invalid.
+ * core's static link rules: types must match or be implicitly convertible, and
+ * field/single must agree. A new link into an already-connected input is allowed
+ * and replaces the old one (issue #41 — see {@link edgesWithoutInput}). Returns a
+ * rejection reason for display when invalid.
  */
 export function checkConnection(
   connection: ConnectionLike,
   nodes: VNodeFlowNode[],
-  edges: Edge[],
 ): ConnectionCheck {
   const { source, target, sourceHandle, targetHandle } = connection;
   if (!source || !target || !sourceHandle || !targetHandle) {
@@ -56,10 +56,9 @@ export function checkConnection(
   if (!outSocket) return reject(`No output socket "${sourceHandle}".`);
   if (!inSocket) return reject(`No input socket "${targetHandle}".`);
 
-  const occupied = edges.some((e) => e.target === target && e.targetHandle === targetHandle);
-  if (occupied) {
-    return reject(`Input "${targetHandle}" is already connected.`);
-  }
+  // An input takes a single link; a new connection into an occupied input is
+  // allowed and replaces the old one (see `edgesWithoutInput`) rather than being
+  // rejected.
 
   if (outSocket.isArray !== inSocket.isArray) {
     return reject(
@@ -74,4 +73,16 @@ export function checkConnection(
   }
 
   return { ok: true };
+}
+
+/**
+ * Edges with any existing link into the input `[target, targetHandle]` removed —
+ * so a new connection into an occupied input replaces the old one (issue #41).
+ */
+export function edgesWithoutInput(
+  edges: Edge[],
+  target: string | null,
+  targetHandle: string | null | undefined,
+): Edge[] {
+  return edges.filter((e) => !(e.target === target && e.targetHandle === targetHandle));
 }
