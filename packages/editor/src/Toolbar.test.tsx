@@ -59,6 +59,17 @@ describe('Toolbar', () => {
     expect(onRedo).not.toHaveBeenCalled();
   });
 
+  it('calls onSwapSidebars and hides the button without a handler', () => {
+    const onSwapSidebars = vi.fn();
+    const { getByText, queryByText, rerender } = render(
+      <Toolbar nodeCount={0} onSwapSidebars={onSwapSidebars} />,
+    );
+    fireEvent.click(getByText('Swap sides'));
+    expect(onSwapSidebars).toHaveBeenCalledTimes(1);
+    rerender(<Toolbar nodeCount={0} />);
+    expect(queryByText('Swap sides')).toBeNull();
+  });
+
   it('openFileDialog handle clicks the hidden file input', () => {
     const ref = createRef<ToolbarHandle>();
     const { getByLabelText } = render(<Toolbar ref={ref} nodeCount={0} />);

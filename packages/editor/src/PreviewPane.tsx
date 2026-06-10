@@ -23,6 +23,8 @@ export interface PreviewPaneProps {
   collapsed?: boolean;
   /** Toggle the collapsed state (omit to hide the toggle). */
   onToggleCollapse?: () => void;
+  /** Which side the pane is docked on; drives the resize handle (issue #62). */
+  side?: 'left' | 'right';
 }
 
 /** Which renderer the preview shows. The underlying network is always 3D. */
@@ -34,10 +36,17 @@ export type PreviewMode = '3d' | '2d';
  * projection (Z dropped). Also shows an element-count footer, or the evaluation
  * error.
  */
-export function PreviewPane({ result, collapsed, onToggleCollapse }: PreviewPaneProps) {
+export function PreviewPane({
+  result,
+  collapsed,
+  onToggleCollapse,
+  side = 'right',
+}: PreviewPaneProps) {
   const [mode, setMode] = useState<PreviewMode>('3d');
   const [width, setWidth] = useState(loadPreviewWidth);
   const dragging = useRef(false);
+  const sideRef = useRef(side);
+  sideRef.current = side;
 
   // Drag the left border to resize; width is measured from the viewport's right
   // edge and persisted so it survives reloads.
@@ -51,7 +60,7 @@ export function PreviewPane({ result, collapsed, onToggleCollapse }: PreviewPane
   useEffect(() => {
     const onMove = (event: PointerEvent) => {
       if (!dragging.current) return;
-      setWidth(previewWidthFromClientX(event.clientX, window.innerWidth));
+      setWidth(previewWidthFromClientX(event.clientX, window.innerWidth, sideRef.current));
     };
     const onUp = () => {
       if (!dragging.current) return;
@@ -91,9 +100,9 @@ export function PreviewPane({ result, collapsed, onToggleCollapse }: PreviewPane
   }
 
   return (
-    <aside className="preview" style={{ width }}>
+    <aside className={`preview preview--${side}`} style={{ width }}>
       <div
-        className="preview__resize"
+        className={`preview__resize preview__resize--${side}`}
         role="separator"
         aria-orientation="vertical"
         aria-label="Resize preview"

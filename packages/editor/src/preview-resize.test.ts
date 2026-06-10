@@ -19,4 +19,10 @@ describe('previewWidthFromClientX', () => {
     // When the fraction cap would fall below the minimum, the minimum wins.
     expect(previewWidthFromClientX(0, 100)).toBe(MIN_PREVIEW_WIDTH);
   });
+
+  it('measures from the left edge when docked left (issue #62)', () => {
+    expect(previewWidthFromClientX(300, 1000, 'left')).toBe(300);
+    expect(previewWidthFromClientX(10, 1000, 'left')).toBe(MIN_PREVIEW_WIDTH);
+    expect(previewWidthFromClientX(900, 1000, 'left')).toBe(1000 * MAX_PREVIEW_FRACTION);
+  });
 });

@@ -92,6 +92,8 @@ export function App() {
   const [paletteCollapsed, setPaletteCollapsed] = useState(() => loadFlag('vn:palette-collapsed'));
   // Preview sidebar collapse, persisted (issue #64).
   const [previewCollapsed, setPreviewCollapsed] = useState(() => loadFlag('vn:preview-collapsed'));
+  // Swap the two sidebars (palette ↔ preview), persisted (issue #62).
+  const [sidebarsSwapped, setSidebarsSwapped] = useState(() => loadFlag('vn:sidebars-swapped'));
   // A node type armed for placement (issue #44): a ghost follows the cursor and
   // the node is dropped on the next canvas click. `ghost` is its screen position.
   const [pending, setPending] = useState<string | null>(null);
@@ -509,8 +511,14 @@ export function App() {
           onRedo={history.redo}
           canUndo={history.canUndo}
           canRedo={history.canRedo}
+          onSwapSidebars={() =>
+            setSidebarsSwapped((s) => {
+              saveFlag('vn:sidebars-swapped', !s);
+              return !s;
+            })
+          }
         />
-        <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
+        <div className={sidebarsSwapped ? 'app-main app-main--swapped' : 'app-main'}>
           <Palette
             items={items}
             onAdd={armNode}
@@ -525,7 +533,8 @@ export function App() {
             }
           />
           <div
-            style={{ flex: 1, minHeight: 0, cursor: pending ? 'copy' : undefined }}
+            className="canvas-wrap"
+            style={{ cursor: pending ? 'copy' : undefined }}
             onPointerMove={pending ? (e) => setGhost({ x: e.clientX, y: e.clientY }) : undefined}
             onPointerDown={
               pending
@@ -589,6 +598,7 @@ export function App() {
           </div>
           <PreviewPane
             result={preview}
+            side={sidebarsSwapped ? 'left' : 'right'}
             collapsed={previewCollapsed}
             onToggleCollapse={() =>
               setPreviewCollapsed((c) => {

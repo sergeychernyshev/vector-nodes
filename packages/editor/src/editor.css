@@ -1,3 +1,25 @@
+/* Editor body: node list | canvas | preview (issue #62 swaps the sides). */
+.app-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.canvas-wrap {
+  flex: 1;
+  min-height: 0;
+}
+.app-main--swapped .palette {
+  order: 3;
+  border-right: none;
+  border-left: 1px solid #ddd;
+}
+.app-main--swapped .canvas-wrap {
+  order: 2;
+}
+.app-main--swapped .preview {
+  order: 1;
+}
+
 /* Custom node */
 .vnode {
   min-width: 140px;
@@ -145,6 +167,10 @@
   overflow: auto;
   position: relative;
 }
+.preview--left {
+  border-left: none;
+  border-right: 1px solid #ddd;
+}
 .preview__resize {
   position: absolute;
   top: 0;
@@ -154,6 +180,10 @@
   cursor: col-resize;
   z-index: 5;
   touch-action: none;
+}
+.preview__resize--left {
+  left: auto;
+  right: -3px;
 }
 .preview__resize:hover {
   background: rgba(74, 144, 217, 0.35);

@@ -13,6 +13,8 @@ export interface ToolbarProps {
   onRedo?: () => void;
   canUndo?: boolean;
   canRedo?: boolean;
+  /** Swap the node-list and preview sidebars (issue #62). */
+  onSwapSidebars?: () => void;
 }
 
 /** Imperative handle exposed by {@link Toolbar} for keyboard shortcuts. */
@@ -23,7 +25,19 @@ export interface ToolbarHandle {
 
 /** Top app bar: product name, node count, and Save/Open/Reset actions. */
 export const Toolbar = forwardRef<ToolbarHandle, ToolbarProps>(function Toolbar(
-  { nodeCount, onSave, onOpen, onReset, onGroup, onUngroup, onUndo, onRedo, canUndo, canRedo },
+  {
+    nodeCount,
+    onSave,
+    onOpen,
+    onReset,
+    onGroup,
+    onUngroup,
+    onUndo,
+    onRedo,
+    canUndo,
+    canRedo,
+    onSwapSidebars,
+  },
   ref,
 ) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -55,6 +69,11 @@ export const Toolbar = forwardRef<ToolbarHandle, ToolbarProps>(function Toolbar(
         <button type="button" onClick={onUngroup} disabled={!onUngroup}>
           Ungroup
         </button>
+        {onSwapSidebars && (
+          <button type="button" onClick={onSwapSidebars} title="Swap sidebars">
+            Swap sides
+          </button>
+        )}
         <button type="button" onClick={onReset}>
           Reset
         </button>
