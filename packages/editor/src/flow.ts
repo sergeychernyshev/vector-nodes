@@ -1,8 +1,11 @@
 import {
+  metaNodeDefinitionToNodeDef,
+  metaNodeName,
   OUTPUT_NODE_TYPE,
   resolveParamDefaults,
   socketColor,
   type Graph,
+  type MetaNodeDefinition,
   type NodeDefinition,
   type NodeRegistry,
   type ParamDefinition,
@@ -142,6 +145,30 @@ export function canAddNode(type: string, nodes: VNodeFlowNode[]): AddCheck {
     };
   }
   return { ok: true };
+}
+
+/**
+ * Resolve the {@link NodeDefinition} for a palette `type`, looking past the
+ * active registry into the meta-node `library` for library-only entries. When
+ * the definition comes from the library, `metaToAdd` carries the `[name, def]`
+ * the caller must register so the instance keeps rendering. Returns an empty
+ * object for unknown types.
+ */
+export function resolveAddableDef(
+  type: string,
+  registry: NodeRegistry,
+  library: Record<string, MetaNodeDefinition>,
+): { def?: NodeDefinition; metaToAdd?: [string, MetaNodeDefinition] } {
+  const existing = registry.get(type);
+  if (existing) return { def: existing };
+  const libName = metaNodeName(type);
+  if (libName && library[libName]) {
+    return {
+      def: metaNodeDefinitionToNodeDef(libName, library[libName]),
+      metaToAdd: [libName, library[libName]],
+    };
+  }
+  return {};
 }
 
 /** A palette entry for adding a node, derived from a definition. */

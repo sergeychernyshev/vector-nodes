@@ -2,7 +2,6 @@ import {
   createBasicRegistry,
   createGraph,
   isMetaNodeType,
-  metaNodeDefinitionToNodeDef,
   metaNodeName,
   metaNodeType,
   OUTPUT_NODE_TYPE,
@@ -17,6 +16,7 @@ import {
   ReactFlow,
   useEdgesState,
   useNodesState,
+  useReactFlow,
   type Connection,
 } from '@xyflow/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -36,6 +36,7 @@ import {
   graphToFlowNodes,
   hasOutputNode,
   paletteItems,
+  resolveAddableDef,
   VNODE_TYPE,
   type VNodeFlowNode,
 } from './flow';
@@ -75,8 +76,13 @@ export function App() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingMeta, setEditingMeta] = useState<string | null>(null);
   const [library] = useState(() => loadLibrary());
+  // A node type armed for placement (issue #44): a ghost follows the cursor and
+  // the node is dropped on the next canvas click. `ghost` is its screen position.
+  const [pending, setPending] = useState<string | null>(null);
+  const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
   const idCounter = useRef(maxAutoId(initialNodes));
   const toolbarRef = useRef<ToolbarHandle>(null);
+  const { screenToFlowPosition } = useReactFlow();
 
   // Registry = base node definitions + a definition per meta-node, so instances
   // render with their interface sockets and links type-check.
@@ -196,31 +202,57 @@ export function App() {
     [setNodes, setEdges, clearError],
   );
 
-  const addNode = useCallback(
+  // Selecting a palette node arms it for placement rather than dropping it
+  // immediately (issue #44). Selecting another replaces the armed type.
+  const armNode = useCallback(
     (type: string) => {
-      // A library meta-node not yet in this graph: bring its definition in first.
-      const libName = metaNodeName(type);
-      let def = registry.get(type);
-      if (!def && libName && library[libName]) {
-        def = metaNodeDefinitionToNodeDef(libName, library[libName]);
-        setMetaNodes((m) => ({ ...m, [libName]: library[libName]! }));
-      }
+      const { def } = resolveAddableDef(type, registry, library);
       if (!def) return;
       const check = canAddNode(type, nodes);
       if (!check.ok) {
         setErrorMessage(check.reason ?? 'Cannot add this node.');
         return;
       }
+      setPending(type);
+      clearError();
+    },
+    [registry, library, nodes, clearError],
+  );
+
+  // Drop the armed node at a screen point (the click location).
+  const placeNode = useCallback(
+    (screenX: number, screenY: number) => {
+      if (!pending) return;
+      const { def, metaToAdd } = resolveAddableDef(pending, registry, library);
+      setPending(null);
+      setGhost(null);
+      if (!def) return;
+      const check = canAddNode(pending, nodes);
+      if (!check.ok) {
+        setErrorMessage(check.reason ?? 'Cannot add this node.');
+        return;
+      }
+      if (metaToAdd) setMetaNodes((m) => ({ ...m, [metaToAdd[0]]: metaToAdd[1] }));
+      const position = screenToFlowPosition({ x: screenX, y: screenY });
       const id = `n${(idCounter.current += 1)}`;
-      const position = {
-        x: 120 + (idCounter.current % 5) * 24,
-        y: 80 + (idCounter.current % 5) * 24,
-      };
       setNodes((nds) => [...nds, createFlowNode(def, position, id)]);
       clearError();
     },
-    [registry, library, nodes, setNodes, clearError],
+    [pending, registry, library, nodes, screenToFlowPosition, setNodes, clearError],
   );
+
+  // Esc cancels an armed placement.
+  useEffect(() => {
+    if (!pending) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setPending(null);
+        setGhost(null);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [pending]);
 
   // Group: a selection may collapse if it has no Output Geometry node.
   const canGroup =
@@ -273,8 +305,17 @@ export function App() {
           onUngroup={ungroupId ? onUngroup : undefined}
         />
         <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
-          <Palette items={items} onAdd={addNode} disabledTypes={disabledTypes} />
-          <div style={{ flex: 1, minHeight: 0 }}>
+          <Palette
+            items={items}
+            onAdd={armNode}
+            disabledTypes={disabledTypes}
+            armedType={pending}
+          />
+          <div
+            style={{ flex: 1, minHeight: 0, cursor: pending ? 'copy' : undefined }}
+            onPointerMove={pending ? (e) => setGhost({ x: e.clientX, y: e.clientY }) : undefined}
+            onPointerLeave={pending ? () => setGhost(null) : undefined}
+          >
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -282,6 +323,7 @@ export function App() {
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
+              onPaneClick={(e) => placeNode(e.clientX, e.clientY)}
               onSelectionChange={({ nodes: sel }) => setSelectedIds(sel.map((n) => n.id))}
               onNodeDoubleClick={(_, node) => {
                 const name = metaNodeName(node.data.nodeType);
@@ -298,6 +340,11 @@ export function App() {
           </div>
           <PreviewPane result={preview} />
         </div>
+        {pending && ghost && (
+          <div className="node-ghost" style={{ left: ghost.x, top: ghost.y }} aria-hidden="true">
+            {items.find((i) => i.type === pending)?.label ?? pending}
+          </div>
+        )}
         {errorMessage && (
           <div role="alert" className="connection-toast">
             {errorMessage}

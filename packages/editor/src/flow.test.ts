@@ -9,6 +9,7 @@ import {
   graphToFlowNodes,
   hasOutputNode,
   paletteItems,
+  resolveAddableDef,
   socketClassName,
   socketsOf,
   socketStyle,
@@ -118,6 +119,27 @@ describe('single-output rule', () => {
   it('allows the first OutputGeometry and other nodes', () => {
     expect(canAddNode('OutputGeometry', withoutOutput).ok).toBe(true);
     expect(canAddNode('PointCircle', withOutput).ok).toBe(true);
+  });
+});
+
+describe('resolveAddableDef', () => {
+  it('returns a registry definition with no meta to add', () => {
+    const { def, metaToAdd } = resolveAddableDef('Translate', registry, {});
+    expect(def?.type).toBe('Translate');
+    expect(metaToAdd).toBeUndefined();
+  });
+
+  it('resolves a library-only meta-node and reports the entry to register', () => {
+    const library = {
+      Group: { interface: { inputs: [], outputs: [] }, nodes: [], links: [] },
+    };
+    const { def, metaToAdd } = resolveAddableDef('Meta:Group', registry, library);
+    expect(def?.type).toBe('Meta:Group');
+    expect(metaToAdd).toEqual(['Group', library.Group]);
+  });
+
+  it('returns nothing for an unknown type', () => {
+    expect(resolveAddableDef('Nope', registry, {})).toEqual({});
   });
 });
 
