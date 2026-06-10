@@ -1,5 +1,5 @@
 import type { Geometry } from '@vector-nodes/runtime';
-import { Line, LineLoop, Mesh as ThreeMesh, Points } from 'three';
+import { Line, LineBasicMaterial, LineLoop, Mesh as ThreeMesh, Points } from 'three';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -34,10 +34,44 @@ describe('colorToHex (issue #55)', () => {
 });
 
 describe('buildGeometryGroup', () => {
-  it("applies a bundle color to its objects' materials (issue #55)", () => {
-    const group = buildGeometryGroup(geometry({ points: [[0, 0, 0]], color: [1, 0, 0, 1] }));
+  it('colors points from per-point colors (issues #80, #85)', () => {
+    const group = buildGeometryGroup(
+      geometry({ points: [[0, 0, 0]], pointColors: [[1, 0, 0, 1]] }),
+    );
     const points = group.children.find((c) => c instanceof Points) as Points;
     expect((points.material as PointsMaterial).color.getHex()).toBe(0xff0000);
+  });
+
+  it('groups points into one cloud per distinct color (issue #85)', () => {
+    const group = buildGeometryGroup(
+      geometry({
+        points: [
+          [0, 0, 0],
+          [1, 0, 0],
+          [2, 0, 0],
+        ],
+        // Two red, one blue → two Points clouds.
+        pointColors: [
+          [1, 0, 0, 1],
+          [1, 0, 0, 1],
+          [0, 0, 1, 1],
+        ],
+      }),
+    );
+    const clouds = group.children.filter((c) => c instanceof Points) as Points[];
+    expect(clouds).toHaveLength(2);
+    const hexes = clouds
+      .map((c) => (c.material as PointsMaterial).color.getHex())
+      .sort((a, b) => a - b);
+    expect(hexes).toEqual([0x0000ff, 0xff0000]);
+  });
+
+  it('colors a curve from its own color (issue #80)', () => {
+    const group = buildGeometryGroup(
+      geometry({ curves: [{ points: [[0, 0, 0]], closed: false, color: [0, 1, 0, 1] }] }),
+    );
+    const line = group.children.find((c) => c instanceof Line) as Line;
+    expect((line.material as LineBasicMaterial).color.getHex()).toBe(0x00ff00);
   });
 
   it('adds a single Points object for bare points', () => {

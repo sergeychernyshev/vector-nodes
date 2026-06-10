@@ -22,6 +22,8 @@ export type Color = [number, number, number, number];
 export interface Curve {
   points: Point[];
   closed: boolean;
+  /** Optional display color for this curve (issue #80). */
+  color?: Color;
 }
 
 /**
@@ -32,15 +34,24 @@ export interface Curve {
 export interface Mesh {
   positions: Point[];
   faces: number[][];
+  /** Optional display color for this mesh (issue #80). */
+  color?: Color;
 }
 
-/** A geometry bundle: the value carried on `Geometry` sockets. */
+/**
+ * A geometry bundle: the value carried on `Geometry` sockets.
+ *
+ * Color lives per element so it survives transforms and merges (issues #80,
+ * #85): each curve/mesh carries its own optional `color`, and bare points are
+ * colored via `pointColors`, index-aligned with `points` (a `null` entry, or a
+ * missing/`undefined` `pointColors`, means "use the renderer's default").
+ */
 export interface Geometry {
   points: Point[];
   curves: Curve[];
   meshes: Mesh[];
-  /** Optional display color applied to the whole bundle (issue #55). */
-  color?: Color;
+  /** Per-point display colors, index-aligned with `points` (issues #80, #85). */
+  pointColors?: (Color | null)[];
 }
 
 /** The origin `[0, 0, 0]`. */

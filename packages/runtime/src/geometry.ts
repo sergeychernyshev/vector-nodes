@@ -1,13 +1,19 @@
 import { ORIGIN, type Color, type Curve, type Geometry, type Point, type Vector } from './types.js';
 import { add } from './vector.js';
 
-/** Apply `fn` to every point in a geometry bundle (points, curves, meshes). */
+/**
+ * Apply `fn` to every point in a geometry bundle (points, curves, meshes).
+ * Per-element colors are preserved: the spreads keep each curve/mesh `color`,
+ * and `pointColors` is carried through unchanged since points map 1:1 (#80).
+ */
 export function transformGeometry(geo: Geometry, fn: (p: Vector) => Vector): Geometry {
-  return {
+  const out: Geometry = {
     points: geo.points.map(fn),
     curves: geo.curves.map((c) => ({ ...c, points: c.points.map(fn) })),
     meshes: geo.meshes.map((m) => ({ ...m, positions: m.positions.map(fn) })),
   };
+  if (geo.pointColors) out.pointColors = geo.pointColors;
+  return out;
 }
 
 // --- Point-array construction -------------------------------------------------
@@ -183,13 +189,27 @@ export function curveGeometry(curve: Curve): Geometry {
   return { points: [], curves: [curve], meshes: [] };
 }
 
-/** Concatenate two geometry bundles. */
+/** Per-point colors padded/truncated to `points.length` (`null` = default). */
+function pointColorsOf(geo: Geometry): (Color | null)[] {
+  const colors = geo.pointColors ?? [];
+  return geo.points.map((_, i) => colors[i] ?? null);
+}
+
+/**
+ * Concatenate two geometry bundles, preserving each side's per-element colors
+ * (issue #85). `pointColors` is materialized only when either side carries
+ * point colors, so colorless merges stay free of the extra array.
+ */
 export function mergeGeometry(a: Geometry, b: Geometry): Geometry {
-  return {
+  const merged: Geometry = {
     points: [...a.points, ...b.points],
     curves: [...a.curves, ...b.curves],
     meshes: [...a.meshes, ...b.meshes],
   };
+  if (a.pointColors || b.pointColors) {
+    merged.pointColors = [...pointColorsOf(a), ...pointColorsOf(b)];
+  }
+  return merged;
 }
 
 /** Concatenate any number of geometry bundles (empty when none). */
@@ -197,9 +217,18 @@ export function mergeAll(geometries: readonly Geometry[]): Geometry {
   return geometries.reduce(mergeGeometry, { points: [], curves: [], meshes: [] });
 }
 
-/** Apply a display color to a whole geometry bundle (issue #55). */
+/**
+ * Apply a display color to every element of a geometry bundle (issues #80, #85):
+ * each curve and mesh is tagged, and every bare point gets the color. Because
+ * the color rides on the elements, it survives later transforms and merges.
+ */
 export function colorGeometry(geometry: Geometry, color: Color): Geometry {
-  return { ...geometry, color };
+  return {
+    points: geometry.points,
+    pointColors: geometry.points.map(() => color),
+    curves: geometry.curves.map((c) => ({ ...c, color })),
+    meshes: geometry.meshes.map((m) => ({ ...m, color })),
+  };
 }
 
 /** Every point referenced by a geometry bundle (points, curves, mesh positions). */
