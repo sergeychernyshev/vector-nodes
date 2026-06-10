@@ -48,7 +48,7 @@ import { Palette } from './Palette';
 import { PreviewPane } from './PreviewPane';
 import { Toolbar, type ToolbarHandle } from './Toolbar';
 import { usePreview } from './usePreview';
-import { VNode } from './VNode';
+import { GhostNode, VNode } from './VNode';
 
 const baseRegistry = createBasicRegistry();
 
@@ -129,6 +129,13 @@ export function App() {
     () => (hasOutputNode(nodes) ? new Set([OUTPUT_NODE_TYPE]) : new Set<string>()),
     [nodes],
   );
+
+  // The armed node's data, used to render a full preview under the cursor.
+  const ghostData = useMemo(() => {
+    if (!pending) return null;
+    const { def } = resolveAddableDef(pending, registry, library);
+    return def ? createFlowNode(def, { x: 0, y: 0 }, 'ghost').data : null;
+  }, [pending, registry, library]);
 
   const clearError = useCallback(() => {
     lastReason.current = null;
@@ -449,9 +456,9 @@ export function App() {
           </div>
           <PreviewPane result={preview} />
         </div>
-        {pending && ghost && (
+        {pending && ghost && ghostData && (
           <div className="node-ghost" style={{ left: ghost.x, top: ghost.y }} aria-hidden="true">
-            {items.find((i) => i.type === pending)?.label ?? pending}
+            <GhostNode data={ghostData} />
           </div>
         )}
         {connectMenu && (
