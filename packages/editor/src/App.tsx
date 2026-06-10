@@ -359,6 +359,11 @@ export function App() {
     connecting.current = params;
   }, []);
 
+  // Snapshot before a drag begins. Must be a stable reference: React Flow tracks
+  // onNodeDragStart/onSelectionDragStart and writes any changed prop into its
+  // store, so a new inline function each render would loop (max update depth).
+  const onDragStart = useCallback(() => takeSnapshot(), [takeSnapshot]);
+
   // Dropping a connection dragged off an input into empty space opens a node
   // menu filtered to sources whose output matches that input (issue #45).
   const onConnectEnd = useCallback(
@@ -516,8 +521,8 @@ export function App() {
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onNodesDelete={onNodesDelete}
-              onNodeDragStart={() => takeSnapshot()}
-              onSelectionDragStart={() => takeSnapshot()}
+              onNodeDragStart={onDragStart}
+              onSelectionDragStart={onDragStart}
               onConnect={onConnect}
               onConnectStart={onConnectStart}
               onPaneClick={(e) => placeNode(e.clientX, e.clientY)}
