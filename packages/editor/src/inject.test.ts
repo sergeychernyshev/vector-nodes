@@ -3,7 +3,14 @@ import type { Edge } from '@xyflow/react';
 import { describe, expect, it } from 'vitest';
 
 import { graphToFlowNodes, socketsOf } from './flow';
-import { planInjection, planReconnects, spliceEdge, suggestSourceNodes } from './inject';
+import {
+  downstreamNodeIds,
+  planInjection,
+  planReconnects,
+  shiftNodesRight,
+  spliceEdge,
+  suggestSourceNodes,
+} from './inject';
 
 const registry = createBasicRegistry();
 
@@ -97,6 +104,52 @@ describe('spliceEdge', () => {
       outputHandle: 'geometry',
     });
     expect(result).toContainEqual(other);
+  });
+});
+
+describe('downstreamNodeIds (issue #86)', () => {
+  // a → b → c
+  const edges: Edge[] = [
+    { id: 'e0', source: 'a', sourceHandle: 'geometry', target: 'b', targetHandle: 'geometry' },
+    { id: 'e1', source: 'b', sourceHandle: 'geometry', target: 'c', targetHandle: 'geometry' },
+  ];
+
+  it('collects the start node and everything downstream of it', () => {
+    expect([...downstreamNodeIds(edges, 'b')].sort()).toEqual(['b', 'c']);
+  });
+
+  it('walks the whole chain from the head', () => {
+    expect([...downstreamNodeIds(edges, 'a')].sort()).toEqual(['a', 'b', 'c']);
+  });
+
+  it('returns just the node when nothing is downstream', () => {
+    expect([...downstreamNodeIds(edges, 'c')]).toEqual(['c']);
+  });
+});
+
+describe('shiftNodesRight (issue #86)', () => {
+  const nodes = graphToFlowNodes(
+    createGraph({
+      nodes: [
+        { id: 'a', type: 'PointCircle', position: [0, 0] },
+        { id: 'b', type: 'Translate', position: [100, 10] },
+        { id: 'out', type: 'OutputGeometry', position: [200, 20] },
+      ],
+    }),
+    registry,
+  );
+
+  it('shifts only the named nodes by dx, leaving others put', () => {
+    const moved = shiftNodesRight(nodes, new Set(['b', 'out']), 50);
+    expect(moved.find((n) => n.id === 'a')!.position.x).toBe(0);
+    expect(moved.find((n) => n.id === 'b')!.position.x).toBe(150);
+    expect(moved.find((n) => n.id === 'out')!.position.x).toBe(250);
+    // Y is untouched.
+    expect(moved.find((n) => n.id === 'b')!.position.y).toBe(10);
+  });
+
+  it('returns the same array reference for a zero shift', () => {
+    expect(shiftNodesRight(nodes, new Set(['b']), 0)).toBe(nodes);
   });
 });
 

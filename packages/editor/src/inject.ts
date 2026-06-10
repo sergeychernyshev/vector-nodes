@@ -90,6 +90,41 @@ export function spliceEdge(
   );
 }
 
+/**
+ * The destination node and every node reachable downstream from it (toward the
+ * output), found by following edges source→target. Used to make room when a
+ * node is injected onto a connection (issue #86).
+ */
+export function downstreamNodeIds(edges: Edge[], start: string): Set<string> {
+  const ids = new Set<string>([start]);
+  const queue = [start];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    for (const edge of edges) {
+      if (edge.source === current && !ids.has(edge.target)) {
+        ids.add(edge.target);
+        queue.push(edge.target);
+      }
+    }
+  }
+  return ids;
+}
+
+/**
+ * Shift the `ids` nodes right by `dx`, leaving the rest untouched. Returns the
+ * same array reference when `dx` is 0 so callers can skip a no-op update.
+ */
+export function shiftNodesRight(
+  nodes: VNodeFlowNode[],
+  ids: Set<string>,
+  dx: number,
+): VNodeFlowNode[] {
+  if (dx === 0) return nodes;
+  return nodes.map((n) =>
+    ids.has(n.id) ? { ...n, position: { ...n.position, x: n.position.x + dx } } : n,
+  );
+}
+
 /** A direct bridge to create when a node is removed: source output → dest input. */
 export interface Reconnect {
   source: string;
