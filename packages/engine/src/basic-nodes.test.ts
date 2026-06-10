@@ -215,3 +215,56 @@ describe('end-to-end evaluation with the basic registry', () => {
     expect(out.points[0]).toEqual([11, 0, 0]); // circle point [1,0,0] + [10,0,0]
   });
 });
+
+describe('array inputs collect connections (issue #99)', () => {
+  it('Merge concatenates every connection into its single geometry input', () => {
+    const graph = createGraph({
+      nodes: [
+        { id: 'a', type: 'PointCircle', params: { radius: 1, count: 3 } },
+        { id: 'b', type: 'PointCircle', params: { radius: 2, count: 4 } },
+        { id: 'm', type: 'MergeGeometry' },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [
+        { from: ['a', 'geometry'], to: ['m', 'geometry'] },
+        { from: ['b', 'geometry'], to: ['m', 'geometry'] },
+        { from: ['m', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    });
+    const out = evaluateGraph(graph, createBasicRegistry(), BASIC_OPERATORS).output
+      .geometry as Geometry;
+    expect(out.points).toHaveLength(7); // 3 + 4
+  });
+
+  it('Merge with no connections yields empty geometry', () => {
+    const graph = createGraph({
+      nodes: [
+        { id: 'm', type: 'MergeGeometry' },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [{ from: ['m', 'geometry'], to: ['out', 'geometry'] }],
+    });
+    const out = evaluateGraph(graph, createBasicRegistry(), BASIC_OPERATORS).output
+      .geometry as Geometry;
+    expect(out).toEqual({ points: [], curves: [], meshes: [] });
+  });
+
+  it('a single field source passes through to an array input (not nested)', () => {
+    // PointGrid.points (Vector field) → Polyline.points: one connection supplies
+    // the whole array, so the polyline has all the grid points.
+    const graph = createGraph({
+      nodes: [
+        { id: 'g', type: 'PointGrid', params: { countX: 2, countY: 2 } },
+        { id: 'pl', type: 'Polyline', params: { closed: false } },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [
+        { from: ['g', 'points'], to: ['pl', 'points'] },
+        { from: ['pl', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    });
+    const out = evaluateGraph(graph, createBasicRegistry(), BASIC_OPERATORS).output
+      .geometry as Geometry;
+    expect(out.curves[0]!.points).toHaveLength(4); // 2×2 grid, passed through
+  });
+});

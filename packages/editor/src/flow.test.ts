@@ -8,10 +8,8 @@ import {
   graphToFlowEdges,
   graphToFlowNodes,
   hasOutputNode,
-  instanceInputs,
   isTap,
   paletteItems,
-  reconcileVariadicInputs,
   resolveAddableDef,
   socketClassName,
   socketsOf,
@@ -176,47 +174,14 @@ describe('palette', () => {
   });
 });
 
-describe('variadic Merge inputs (issue #65)', () => {
-  const merge = registry.require('MergeGeometry');
-
-  it('shows one empty input when nothing is connected', () => {
-    expect(instanceInputs(merge, []).map((s) => s.name)).toEqual(['geometry0']);
-  });
-
-  it('always shows one trailing empty socket beyond the highest used index', () => {
-    expect(instanceInputs(merge, ['geometry0']).map((s) => s.name)).toEqual([
-      'geometry0',
-      'geometry1',
-    ]);
-    expect(instanceInputs(merge, ['geometry0', 'geometry2']).map((s) => s.name)).toEqual([
-      'geometry0',
-      'geometry1',
-      'geometry2',
-      'geometry3',
-    ]);
-  });
-
-  it('leaves non-variadic nodes unchanged', () => {
-    const translate = registry.require('Translate');
-    expect(instanceInputs(translate, []).map((s) => s.name)).toEqual(['geometry', 'offset']);
-  });
-
-  it('reconcileVariadicInputs grows a Merge node as edges connect (same ref when unchanged)', () => {
+describe('Merge has a single array geometry input (issue #99)', () => {
+  it('exposes one array input handle named geometry', () => {
     const nodes = graphToFlowNodes(
       createGraph({ nodes: [{ id: 'm', type: 'MergeGeometry' }] }),
       registry,
     );
-    expect(nodes[0]!.data.inputs.map((s) => s.name)).toEqual(['geometry0']);
-
-    const edges = [
-      { id: 'e0', source: 'x', sourceHandle: 'geometry', target: 'm', targetHandle: 'geometry0' },
-    ];
-    const grown = reconcileVariadicInputs(nodes, edges, registry);
-    expect(grown).not.toBe(nodes);
-    expect(grown[0]!.data.inputs.map((s) => s.name)).toEqual(['geometry0', 'geometry1']);
-
-    // Idempotent: re-running with the same edges returns the same reference.
-    expect(reconcileVariadicInputs(grown, edges, registry)).toBe(grown);
+    expect(nodes[0]!.data.inputs.map((s) => s.name)).toEqual(['geometry']);
+    expect(nodes[0]!.data.inputs[0]!.isArray).toBe(true);
   });
 });
 

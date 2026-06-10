@@ -8,7 +8,7 @@ import {
   useNodesState,
   type Connection,
 } from '@xyflow/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { checkConnection, edgesWithoutInput, type ConnectionLike } from './connection';
 import { VNODE_TYPE, type VNodeFlowNode } from './flow';
@@ -81,9 +81,19 @@ export function SubgraphEditor({
     (c: ConnectionLike) => checkConnection(c, nodes).ok,
     [nodes],
   );
+  // Latest nodes for the stable onConnect handler (issue #99): array inputs keep
+  // every connection; scalar inputs replace their existing link.
+  const nodesRef = useRef(nodes);
+  nodesRef.current = nodes;
   const onConnect = useCallback(
-    (c: Connection) =>
-      setEdges((eds) => addEdge(c, edgesWithoutInput(eds, c.target, c.targetHandle))),
+    (c: Connection) => {
+      const targetSocket = nodesRef.current
+        .find((n) => n.id === c.target)
+        ?.data.inputs.find((s) => s.name === c.targetHandle);
+      setEdges((eds) =>
+        addEdge(c, targetSocket?.isArray ? eds : edgesWithoutInput(eds, c.target, c.targetHandle)),
+      );
+    },
     [setEdges],
   );
 

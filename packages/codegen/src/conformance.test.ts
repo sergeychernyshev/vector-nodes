@@ -215,8 +215,8 @@ describe('conformance: Phase 7 nodes', () => {
         { id: 'out', type: 'OutputGeometry' },
       ],
       [
-        { from: ['pc', 'geometry'], to: ['m', 'geometry0'] },
-        { from: ['cc', 'geometry'], to: ['m', 'geometry1'] },
+        { from: ['pc', 'geometry'], to: ['m', 'geometry'] },
+        { from: ['cc', 'geometry'], to: ['m', 'geometry'] },
         { from: ['m', 'geometry'], to: ['bb', 'geometry'] },
         { from: ['bb', 'geometry'], to: ['out', 'geometry'] },
       ],
@@ -224,7 +224,7 @@ describe('conformance: Phase 7 nodes', () => {
     expect(runCompiled(g, [])).toEqual(interpret(g));
   });
 
-  it('MergeGeometry with three variadic inputs (issue #65)', () => {
+  it('MergeGeometry collects many connections into one array input (issue #99)', () => {
     const g = geoGraph(
       [
         { id: 'a', type: 'PointCircle', params: { radius: 1, count: 3 } },
@@ -234,9 +234,10 @@ describe('conformance: Phase 7 nodes', () => {
         { id: 'out', type: 'OutputGeometry' },
       ],
       [
-        { from: ['a', 'geometry'], to: ['m', 'geometry0'] },
-        { from: ['b', 'geometry'], to: ['m', 'geometry1'] },
-        { from: ['c', 'geometry'], to: ['m', 'geometry2'] },
+        // All three feed the single `geometry` array input.
+        { from: ['a', 'geometry'], to: ['m', 'geometry'] },
+        { from: ['b', 'geometry'], to: ['m', 'geometry'] },
+        { from: ['c', 'geometry'], to: ['m', 'geometry'] },
         { from: ['m', 'geometry'], to: ['out', 'geometry'] },
       ],
     );
@@ -246,7 +247,7 @@ describe('conformance: Phase 7 nodes', () => {
     expect(result.curves).toHaveLength(1);
   });
 
-  it('MergeGeometry with no inputs yields empty geometry (issue #65)', () => {
+  it('MergeGeometry with no inputs yields empty geometry (issue #99)', () => {
     const g = geoGraph(
       [
         { id: 'm', type: 'MergeGeometry' },

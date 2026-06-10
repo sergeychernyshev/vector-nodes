@@ -13,7 +13,7 @@ Plus a **Parameter** node per socket type (`ParameterFloat` … `ParameterGeomet
 | **Circle** (`CircleCurve`)                  | `radius`: Float, `count`: Integer                                           | `geometry`: Geometry                     | —                                 |
 | **Set Color** (`ColorGeometry`)             | `geometry`: Geometry, `color`: Color                                        | `geometry`: Geometry                     | —                                 |
 | **Instance on Points** (`InstanceOnPoints`) | `geometry`: Geometry, `points`[]: Vector                                    | `geometry`: Geometry                     | —                                 |
-| **Merge** (`MergeGeometry`)                 | `geometry0`, `geometry1`, … : Geometry (variadic)                           | `geometry`: Geometry                     | —                                 |
+| **Merge** (`MergeGeometry`)                 | `geometry`[]: Geometry (accepts many connections)                           | `geometry`: Geometry                     | —                                 |
 | **Point Circle** (`PointCircle`)            | `radius`: Float, `count`: Integer                                           | `geometry`: Geometry, `points`[]: Vector | —                                 |
 | **Point Grid** (`PointGrid`)                | `countX`: Integer, `countY`: Integer, `spacingX`: Float, `spacingY`: Float  | `geometry`: Geometry, `points`[]: Vector | —                                 |
 | **Point Line** (`PointLine`)                | `start`: Vector, `end`: Vector, `count`: Integer                            | `geometry`: Geometry, `points`[]: Vector | —                                 |

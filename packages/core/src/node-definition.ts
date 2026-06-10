@@ -52,54 +52,14 @@ export interface NodeDefinition {
   readonly inputs: readonly SocketDefinition[];
   readonly outputs: readonly SocketDefinition[];
   readonly params: readonly ParamDefinition[];
-  /**
-   * A variable-arity input: the node accepts any number of links into sockets
-   * named `${name}0`, `${name}1`, … of this type (e.g. Merge — issue #65). The
-   * editor grows the handles as they fill; the interpreter/codegen gather them.
-   */
-  readonly variadicInput?: {
-    readonly name: string;
-    readonly type: SocketType;
-    readonly isArray?: boolean;
-  };
 }
 
-/** Parse the index `n` from a `${prefix}n` socket name, or `null` if it doesn't match. */
-export function parseVariadicIndex(prefix: string, socketName: string): number | null {
-  if (!socketName.startsWith(prefix)) return null;
-  const rest = socketName.slice(prefix.length);
-  return /^\d+$/.test(rest) ? Number(rest) : null;
-}
-
-/** Parse the index `n` from a variadic socket name `${name}n`, or `null`. */
-export function variadicSocketIndex(def: NodeDefinition, socketName: string): number | null {
-  return def.variadicInput ? parseVariadicIndex(def.variadicInput.name, socketName) : null;
-}
-
-/** Keys matching `${prefix}n`, sorted by their numeric index. */
-export function orderedVariadicKeys(keys: Iterable<string>, prefix: string): string[] {
-  return [...keys]
-    .map((key) => ({ key, index: parseVariadicIndex(prefix, key) }))
-    .filter((entry): entry is { key: string; index: number } => entry.index !== null)
-    .sort((a, b) => a.index - b.index)
-    .map((entry) => entry.key);
-}
-
-/**
- * Resolve an input socket by name, accounting for a definition's variadic input:
- * a `${name}n` socket resolves to a synthesized socket of the variadic type.
- */
+/** Resolve an input socket by name, or `undefined` if the node has no such input. */
 export function resolveInputSocket(
   def: NodeDefinition,
   socketName: string,
 ): SocketDefinition | undefined {
-  const fixed = def.inputs.find((s) => s.name === socketName);
-  if (fixed) return fixed;
-  if (variadicSocketIndex(def, socketName) !== null) {
-    const v = def.variadicInput!;
-    return { name: socketName, type: v.type, ...(v.isArray ? { isArray: true } : {}) };
-  }
-  return undefined;
+  return def.inputs.find((s) => s.name === socketName);
 }
 
 /**

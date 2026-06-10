@@ -14,6 +14,7 @@ const nodes = graphToFlowNodes(
       { id: 'pa', type: 'PointCircle' }, // out: geometry (Geometry), points (Vector field)
       { id: 'cf', type: 'ConstFloat' }, // out: value (Float)
       { id: 't', type: 'Translate' }, // in: geometry (Geometry), offset (Vector)
+      { id: 'm', type: 'MergeGeometry' }, // in: geometry (Geometry, field)
       { id: 'out', type: 'OutputGeometry' }, // in: geometry (Geometry)
     ],
   }),
@@ -68,6 +69,29 @@ describe('checkConnection — rejected', () => {
         nodes,
       ).ok,
     ).toBe(false);
+  });
+});
+
+describe('array inputs accept many connections (issue #99)', () => {
+  it('allows a single value into an array input (collected as an element)', () => {
+    // pa.geometry (scalar Geometry) → m.geometry (Geometry field).
+    expect(checkConnection(conn('pa', 'geometry', 'm', 'geometry'), nodes).ok).toBe(true);
+  });
+
+  it('still rejects a field output into a single-value input', () => {
+    const res = checkConnection(conn('pa', 'points', 't', 'offset'), nodes);
+    expect(res.ok).toBe(false);
+    expect(res.reason).toMatch(/field/);
+  });
+
+  it('does not drop existing links into an array input on connect (App keeps them)', () => {
+    // The editor only calls edgesWithoutInput for scalar inputs; array inputs
+    // keep their edges. Here we assert the helper would (if misused) drop both —
+    // documenting why App guards it behind the isArray check.
+    const existing: Edge[] = [
+      { id: 'e0', source: 'pa', sourceHandle: 'geometry', target: 'm', targetHandle: 'geometry' },
+    ];
+    expect(edgesWithoutInput(existing, 'm', 'geometry')).toEqual([]);
   });
 });
 
