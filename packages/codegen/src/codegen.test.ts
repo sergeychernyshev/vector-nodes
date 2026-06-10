@@ -1,7 +1,14 @@
 import { createBasicRegistry, createGraph } from '@vector-nodes/core';
 import { describe, expect, it } from 'vitest';
 
-import { generate, lit, sanitize, tsTypeOf } from './codegen.js';
+import {
+  generate,
+  generatedPackageJson,
+  lit,
+  RUNTIME_RANGE,
+  sanitize,
+  tsTypeOf,
+} from './codegen.js';
 import { mainThreadWrapper, workerClient, workerModule } from './wrappers.js';
 
 const registry = createBasicRegistry();
@@ -50,6 +57,14 @@ describe('generate', () => {
     expect(mod.js).toContain('export default function circle() {');
     expect(mod.js).not.toContain(': Geometry');
     expect(mod.js).not.toContain('type Geometry');
+  });
+
+  it('pins the runtime dependency and can emit a package.json', () => {
+    const mod = generate(graph, registry);
+    expect(mod.runtimeDependency).toEqual({ '@vector-nodes/runtime': RUNTIME_RANGE });
+    const pkg = JSON.parse(generatedPackageJson(mod));
+    expect(pkg.name).toBe('circle');
+    expect(pkg.dependencies['@vector-nodes/runtime']).toBe(RUNTIME_RANGE);
   });
 
   it('derives typed arguments from network parameters', () => {

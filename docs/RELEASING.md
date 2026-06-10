@@ -36,15 +36,32 @@ npm publish --workspaces   # from the repo root; publishes 0.1.0 of all four
 After that initial publish, complete step 1 for each package and all subsequent releases go
 through CI.
 
+## Versioning (Changesets)
+
+Coordinated semver across the workspace is managed by **Changesets**
+([`.changeset/config.json`](../.changeset/config.json)). The four `@vector-nodes/*` packages are a
+**fixed** group (they version in lockstep), `access` is `public`, and the private `editor` is
+ignored.
+
+1. With each change, add a changeset describing it and the bump:
+   ```bash
+   npm run changeset
+   ```
+2. To apply pending changesets — bump versions, update internal `^x.y.z` ranges, and write
+   changelogs:
+   ```bash
+   npm run version-packages
+   ```
+   Because the library packages are fixed-grouped, codegen's `RUNTIME_RANGE` (the runtime pin in
+   generated modules) stays compatible automatically.
+
 ## Cutting a release
 
-1. Bump versions (keep the four `@vector-nodes/*` packages in lockstep) and update the internal
-   `^x.y.z` dependency ranges to match.
-2. Merge the version bump to `main`.
-3. Create a **GitHub Release** with a tag (e.g. `v0.1.0`). The Release workflow builds, tests,
-   and publishes to npm with provenance.
+1. Run `npm run version-packages`, review the changelogs/version bumps, and merge to `main`.
+2. Create a **GitHub Release** with a matching tag (e.g. `v0.1.2`). The
+   [Release workflow](../.github/workflows/release.yml) builds, tests, and publishes to npm via
+   OIDC trusted publishing (provenance automatic).
 
-> Coordinated versioning + changelogs via Changesets, the runtime semver pin in generated code,
-> and the packed-tarball conformance test are **Phase 10** (release engineering). This phase
-> (4.5) gets the packages onto npm so consumers and the editor's Cloudflare build can resolve
-> them.
+CI runs `npm run pack:check` (`npm pack --dry-run` for the public packages — local, no registry) on
+every PR to catch packaging regressions early, and the codegen **packed-tarball conformance test**
+verifies a generated module runs against the actual npm-packed runtime.

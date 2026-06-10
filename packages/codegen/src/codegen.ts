@@ -10,6 +10,12 @@ import {
   type SocketType,
 } from '@vector-nodes/core';
 
+/**
+ * The compatible `@vector-nodes/runtime` semver range that generated modules
+ * import from. Kept in lockstep with this package's version by Changesets.
+ */
+export const RUNTIME_RANGE = '^0.1.0';
+
 /** A function parameter of the generated module. */
 export interface GeneratedParam {
   /** JS identifier (sanitized parameter id). */
@@ -31,6 +37,23 @@ export interface GeneratedModule {
   ts: string;
   /** Full JavaScript module source (same logic, no type annotations). */
   js: string;
+  /** The runtime dependency the generated module needs at a compatible range. */
+  runtimeDependency: Record<string, string>;
+}
+
+/** A minimal `package.json` for shipping a generated module standalone. */
+export function generatedPackageJson(mod: GeneratedModule): string {
+  return `${JSON.stringify(
+    {
+      name: mod.name,
+      version: '0.0.0',
+      type: 'module',
+      main: `./${mod.name}.js`,
+      dependencies: mod.runtimeDependency,
+    },
+    null,
+    2,
+  )}\n`;
 }
 
 /** Idiomatic TypeScript type for a socket type. */
@@ -338,7 +361,15 @@ export function generate(graph: Graph, registry: NodeRegistry): GeneratedModule 
 
   const ts = renderModule(name, params, usesList, body, true);
   const js = renderModule(name, params, usesList, body, false);
-  return { name, params, uses: usesList, body, ts, js };
+  return {
+    name,
+    params,
+    uses: usesList,
+    body,
+    ts,
+    js,
+    runtimeDependency: { '@vector-nodes/runtime': RUNTIME_RANGE },
+  };
 }
 
 function renderModule(
