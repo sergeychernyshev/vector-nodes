@@ -91,7 +91,10 @@ function NodeCard({ id, data, selected, ghost, connectedInputs }: NodeCardProps)
   if (data.nodeType.startsWith('Meta:')) classes.push('vnode--meta');
 
   return (
-    <div className={classes.join(' ')}>
+    <div className="vnode-wrap">
+      {/* The preview floats above the body (absolute), so toggling it never
+          shifts the node body or its handles — it collapses down into the
+          header (issue #79). */}
       {previewOpen && (
         <div className="vnode__preview nodrag nowheel">
           {previewGeometry ? (
@@ -101,62 +104,68 @@ function NodeCard({ id, data, selected, ghost, connectedInputs }: NodeCardProps)
           )}
         </div>
       )}
-      <div className="vnode__header">
-        <span className="vnode__title">{data.label}</span>
-        {previewable && (
-          <button
-            type="button"
-            className="vnode__preview-toggle nodrag"
-            aria-label={previewOpen ? 'Hide preview' : 'Show preview'}
-            aria-pressed={previewOpen}
-            title={previewOpen ? 'Hide preview' : 'Show preview'}
-            onClick={() => preview.toggle(id)}
-          >
-            {previewOpen ? '▾' : '▸'}
-          </button>
-        )}
-      </div>
-      <div className="vnode__body">
-        <div className="vnode__col">
-          {data.inputs.map((s) => (
-            <SocketRow
-              key={s.name}
-              socket={s}
-              side="input"
-              ghost={ghost}
-              control={
-                isEditableInput(s) ? (
-                  <InputDefaultField
-                    nodeId={id}
-                    socket={s}
-                    value={data.inputDefaults[s.name] ?? s.default}
-                    connected={connectedInputs.has(s.name)}
-                  />
-                ) : undefined
-              }
-            />
-          ))}
+      <div className={classes.join(' ')}>
+        <div className="vnode__header">
+          <span className="vnode__title">{data.label}</span>
+          {previewable && (
+            <button
+              type="button"
+              className="vnode__preview-toggle nodrag"
+              aria-label={previewOpen ? 'Hide preview' : 'Show preview'}
+              aria-pressed={previewOpen}
+              title={previewOpen ? 'Hide preview' : 'Show preview'}
+              onClick={() => preview.toggle(id)}
+            >
+              {previewOpen ? '▾' : '▸'}
+            </button>
+          )}
         </div>
-        <div className="vnode__col vnode__col--outputs">
-          {data.outputs.map((s) => {
-            const param = inlineParams.get(s.name);
-            return (
+        <div className="vnode__body">
+          <div className="vnode__col">
+            {data.inputs.map((s) => (
               <SocketRow
                 key={s.name}
                 socket={s}
-                side="output"
+                side="input"
                 ghost={ghost}
                 control={
-                  param ? (
-                    <ParamControlField nodeId={id} param={param} value={data.params[param.name]} />
+                  isEditableInput(s) ? (
+                    <InputDefaultField
+                      nodeId={id}
+                      socket={s}
+                      value={data.inputDefaults[s.name] ?? s.default}
+                      connected={connectedInputs.has(s.name)}
+                    />
                   ) : undefined
                 }
               />
-            );
-          })}
+            ))}
+          </div>
+          <div className="vnode__col vnode__col--outputs">
+            {data.outputs.map((s) => {
+              const param = inlineParams.get(s.name);
+              return (
+                <SocketRow
+                  key={s.name}
+                  socket={s}
+                  side="output"
+                  ghost={ghost}
+                  control={
+                    param ? (
+                      <ParamControlField
+                        nodeId={id}
+                        param={param}
+                        value={data.params[param.name]}
+                      />
+                    ) : undefined
+                  }
+                />
+              );
+            })}
+          </div>
         </div>
+        <ParamControls nodeId={id} paramDefs={blockParams} values={data.params} />
       </div>
-      <ParamControls nodeId={id} paramDefs={blockParams} values={data.params} />
     </div>
   );
 }

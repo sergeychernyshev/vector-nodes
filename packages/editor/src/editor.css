@@ -67,16 +67,29 @@
 .vnode__preview-toggle:hover {
   background: #3f3f3f;
 }
-.vnode__preview {
-  /* The SVG is taken out of flow so its intrinsic width doesn't widen the node:
-     the box (and node) stay as wide as the node's own content (issue #79). */
+/* Wrapper so the preview can float above the node body without moving it. */
+.vnode-wrap {
   position: relative;
+}
+.vnode__preview {
+  /* Floats directly above the node body (absolute, anchored to its top edge), so
+     toggling never shifts the body or its handles — it just collapses down into
+     the header. Absolute also keeps the SVG's intrinsic width from widening the
+     node, so the box stays as wide as the node itself (issue #79). */
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  width: 100%;
   height: 96px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid #555;
   background: #1e1e1e;
+  border: 1px solid #555;
+  border-bottom: none;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  overflow: hidden;
 }
 .vnode__preview .preview__svg {
   position: absolute;
