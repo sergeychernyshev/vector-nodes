@@ -2,7 +2,7 @@ import type { ParamDefinition } from '@vector-nodes/core';
 
 import { useNodeEdit } from './NodeEditContext';
 import type { FlowSocket } from './flow';
-import { asNumber, asRgba, asVec3, hexToRgb, rgbToHex, type Vec3 } from './param';
+import { asNumber, asRgba, asVec3, asVec3Array, hexToRgb, rgbToHex, type Vec3 } from './param';
 
 interface ControlProps {
   param: ParamDefinition;
@@ -146,8 +146,65 @@ function ColorControl({ value, onChange, disabled }: ControlProps) {
   );
 }
 
+/**
+ * Inline editor for a list of vectors (e.g. `VectorArray.values`, issue #83):
+ * one xyz row per entry with a remove button, plus an add button. The array is a
+ * constant source that can't be wired, so this is the only way to set it.
+ */
+function VectorArrayControl({ value, onChange, disabled }: ControlProps) {
+  const items = asVec3Array(value);
+  const setAxis = (index: number, axis: number, n: number) => {
+    onChange(
+      items.map((v, i) => {
+        if (i !== index) return v;
+        const next = [...v] as Vec3;
+        next[axis] = n;
+        return next;
+      }),
+    );
+  };
+  const addItem = () => onChange([...items, [0, 0, 0]]);
+  const removeItem = (index: number) => onChange(items.filter((_, i) => i !== index));
+  return (
+    <div className="vnode__vec-array nodrag nowheel">
+      {items.map((v, index) => (
+        <div className="vnode__vec-array-row" key={index}>
+          {([0, 1, 2] as const).map((axis) => (
+            <input
+              key={axis}
+              className="nodrag vnode__input vnode__input--axis"
+              type="number"
+              step="any"
+              aria-label={`${['x', 'y', 'z'][axis]} ${index}`}
+              disabled={disabled}
+              value={v[axis]}
+              onChange={(e) => setAxis(index, axis, Number(e.target.value))}
+            />
+          ))}
+          <button
+            type="button"
+            className="vnode__vec-array-remove"
+            aria-label={`Remove vector ${index}`}
+            title="Remove"
+            disabled={disabled}
+            onClick={() => removeItem(index)}
+          >
+            ×
+          </button>
+        </div>
+      ))}
+      <button type="button" className="vnode__vec-array-add" disabled={disabled} onClick={addItem}>
+        + Add vector
+      </button>
+    </div>
+  );
+}
+
 function ParamControl(props: ControlProps) {
   if (props.param.isArray) {
+    if (props.param.type === 'Vector') {
+      return <VectorArrayControl {...props} />;
+    }
     return <span className="vnode__param-note">(array)</span>;
   }
   if (props.param.options && props.param.options.length > 0) {
@@ -244,7 +301,10 @@ export function ParamControls({ nodeId, paramDefs, values }: ParamControlsProps)
   return (
     <div className="vnode__params nodrag nowheel">
       {paramDefs.map((param) => (
-        <label className="vnode__param" key={param.name}>
+        <label
+          className={`vnode__param${param.isArray ? ' vnode__param--block' : ''}`}
+          key={param.name}
+        >
           <span className="vnode__param-label">{param.name}</span>
           <ParamControl
             param={param}

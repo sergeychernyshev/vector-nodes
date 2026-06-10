@@ -2,7 +2,15 @@ import { createBasicRegistry, createGraph } from '@vector-nodes/core';
 import { describe, expect, it } from 'vitest';
 
 import { graphToFlowNodes } from './flow';
-import { asRgba, asVec3, hexToRgb, rgbToHex, setNodeInputDefault, setNodeParam } from './param';
+import {
+  asRgba,
+  asVec3,
+  asVec3Array,
+  hexToRgb,
+  rgbToHex,
+  setNodeInputDefault,
+  setNodeParam,
+} from './param';
 
 const registry = createBasicRegistry();
 const nodes = graphToFlowNodes(
@@ -49,6 +57,24 @@ describe('coercion helpers', () => {
   it('asRgba coerces arrays and falls back to opaque black', () => {
     expect(asRgba([0.1, 0.2, 0.3, 0.4])).toEqual([0.1, 0.2, 0.3, 0.4]);
     expect(asRgba(null)).toEqual([0, 0, 0, 1]);
+  });
+
+  it('asVec3Array coerces each entry and falls back to an empty list', () => {
+    expect(
+      asVec3Array([
+        [1, 2, 3],
+        [4, 5, 6],
+      ]),
+    ).toEqual([
+      [1, 2, 3],
+      [4, 5, 6],
+    ]);
+    // Short/garbage entries become the origin; non-arrays yield [].
+    expect(asVec3Array([[1], 'x'])).toEqual([
+      [0, 0, 0],
+      [0, 0, 0],
+    ]);
+    expect(asVec3Array('nope')).toEqual([]);
   });
 });
 

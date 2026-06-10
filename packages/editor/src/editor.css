@@ -126,6 +126,10 @@
   justify-content: space-between;
   gap: 8px;
 }
+.vnode__param--block {
+  flex-direction: column;
+  align-items: stretch;
+}
 .vnode__param-label {
   opacity: 0.8;
 }
@@ -144,6 +148,46 @@
   display: inline-flex;
   align-items: center;
   gap: 3px;
+}
+
+/* Inline vector-array editor (issue #83). */
+.vnode__vec-array {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 2px;
+}
+.vnode__vec-array-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.vnode__vec-array-remove {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  line-height: 1;
+  color: #eee;
+  background: #2b2b2b;
+  border: 1px solid #555;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.vnode__vec-array-remove:hover {
+  background: #5a2b2b;
+}
+.vnode__vec-array-add {
+  align-self: flex-start;
+  font-size: 11px;
+  color: #eee;
+  background: #2b2b2b;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+.vnode__vec-array-add:hover {
+  background: #3f3f3f;
 }
 .vnode__color {
   display: inline-flex;
