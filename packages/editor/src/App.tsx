@@ -53,6 +53,7 @@ import {
 import { Palette } from './Palette';
 import { PreviewPane } from './PreviewPane';
 import { Toolbar, type ToolbarHandle } from './Toolbar';
+import { useUndoRedo } from './useUndoRedo';
 import { usePreview } from './usePreview';
 import { GhostNode, VNode } from './VNode';
 
@@ -111,6 +112,19 @@ export function App() {
   // The current network as a core graph (meta-nodes included), recomputed on change.
   const graph = useMemo(() => currentGraph(nodes, edges, metaNodes), [nodes, edges, metaNodes]);
 
+  // Undo/redo over snapshots of the editor state. Handlers call takeSnapshot()
+  // before a mutating action; undo/redo restore a snapshot wholesale.
+  const history = useUndoRedo(
+    () => ({ nodes, edges, metaNodes }),
+    (snapshot) => {
+      setNodes(snapshot.nodes);
+      setEdges(snapshot.edges);
+      setMetaNodes(snapshot.metaNodes);
+      setSelectedIds([]);
+    },
+  );
+  const { takeSnapshot } = history;
+
   // Autosave to localStorage on every change.
   useEffect(() => {
     saveGraph(graph);
@@ -163,46 +177,66 @@ export function App() {
 
   const onConnect = useCallback(
     (connection: Connection) => {
+      takeSnapshot();
       // Replace any existing link into this input (issue #41), then add the new one.
       setEdges((eds) =>
         addEdge(connection, edgesWithoutInput(eds, connection.target, connection.targetHandle)),
       );
       clearError();
     },
-    [setEdges, clearError],
+    [setEdges, clearError, takeSnapshot],
   );
 
   const editApi = useMemo<NodeEditApi>(
     () => ({
-      setParam: (nodeId, name, value) => setNodes((nds) => setNodeParam(nds, nodeId, name, value)),
-      setInputDefault: (nodeId, name, value) =>
-        setNodes((nds) => setNodeInputDefault(nds, nodeId, name, value)),
+      setParam: (nodeId, name, value) => {
+        takeSnapshot(`param:${nodeId}:${name}`);
+        setNodes((nds) => setNodeParam(nds, nodeId, name, value));
+      },
+      setInputDefault: (nodeId, name, value) => {
+        takeSnapshot(`input:${nodeId}:${name}`);
+        setNodes((nds) => setNodeInputDefault(nds, nodeId, name, value));
+      },
     }),
-    [setNodes],
+    [setNodes, takeSnapshot],
   );
 
   const onSave = useCallback(() => {
     downloadText('network.vnodes', serializeVnodes(graph));
   }, [graph]);
 
-  // Cmd/Ctrl+S saves, Cmd/Ctrl+O opens — overriding the browser defaults.
+  // Cmd/Ctrl+S saves, +O opens, +Z undoes, +Shift+Z / Ctrl+Y redoes —
+  // overriding the browser defaults.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
       const key = event.key.toLowerCase();
+      // Let the browser handle undo/redo while typing in a field.
+      const target = event.target as HTMLElement | null;
+      const editing =
+        target?.isContentEditable ||
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName ?? '');
       if (key === 's') {
         event.preventDefault();
         onSave();
       } else if (key === 'o') {
         event.preventDefault();
         toolbarRef.current?.openFileDialog();
+      } else if (key === 'z' && !editing) {
+        event.preventDefault();
+        if (event.shiftKey) history.redo();
+        else history.undo();
+      } else if (key === 'y' && !editing) {
+        event.preventDefault();
+        history.redo();
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onSave]);
+  }, [onSave, history]);
 
   const onReset = useCallback(() => {
+    takeSnapshot();
     clearGraph();
     setNodes(graphToFlowNodes(seed, baseRegistry));
     setEdges(graphToFlowEdges(seed));
@@ -210,7 +244,7 @@ export function App() {
     setSelectedIds([]);
     idCounter.current = 0;
     clearError();
-  }, [setNodes, setEdges, clearError]);
+  }, [setNodes, setEdges, clearError, takeSnapshot]);
 
   const onOpen = useCallback(
     async (file: File) => {
@@ -218,6 +252,7 @@ export function App() {
         const opened = parseVnodes(await file.text());
         const openedMeta = opened.metaNodes ?? {};
         const loaded = graphToFlowNodes(opened, augmentedRegistry(baseRegistry, openedMeta));
+        takeSnapshot();
         setNodes(loaded);
         setEdges(graphToFlowEdges(opened));
         setMetaNodes(openedMeta);
@@ -228,7 +263,7 @@ export function App() {
         setErrorMessage(`Failed to open file: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
-    [setNodes, setEdges, clearError],
+    [setNodes, setEdges, clearError, takeSnapshot],
   );
 
   // Selecting a palette node arms it for placement rather than dropping it
@@ -259,13 +294,14 @@ export function App() {
         setErrorMessage(check.reason ?? 'Cannot add this node.');
         return null;
       }
+      takeSnapshot();
       if (metaToAdd) setMetaNodes((m) => ({ ...m, [metaToAdd[0]]: metaToAdd[1] }));
       const position = screenToFlowPosition({ x: screenX, y: screenY });
       const id = `n${(idCounter.current += 1)}`;
       setNodes((nds) => [...nds, createFlowNode(def, position, id)]);
       return id;
     },
-    [registry, library, nodes, screenToFlowPosition, setNodes],
+    [registry, library, nodes, screenToFlowPosition, setNodes, takeSnapshot],
   );
 
   // Drop the armed node at a screen point (the click location).
@@ -378,6 +414,7 @@ export function App() {
   // direct connection (the inverse of injecting a node — issue #43).
   const onNodesDelete = useCallback(
     (deleted: VNodeFlowNode[]) => {
+      takeSnapshot();
       const deletedIds = new Set(deleted.map((n) => n.id));
       const bridges = planReconnects(edges, nodes, deletedIds);
       if (bridges.length === 0) return;
@@ -391,7 +428,7 @@ export function App() {
         return next;
       });
     },
-    [edges, nodes, setEdges],
+    [edges, nodes, setEdges, takeSnapshot],
   );
 
   // Group: a selection may collapse if it has no Output Geometry node.
@@ -407,23 +444,35 @@ export function App() {
 
   const onGroup = useCallback(() => {
     if (!canGroup) return;
+    takeSnapshot();
     const next = collapse({ nodes, edges, metaNodes }, selectedIds, baseRegistry);
     setNodes(next.nodes);
     setEdges(next.edges);
     setMetaNodes(next.metaNodes);
     setSelectedIds([next.instanceId]);
     clearError();
-  }, [canGroup, nodes, edges, metaNodes, selectedIds, setNodes, setEdges, clearError]);
+  }, [
+    canGroup,
+    nodes,
+    edges,
+    metaNodes,
+    selectedIds,
+    setNodes,
+    setEdges,
+    clearError,
+    takeSnapshot,
+  ]);
 
   const onUngroup = useCallback(() => {
     if (!ungroupId) return;
+    takeSnapshot();
     const next = expand({ nodes, edges, metaNodes }, ungroupId, baseRegistry);
     setNodes(next.nodes);
     setEdges(next.edges);
     setMetaNodes(next.metaNodes);
     setSelectedIds([]);
     clearError();
-  }, [ungroupId, nodes, edges, metaNodes, setNodes, setEdges, clearError]);
+  }, [ungroupId, nodes, edges, metaNodes, setNodes, setEdges, clearError, takeSnapshot]);
 
   return (
     <NodeEditContext.Provider value={editApi}>
@@ -443,6 +492,10 @@ export function App() {
           onReset={onReset}
           onGroup={canGroup ? onGroup : undefined}
           onUngroup={ungroupId ? onUngroup : undefined}
+          onUndo={history.undo}
+          onRedo={history.redo}
+          canUndo={history.canUndo}
+          canRedo={history.canRedo}
         />
         <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
           <Palette
@@ -463,6 +516,8 @@ export function App() {
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onNodesDelete={onNodesDelete}
+              onNodeDragStart={() => takeSnapshot()}
+              onSelectionDragStart={() => takeSnapshot()}
               onConnect={onConnect}
               onConnectStart={onConnectStart}
               onPaneClick={(e) => placeNode(e.clientX, e.clientY)}

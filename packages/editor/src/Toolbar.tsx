@@ -9,6 +9,10 @@ export interface ToolbarProps {
   onGroup?: () => void;
   /** Expand the selected meta-node instance (omit to disable). */
   onUngroup?: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
 }
 
 /** Imperative handle exposed by {@link Toolbar} for keyboard shortcuts. */
@@ -19,7 +23,7 @@ export interface ToolbarHandle {
 
 /** Top app bar: product name, node count, and Save/Open/Reset actions. */
 export const Toolbar = forwardRef<ToolbarHandle, ToolbarProps>(function Toolbar(
-  { nodeCount, onSave, onOpen, onReset, onGroup, onUngroup },
+  { nodeCount, onSave, onOpen, onReset, onGroup, onUngroup, onUndo, onRedo, canUndo, canRedo },
   ref,
 ) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -39,6 +43,12 @@ export const Toolbar = forwardRef<ToolbarHandle, ToolbarProps>(function Toolbar(
       <strong>Vector Nodes</strong>
       <span data-testid="node-count">{nodeCount} nodes</span>
       <span style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+        <button type="button" onClick={onUndo} disabled={!canUndo} title="Undo (Ctrl/Cmd+Z)">
+          Undo
+        </button>
+        <button type="button" onClick={onRedo} disabled={!canRedo} title="Redo (Ctrl/Cmd+Shift+Z)">
+          Redo
+        </button>
         <button type="button" onClick={onGroup} disabled={!onGroup}>
           Group
         </button>

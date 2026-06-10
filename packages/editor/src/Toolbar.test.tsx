@@ -46,6 +46,19 @@ describe('Toolbar', () => {
     expect((getByText('Group').closest('button') as HTMLButtonElement).disabled).toBe(true);
   });
 
+  it('calls onUndo / onRedo and disables them per canUndo / canRedo', () => {
+    const onUndo = vi.fn();
+    const onRedo = vi.fn();
+    const { getByText } = render(
+      <Toolbar nodeCount={0} onUndo={onUndo} onRedo={onRedo} canUndo canRedo={false} />,
+    );
+    fireEvent.click(getByText('Undo'));
+    expect(onUndo).toHaveBeenCalledTimes(1);
+    expect((getByText('Redo').closest('button') as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(getByText('Redo'));
+    expect(onRedo).not.toHaveBeenCalled();
+  });
+
   it('openFileDialog handle clicks the hidden file input', () => {
     const ref = createRef<ToolbarHandle>();
     const { getByLabelText } = render(<Toolbar ref={ref} nodeCount={0} />);
