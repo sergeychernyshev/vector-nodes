@@ -5,8 +5,10 @@ import {
   clearGraph,
   loadFlag,
   loadGraph,
+  loadString,
   saveFlag,
   saveGraph,
+  saveString,
   STORAGE_KEY,
   type KeyValueStore,
 } from './storage';
@@ -75,5 +77,14 @@ describe('storage', () => {
     expect(loadFlag('vn:flag', true, store)).toBe(false);
     expect(loadFlag('vn:flag', true, null)).toBe(true); // no store → fallback
     expect(() => saveFlag('vn:flag', true, null)).not.toThrow();
+  });
+
+  it('persists and reads string settings', () => {
+    const store = fakeStore();
+    expect(loadString('vn:lang', 'typescript', store)).toBe('typescript'); // missing → fallback
+    saveString('vn:lang', 'javascript', store);
+    expect(loadString('vn:lang', 'typescript', store)).toBe('javascript');
+    expect(loadString('vn:lang', 'typescript', null)).toBe('typescript'); // no store → fallback
+    expect(() => saveString('vn:lang', 'x', null)).not.toThrow();
   });
 });

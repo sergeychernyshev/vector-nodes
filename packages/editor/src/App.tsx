@@ -45,7 +45,17 @@ import { loadLibrary } from './meta-library';
 import { SubgraphEditor } from './SubgraphEditor';
 import { NodeEditContext, type NodeEditApi } from './NodeEditContext';
 import { setNodeInputDefault, setNodeParam } from './param';
-import { clearGraph, loadFlag, loadGraph, saveFlag, saveGraph } from './storage';
+import { generate } from '@vector-nodes/codegen';
+
+import {
+  clearGraph,
+  loadFlag,
+  loadGraph,
+  loadString,
+  saveFlag,
+  saveGraph,
+  saveString,
+} from './storage';
 import {
   canAddNode,
   createFlowNode,
@@ -101,6 +111,10 @@ export function App() {
   const [previewCollapsed, setPreviewCollapsed] = useState(() => loadFlag('vn:preview-collapsed'));
   // Swap the two sidebars (palette ↔ preview), persisted (issue #62).
   const [sidebarsSwapped, setSidebarsSwapped] = useState(() => loadFlag('vn:sidebars-swapped'));
+  // Target language for code generation, persisted (issue #67).
+  const [codeLanguage, setCodeLanguage] = useState(() =>
+    loadString('vn:codegen-language', 'typescript'),
+  );
   // A node type armed for placement (issue #44): a ghost follows the cursor and
   // the node is dropped on the next canvas click. `ghost` is its screen position.
   const [pending, setPending] = useState<string | null>(null);
@@ -221,6 +235,19 @@ export function App() {
   const onSave = useCallback(() => {
     downloadText('network.vnodes', serializeVnodes(graph));
   }, [graph]);
+
+  // Generate code for the current network and download it in the chosen language
+  // (issue #67). Invalid graphs surface their reason in the error toast.
+  const onGenerate = useCallback(() => {
+    try {
+      const mod = generate(graph, registry);
+      const ts = codeLanguage === 'typescript';
+      downloadText(`${mod.name}.${ts ? 'ts' : 'js'}`, ts ? mod.ts : mod.js);
+      clearError();
+    } catch (err) {
+      setErrorMessage(`Cannot generate code: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }, [graph, registry, codeLanguage, clearError]);
 
   // Cmd/Ctrl+S saves, +O opens, +Z undoes, +Shift+Z / Ctrl+Y redoes —
   // overriding the browser defaults.
@@ -524,6 +551,12 @@ export function App() {
               return !s;
             })
           }
+          onGenerate={onGenerate}
+          codeLanguage={codeLanguage}
+          onCodeLanguageChange={(lang) => {
+            saveString('vn:codegen-language', lang);
+            setCodeLanguage(lang);
+          }}
         />
         <div className={sidebarsSwapped ? 'app-main app-main--swapped' : 'app-main'}>
           <Palette

@@ -70,6 +70,25 @@ describe('Toolbar', () => {
     expect(queryByText('Swap sides')).toBeNull();
   });
 
+  it('generates code and switches language (issue #67)', () => {
+    const onGenerate = vi.fn();
+    const onCodeLanguageChange = vi.fn();
+    const { getByText, getByLabelText } = render(
+      <Toolbar
+        nodeCount={0}
+        onGenerate={onGenerate}
+        codeLanguage="typescript"
+        onCodeLanguageChange={onCodeLanguageChange}
+      />,
+    );
+    const select = getByLabelText('Code language') as HTMLSelectElement;
+    expect(select.value).toBe('typescript');
+    fireEvent.change(select, { target: { value: 'javascript' } });
+    expect(onCodeLanguageChange).toHaveBeenCalledWith('javascript');
+    fireEvent.click(getByText('Generate code'));
+    expect(onGenerate).toHaveBeenCalledTimes(1);
+  });
+
   it('openFileDialog handle clicks the hidden file input', () => {
     const ref = createRef<ToolbarHandle>();
     const { getByLabelText } = render(<Toolbar ref={ref} nodeCount={0} />);

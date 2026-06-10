@@ -68,6 +68,34 @@ export function saveFlag(
   }
 }
 
+/** Load a persisted string setting, falling back to `fallback`. */
+export function loadString(
+  key: string,
+  fallback: string,
+  store: KeyValueStore | null = defaultStore(),
+): string {
+  if (!store) return fallback;
+  try {
+    return store.getItem(key) ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+/** Persist a string setting. Silently no-ops if storage is unavailable. */
+export function saveString(
+  key: string,
+  value: string,
+  store: KeyValueStore | null = defaultStore(),
+): void {
+  if (!store) return;
+  try {
+    store.setItem(key, value);
+  } catch {
+    // Ignore.
+  }
+}
+
 /** Remove the autosaved graph. */
 export function clearGraph(store: KeyValueStore | null = defaultStore()): void {
   if (!store) return;
