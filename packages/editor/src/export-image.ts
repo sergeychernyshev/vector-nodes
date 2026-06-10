@@ -30,6 +30,29 @@ export interface CaptureTransform {
 }
 
 /**
+ * Edge color/width come from CSS custom properties (`--xy-edge-*`) declared on
+ * the `.react-flow` container — an ancestor of the captured `.react-flow__viewport`.
+ * html-to-image clones the viewport detached from that ancestor, so those
+ * properties resolve to nothing and `stroke` falls back to `none`, dropping every
+ * connection. Copy the container's custom properties onto the viewport for the
+ * duration of the capture so the clone keeps them; returns a restorer.
+ */
+function inheritFlowVars(viewport: HTMLElement): () => void {
+  const root = viewport.closest<HTMLElement>('.react-flow');
+  if (!root) return () => {};
+  const computed = getComputedStyle(root);
+  const applied: string[] = [];
+  for (let i = 0; i < computed.length; i += 1) {
+    const name = computed.item(i);
+    if (name.startsWith('--')) {
+      viewport.style.setProperty(name, computed.getPropertyValue(name));
+      applied.push(name);
+    }
+  }
+  return () => applied.forEach((name) => viewport.style.removeProperty(name));
+}
+
+/**
  * Rasterize the React Flow viewport element to a PNG data URL, framing the
  * content with the given size and transform. Faithful to the live canvas:
  * html-to-image rasterizes the actual rendered DOM.
@@ -40,6 +63,7 @@ export function captureViewport(
   transform: CaptureTransform,
   backgroundColor: string,
 ): Promise<string> {
+  const restore = inheritFlowVars(viewport);
   return toPng(viewport, {
     backgroundColor,
     width: size.width,
@@ -49,7 +73,7 @@ export function captureViewport(
       height: `${size.height}px`,
       transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.zoom})`,
     },
-  });
+  }).finally(restore);
 }
 
 /** Trigger a browser download of a data URL under `filename`. */
