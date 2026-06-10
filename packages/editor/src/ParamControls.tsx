@@ -33,8 +33,11 @@ function NumberControl({ param, value, onChange, disabled }: ControlProps) {
 
 function BooleanControl({ value, onChange, disabled }: ControlProps) {
   const checked = Boolean(value);
+  // Label on the left, checkbox on the right; the label wraps the checkbox so
+  // clicking the text toggles it (issue #97).
   return (
-    <span className="vnode__bool">
+    <label className="vnode__bool nodrag">
+      <span className="vnode__bool-label">{checked ? 'true' : 'false'}</span>
       <input
         className="nodrag"
         type="checkbox"
@@ -42,8 +45,7 @@ function BooleanControl({ value, onChange, disabled }: ControlProps) {
         disabled={disabled}
         onChange={(e) => onChange(e.target.checked)}
       />
-      <span className="vnode__bool-label">{checked ? 'true' : 'false'}</span>
-    </span>
+    </label>
   );
 }
 

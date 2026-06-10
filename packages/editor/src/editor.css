@@ -148,6 +148,16 @@
   width: 70px;
   font-size: 12px;
 }
+/* Boolean control: label on the left, checkbox on the right (issue #97). */
+.vnode__bool {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+.vnode__bool-label {
+  opacity: 0.85;
+}
 .vnode__input--axis {
   width: 44px;
 }
