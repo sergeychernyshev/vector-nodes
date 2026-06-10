@@ -42,8 +42,9 @@ describe('App ↔ React Flow prop stability (regression for React #185 update lo
     expect(typeof first.onNodeDragStart).toBe('function');
 
     // Trigger an internal state change (snapshot → history push) → App re-renders.
+    // A non-alt drag just snapshots, so a bare mouse event with a node suffices.
     act(() => {
-      (first.onNodeDragStart as () => void)();
+      (first.onNodeDragStart as (e: unknown, n: unknown) => void)({ altKey: false }, { id: 'pa' });
     });
     const second = captured.props.at(-1)!;
 
