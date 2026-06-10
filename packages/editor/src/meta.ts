@@ -4,6 +4,7 @@ import {
   META_INPUT_ID,
   META_OUTPUT_ID,
   metaNodeDefinitionToNodeDef,
+  metaNodeType,
   NodeRegistry,
   type Graph,
   type GraphLink,
@@ -45,6 +46,34 @@ export interface FlowState {
   nodes: VNodeFlowNode[];
   edges: Edge[];
   metaNodes: MetaNodes;
+}
+
+/**
+ * Rename a meta-node (issue #66): rekey its definition and retype/relabel every
+ * instance from `Meta:oldName` to `Meta:newName`. Edges are untouched (they key
+ * on node ids). A no-op when the name is unchanged.
+ */
+export function renameMetaNode(state: FlowState, oldName: string, newName: string): FlowState {
+  if (oldName === newName) return state;
+  const oldType = metaNodeType(oldName);
+  const newType = metaNodeType(newName);
+  const metaNodes: MetaNodes = {};
+  for (const [key, def] of Object.entries(state.metaNodes)) {
+    metaNodes[key === oldName ? newName : key] = def;
+  }
+  const nodes = state.nodes.map((n) =>
+    n.data.nodeType === oldType
+      ? {
+          ...n,
+          data: {
+            ...n.data,
+            nodeType: newType,
+            label: n.data.label === oldName ? newName : n.data.label,
+          },
+        }
+      : n,
+  );
+  return { nodes, edges: state.edges, metaNodes };
 }
 
 function flowStateOf(graph: Graph, base: NodeRegistry): FlowState {

@@ -33,7 +33,14 @@ import {
   suggestSourceNodes,
   type SourceSuggestion,
 } from './inject';
-import { augmentedRegistry, collapse, currentGraph, expand, type MetaNodes } from './meta';
+import {
+  augmentedRegistry,
+  collapse,
+  currentGraph,
+  expand,
+  renameMetaNode,
+  type MetaNodes,
+} from './meta';
 import { loadLibrary } from './meta-library';
 import { SubgraphEditor } from './SubgraphEditor';
 import { NodeEditContext, type NodeEditApi } from './NodeEditContext';
@@ -634,6 +641,19 @@ export function App() {
             registry={registry}
             onSave={(name, def) => setMetaNodes((m) => ({ ...m, [name]: def }))}
             onClose={() => setEditingMeta(null)}
+            onRename={(oldName, newName) => {
+              const trimmed = newName.trim();
+              if (!trimmed) return 'Name cannot be empty.';
+              if (trimmed !== oldName && metaNodes[trimmed]) {
+                return `A group named “${trimmed}” already exists.`;
+              }
+              takeSnapshot();
+              const next = renameMetaNode({ nodes, edges, metaNodes }, oldName, trimmed);
+              setNodes(next.nodes);
+              setMetaNodes(next.metaNodes);
+              setEditingMeta(trimmed);
+              return null;
+            }}
           />
         )}
       </div>

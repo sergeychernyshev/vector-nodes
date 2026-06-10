@@ -8,7 +8,7 @@ import {
   useNodesState,
   type Connection,
 } from '@xyflow/react';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { checkConnection, edgesWithoutInput, type ConnectionLike } from './connection';
 import { VNODE_TYPE, type VNodeFlowNode } from './flow';
@@ -26,6 +26,8 @@ export interface SubgraphEditorProps {
   registry: NodeRegistry;
   onSave: (name: string, def: MetaNodeDefinition) => void;
   onClose: () => void;
+  /** Rename the meta-node (issue #66); return an error message, or null if ok. */
+  onRename?: (oldName: string, newName: string) => string | null;
 }
 
 /**
@@ -40,11 +42,31 @@ export function SubgraphEditor({
   registry,
   onSave,
   onClose,
+  onRename,
 }: SubgraphEditorProps) {
   const initial = useMemo(() => subgraphToFlow(definition, registry), [definition, registry]);
   const [nodes, setNodes, onNodesChange] = useNodesState<VNodeFlowNode>(initial.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initial.edges);
   const [error, setError] = useState<string | null>(null);
+  const [draftName, setDraftName] = useState(name);
+
+  // Follow external renames (the `name` prop changes when a rename commits).
+  useEffect(() => setDraftName(name), [name]);
+
+  const commitRename = useCallback(() => {
+    const next = draftName.trim();
+    if (!onRename || next === name) {
+      setDraftName(name);
+      return;
+    }
+    const message = onRename(name, next);
+    if (message) {
+      setError(message);
+      setDraftName(name);
+    } else {
+      setError(null);
+    }
+  }, [draftName, name, onRename]);
 
   const editApi = useMemo<NodeEditApi>(
     () => ({
@@ -74,7 +96,20 @@ export function SubgraphEditor({
     <div className="subgraph" role="dialog" aria-label={`Edit meta-node ${name}`}>
       <div className="subgraph__panel">
         <div className="subgraph__header">
-          <strong>Edit “{name}”</strong>
+          <label className="subgraph__name">
+            <span>Name</span>
+            <input
+              type="text"
+              aria-label="Meta-node name"
+              value={draftName}
+              disabled={!onRename}
+              onChange={(e) => setDraftName(e.target.value)}
+              onBlur={commitRename}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+              }}
+            />
+          </label>
           <span className="subgraph__actions">
             <button
               type="button"
