@@ -1,0 +1,43 @@
+{
+  "format": "vector-nodes",
+  "version": "1.0",
+  "parameters": [],
+  "nodes": [
+    {
+      "id": "pc",
+      "type": "PointCircle",
+      "position": [
+        80,
+        120
+      ],
+      "params": {
+        "radius": 2,
+        "count": 24
+      }
+    },
+    {
+      "id": "out",
+      "type": "OutputGeometry",
+      "position": [
+        400,
+        120
+      ]
+    }
+  ],
+  "links": [
+    {
+      "from": [
+        "pc",
+        "geometry"
+      ],
+      "to": [
+        "out",
+        "geometry"
+      ]
+    }
+  ],
+  "metadata": {
+    "name": "circle",
+    "description": "A ring of points."
+  }
+}
