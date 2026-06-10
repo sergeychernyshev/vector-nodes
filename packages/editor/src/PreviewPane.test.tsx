@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { emptyGeometry } from '@vector-nodes/runtime';
 import { cleanup, fireEvent, render } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { PreviewPane } from './PreviewPane';
 
@@ -55,5 +55,24 @@ describe('PreviewPane', () => {
     fireEvent.click(getByRole('button', { name: '3D' }));
     expect(getByTestId('preview-canvas')).toBeTruthy();
     expect(queryByTestId('preview-svg')).toBeNull();
+  });
+
+  it('collapses to a rail with only an expand button (issue #64)', () => {
+    const onToggle = vi.fn();
+    const { getByLabelText, queryByTestId } = render(
+      <PreviewPane result={{ geometry: sampleGeometry() }} collapsed onToggleCollapse={onToggle} />,
+    );
+    expect(queryByTestId('preview-canvas')).toBeNull();
+    fireEvent.click(getByLabelText('Show preview'));
+    expect(onToggle).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows a collapse button when expanded', () => {
+    const onToggle = vi.fn();
+    const { getByLabelText } = render(
+      <PreviewPane result={{ geometry: sampleGeometry() }} onToggleCollapse={onToggle} />,
+    );
+    fireEvent.click(getByLabelText('Hide preview'));
+    expect(onToggle).toHaveBeenCalledTimes(1);
   });
 });

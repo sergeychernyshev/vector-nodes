@@ -19,6 +19,10 @@ function loadPreviewWidth(): number {
 
 export interface PreviewPaneProps {
   result: PreviewResult;
+  /** Whether the preview is collapsed to a thin rail (issue #64). */
+  collapsed?: boolean;
+  /** Toggle the collapsed state (omit to hide the toggle). */
+  onToggleCollapse?: () => void;
 }
 
 /** Which renderer the preview shows. The underlying network is always 3D. */
@@ -30,7 +34,7 @@ export type PreviewMode = '3d' | '2d';
  * projection (Z dropped). Also shows an element-count footer, or the evaluation
  * error.
  */
-export function PreviewPane({ result }: PreviewPaneProps) {
+export function PreviewPane({ result, collapsed, onToggleCollapse }: PreviewPaneProps) {
   const [mode, setMode] = useState<PreviewMode>('3d');
   const [width, setWidth] = useState(loadPreviewWidth);
   const dragging = useRef(false);
@@ -68,6 +72,24 @@ export function PreviewPane({ result }: PreviewPaneProps) {
     };
   }, [width]);
 
+  // Collapsed: a thin rail with an expand button (rendered after all hooks).
+  if (collapsed) {
+    return (
+      <aside className="preview preview--collapsed">
+        <button
+          type="button"
+          className="preview__collapse"
+          onClick={onToggleCollapse}
+          aria-label="Show preview"
+          aria-expanded={false}
+          title="Show preview"
+        >
+          «
+        </button>
+      </aside>
+    );
+  }
+
   return (
     <aside className="preview" style={{ width }}>
       <div
@@ -78,6 +100,18 @@ export function PreviewPane({ result }: PreviewPaneProps) {
         onPointerDown={onResizeStart}
       />
       <div className="preview__header">
+        {onToggleCollapse && (
+          <button
+            type="button"
+            className="preview__collapse"
+            onClick={onToggleCollapse}
+            aria-label="Hide preview"
+            aria-expanded
+            title="Hide preview"
+          >
+            »
+          </button>
+        )}
         <span>Preview</span>
         <div className="preview__toggle" role="group" aria-label="Preview mode">
           <button
