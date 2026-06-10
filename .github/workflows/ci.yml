@@ -43,3 +43,7 @@ jobs:
 
       - name: Test
         run: npm test
+
+      # Validate that the public packages pack cleanly (no auth / no upload).
+      - name: Package (dry-run)
+        run: npm run pack:check
