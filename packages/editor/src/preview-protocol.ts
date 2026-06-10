@@ -6,6 +6,8 @@ import { evaluatePreview, type PreviewResult } from './preview';
 export interface PreviewRequest {
   id: number;
   graph: Graph;
+  /** Node ids whose per-node preview is open and need their geometry (issue #79). */
+  previewIds?: string[];
 }
 
 /** Message posted back from the preview worker: the result for request `id`. */
@@ -19,5 +21,5 @@ export interface PreviewResponse {
  * importable (and unit-testable) without a Worker/DOM context.
  */
 export function runPreviewRequest(request: PreviewRequest): PreviewResponse {
-  return { id: request.id, result: evaluatePreview(request.graph) };
+  return { id: request.id, result: evaluatePreview(request.graph, request.previewIds) };
 }
