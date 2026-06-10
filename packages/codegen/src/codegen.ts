@@ -220,8 +220,8 @@ const EMITTERS: Record<string, Emitter> = {
     expr: `{ geometry: curveGeometry(circleCurve(${lit(params.radius)}, ${lit(params.count)})) }`,
     uses: ['curveGeometry', 'circleCurve'],
   }),
-  Polyline: ({ params }) => ({
-    expr: `{ geometry: curveGeometry(polyline(${lit(params.points)}, ${lit(params.closed)})) }`,
+  Polyline: ({ inputs, params }) => ({
+    expr: `{ geometry: curveGeometry(polyline(${inputs.points}, ${lit(params.closed)})) }`,
     uses: ['curveGeometry', 'polyline'],
   }),
   MergeGeometry: ({ inputs }) => ({

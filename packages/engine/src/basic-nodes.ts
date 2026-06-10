@@ -162,8 +162,8 @@ const circleCurveNode: NodeEvaluator = ({ params }) => ({
   geometry: curveGeometry(circleCurve(params.radius as number, params.count as number)),
 });
 
-const polylineNode: NodeEvaluator = ({ params }) => ({
-  geometry: curveGeometry(polyline(params.points as Vector[], params.closed as boolean)),
+const polylineNode: NodeEvaluator = ({ inputs, params }) => ({
+  geometry: curveGeometry(polyline(inputs.points as Vector[], params.closed as boolean)),
 });
 
 const merge: NodeEvaluator = ({ inputs }) => ({
