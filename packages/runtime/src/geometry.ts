@@ -1,5 +1,14 @@
-import { ORIGIN, type Point, type Vector } from './types.js';
+import { ORIGIN, type Geometry, type Point, type Vector } from './types.js';
 import { add } from './vector.js';
+
+/** Apply `fn` to every point in a geometry bundle (points, curves, meshes). */
+export function transformGeometry(geo: Geometry, fn: (p: Vector) => Vector): Geometry {
+  return {
+    points: geo.points.map(fn),
+    curves: geo.curves.map((c) => ({ ...c, points: c.points.map(fn) })),
+    meshes: geo.meshes.map((m) => ({ ...m, positions: m.positions.map(fn) })),
+  };
+}
 
 // --- Point-array construction -------------------------------------------------
 
