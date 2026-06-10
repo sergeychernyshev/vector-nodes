@@ -62,6 +62,6 @@ ignored.
    [Release workflow](../.github/workflows/release.yml) builds, tests, and publishes to npm via
    OIDC trusted publishing (provenance automatic).
 
-CI runs `npm run pack:check` (`npm publish --workspaces --dry-run`) on every PR to catch packaging
-regressions early, and the codegen **packed-tarball conformance test** verifies a generated module
-runs against the actual npm-packed runtime.
+CI runs `npm run pack:check` (`npm pack --dry-run` for the public packages — local, no registry) on
+every PR to catch packaging regressions early, and the codegen **packed-tarball conformance test**
+verifies a generated module runs against the actual npm-packed runtime.

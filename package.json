@@ -23,7 +23,7 @@
     "format": "prettier --check .",
     "format:write": "prettier --write .",
     "test": "vitest run",
-    "pack:check": "npm publish --workspaces --dry-run",
+    "pack:check": "npm pack --dry-run -w @vector-nodes/core -w @vector-nodes/runtime -w @vector-nodes/engine -w @vector-nodes/codegen",
     "changeset": "changeset",
     "version-packages": "changeset version"
   },
