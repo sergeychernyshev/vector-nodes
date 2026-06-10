@@ -1,4 +1,4 @@
-import type { Geometry } from '@vector-nodes/runtime';
+import type { Color, Geometry } from '@vector-nodes/runtime';
 import { useMemo } from 'react';
 
 import { buildSvgScene, padBounds, pointsPathD, type Point2 } from './svg-scene';
@@ -17,6 +17,30 @@ const COLORS = {
 function rgbCss([r, g, b]: readonly number[]): string {
   const ch = (v = 0) => Math.max(0, Math.min(255, Math.round(v * 255)));
   return `rgb(${ch(r)}, ${ch(g)}, ${ch(b)})`;
+}
+
+/** A per-element color resolved to CSS, falling back to a default (issue #80). */
+function colorCss(color: Color | null | undefined, fallback: string): string {
+  return color ? rgbCss(color) : fallback;
+}
+
+/**
+ * Split the scene's points into one group per resolved color (issues #80, #85),
+ * preserving first-seen order. Each group becomes a single `<path>` so distinct
+ * colors survive a merge while still collapsing to a handful of DOM nodes.
+ */
+function pointGroups(
+  points: readonly Point2[],
+  pointColors: readonly (Color | null)[] | undefined,
+): { color: string; points: Point2[] }[] {
+  const groups = new Map<string, Point2[]>();
+  points.forEach((p, i) => {
+    const css = colorCss(pointColors?.[i], COLORS.point);
+    const bucket = groups.get(css);
+    if (bucket) bucket.push(p);
+    else groups.set(css, [p]);
+  });
+  return [...groups].map(([color, pts]) => ({ color, points: pts }));
 }
 
 function pointsAttr(points: readonly Point2[]): string {
@@ -38,11 +62,8 @@ export function SvgView({ geometry }: SvgViewProps) {
   const pointRadius = extent * 0.012;
   // Flip Y for display (SVG y grows downward; we want y-up).
   const flip = `scale(1,-1) translate(0,${-(bounds.minY + bounds.maxY)})`;
-  // A bundle color (issue #55) overrides the per-kind defaults.
-  const tint = geometry.color ? rgbCss(geometry.color) : null;
-  const meshColor = tint ?? COLORS.mesh;
-  const curveColor = tint ?? COLORS.curve;
-  const pointColor = tint ?? COLORS.point;
+  // Per-element colors (issues #80, #85), falling back to the per-kind defaults.
+  const groups = pointGroups(scene.points, scene.pointColors);
 
   return (
     <svg
@@ -52,23 +73,27 @@ export function SvgView({ geometry }: SvgViewProps) {
       preserveAspectRatio="xMidYMid meet"
     >
       <g transform={flip}>
-        {scene.polygons.map((polygon, i) => (
-          <polygon
-            key={`m${i}`}
-            points={pointsAttr(polygon)}
-            fill={meshColor}
-            fillOpacity={0.5}
-            stroke={meshColor}
-            strokeWidth={strokeWidth}
-          />
-        ))}
-        {scene.curves.map((curve, i) =>
-          curve.closed ? (
+        {scene.polygons.map((polygon, i) => {
+          const color = colorCss(polygon.color, COLORS.mesh);
+          return (
+            <polygon
+              key={`m${i}`}
+              points={pointsAttr(polygon.points)}
+              fill={color}
+              fillOpacity={0.5}
+              stroke={color}
+              strokeWidth={strokeWidth}
+            />
+          );
+        })}
+        {scene.curves.map((curve, i) => {
+          const color = colorCss(curve.color, COLORS.curve);
+          return curve.closed ? (
             <polygon
               key={`c${i}`}
               points={pointsAttr(curve.points)}
               fill="none"
-              stroke={curveColor}
+              stroke={color}
               strokeWidth={strokeWidth}
             />
           ) : (
@@ -76,22 +101,23 @@ export function SvgView({ geometry }: SvgViewProps) {
               key={`c${i}`}
               points={pointsAttr(curve.points)}
               fill="none"
-              stroke={curveColor}
+              stroke={color}
               strokeWidth={strokeWidth}
             />
-          ),
-        )}
-        {/* All points as one <path> (one DOM node) — round caps draw each as a dot. */}
-        {scene.points.length > 0 && (
+          );
+        })}
+        {/* One <path> per distinct point color — round caps draw each point as a dot. */}
+        {groups.map((g) => (
           <path
+            key={g.color}
             className="svg-points"
-            d={pointsPathD(scene.points)}
+            d={pointsPathD(g.points)}
             fill="none"
-            stroke={pointColor}
+            stroke={g.color}
             strokeWidth={pointRadius * 2}
             strokeLinecap="round"
           />
-        )}
+        ))}
       </g>
     </svg>
   );

@@ -1,4 +1,4 @@
-import type { Geometry, Point, Vector } from '@vector-nodes/runtime';
+import type { Color, Geometry, Mesh, Point, Vector } from '@vector-nodes/runtime';
 
 /** A 2D point in world space (X–Y plane), Z dropped. */
 export type Point2 = [number, number];
@@ -7,6 +7,14 @@ export type Point2 = [number, number];
 export interface SvgPolyline {
   points: Point2[];
   closed: boolean;
+  /** Per-curve color (issue #80); `undefined` uses the renderer default. */
+  color?: Color;
+}
+
+/** A projected mesh face polygon, carrying its mesh's color (issue #80). */
+export interface SvgPolygon {
+  points: Point2[];
+  color?: Color;
 }
 
 /** Axis-aligned bounds in world space; `null` width/height stays >0 after padding. */
@@ -20,10 +28,12 @@ export interface SvgBounds {
 /** A flat, serializable description of the 2D scene — easy to unit-test. */
 export interface SvgScene {
   points: Point2[];
+  /** Per-point colors, index-aligned with `points` (issues #80, #85). */
+  pointColors?: (Color | null)[];
   /** Curve outlines. */
   curves: SvgPolyline[];
   /** Mesh faces, each a closed polygon of projected vertices. */
-  polygons: Point2[][];
+  polygons: SvgPolygon[];
   bounds: SvgBounds;
 }
 
@@ -74,6 +84,16 @@ function facePolygon(positions: readonly Point[], face: readonly number[]): Poin
   return polygon;
 }
 
+/** A projected polygon per mesh face, tagging each with its mesh color (#80). */
+function meshPolygons(mesh: Mesh): SvgPolygon[] {
+  const polygons: SvgPolygon[] = [];
+  for (const face of mesh.faces) {
+    const points = facePolygon(mesh.positions, face);
+    if (points.length > 0) polygons.push(mesh.color ? { points, color: mesh.color } : { points });
+  }
+  return polygons;
+}
+
 /**
  * Build a flat 2D scene from a geometry bundle by projecting to X–Y (Z dropped):
  * bare points, curve outlines, and one polygon per mesh face. Pure and
@@ -81,19 +101,20 @@ function facePolygon(positions: readonly Point[], face: readonly number[]): Poin
  */
 export function buildSvgScene(geometry: Geometry): SvgScene {
   const points = geometry.points.map(project);
-  const curves: SvgPolyline[] = geometry.curves.map((curve) => ({
-    points: curve.points.map(project),
-    closed: curve.closed,
-  }));
-  const polygons: Point2[][] = [];
-  for (const mesh of geometry.meshes) {
-    for (const face of mesh.faces) {
-      const polygon = facePolygon(mesh.positions, face);
-      if (polygon.length > 0) polygons.push(polygon);
-    }
-  }
-  const all: Point2[] = [...points, ...curves.flatMap((c) => c.points), ...polygons.flat()];
-  return { points, curves, polygons, bounds: boundsOf(all) };
+  const curves: SvgPolyline[] = geometry.curves.map((curve) =>
+    curve.color
+      ? { points: curve.points.map(project), closed: curve.closed, color: curve.color }
+      : { points: curve.points.map(project), closed: curve.closed },
+  );
+  const polygons: SvgPolygon[] = geometry.meshes.flatMap(meshPolygons);
+  const all: Point2[] = [
+    ...points,
+    ...curves.flatMap((c) => c.points),
+    ...polygons.flatMap((p) => p.points),
+  ];
+  const scene: SvgScene = { points, curves, polygons, bounds: boundsOf(all) };
+  if (geometry.pointColors) scene.pointColors = geometry.pointColors;
+  return scene;
 }
 
 /**

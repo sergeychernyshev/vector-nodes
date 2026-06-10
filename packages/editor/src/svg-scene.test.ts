@@ -102,12 +102,28 @@ describe('buildSvgScene', () => {
       }),
     );
     expect(scene.polygons).toEqual([
-      [
-        [0, 0],
-        [2, 0],
-        [2, 2],
-      ],
+      {
+        points: [
+          [0, 0],
+          [2, 0],
+          [2, 2],
+        ],
+      },
     ]);
+  });
+
+  it('carries per-element colors onto the scene (issues #80, #85)', () => {
+    const scene = buildSvgScene(
+      geometry({
+        points: [[0, 0, 0]],
+        pointColors: [[1, 0, 0, 1]],
+        curves: [{ points: [[0, 0, 0]], closed: false, color: [0, 1, 0, 1] }],
+        meshes: [{ positions: [[0, 0, 0]], faces: [[0]], color: [0, 0, 1, 1] }],
+      }),
+    );
+    expect(scene.pointColors).toEqual([[1, 0, 0, 1]]);
+    expect(scene.curves[0]!.color).toEqual([0, 1, 0, 1]);
+    expect(scene.polygons[0]!.color).toEqual([0, 0, 1, 1]);
   });
 });
 

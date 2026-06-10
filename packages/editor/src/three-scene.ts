@@ -90,22 +90,39 @@ export function buildMesh(mesh: Mesh, color: number = PREVIEW_COLORS.mesh): Thre
 }
 
 /**
+ * Group points by their resolved hex color (issues #80, #85), preserving
+ * first-seen color order. Uncolored points fall back to the point default, so
+ * an all-default bundle yields a single group.
+ */
+function pointsByColor(geometry: Geometry): Map<number, Point[]> {
+  const groups = new Map<number, Point[]>();
+  const colors = geometry.pointColors;
+  geometry.points.forEach((p, i) => {
+    const c = colors?.[i];
+    const hex = c ? colorToHex(c) : PREVIEW_COLORS.point;
+    const bucket = groups.get(hex);
+    if (bucket) bucket.push(p);
+    else groups.set(hex, [p]);
+  });
+  return groups;
+}
+
+/**
  * Build a `THREE.Group` containing all renderable objects for a geometry
- * bundle: a single points cloud, one line per curve, and one mesh per mesh.
- * Pure — does not touch a WebGL context, so it is unit-testable.
+ * bundle: one points cloud per distinct point color, one line per curve, and
+ * one mesh per mesh. Each curve/mesh uses its own `color` when set, else the
+ * per-kind default. Pure — does not touch a WebGL context, so it is unit-testable.
  */
 export function buildGeometryGroup(geometry: Geometry): Group {
   const group = new Group();
-  // A bundle color (issue #55) overrides the per-kind defaults.
-  const c = geometry.color ? colorToHex(geometry.color) : undefined;
-  if (geometry.points.length > 0) {
-    group.add(buildPoints(geometry.points, c ?? PREVIEW_COLORS.point));
+  for (const [hex, points] of pointsByColor(geometry)) {
+    group.add(buildPoints(points, hex));
   }
   for (const curve of geometry.curves) {
-    group.add(buildCurve(curve, c ?? PREVIEW_COLORS.curve));
+    group.add(buildCurve(curve, curve.color ? colorToHex(curve.color) : PREVIEW_COLORS.curve));
   }
   for (const mesh of geometry.meshes) {
-    group.add(buildMesh(mesh, c ?? PREVIEW_COLORS.mesh));
+    group.add(buildMesh(mesh, mesh.color ? colorToHex(mesh.color) : PREVIEW_COLORS.mesh));
   }
   return group;
 }

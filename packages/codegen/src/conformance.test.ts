@@ -258,7 +258,7 @@ describe('conformance: Phase 7 nodes', () => {
     expect(runCompiled(g, [])).toEqual({ points: [], curves: [], meshes: [] });
   });
 
-  it('ColorGeometry applies a bundle color (issue #55)', () => {
+  it('ColorGeometry colors every point (issues #80, #85)', () => {
     const g = geoGraph(
       [
         { id: 'pc', type: 'PointCircle', params: { radius: 1, count: 4 } },
@@ -270,9 +270,9 @@ describe('conformance: Phase 7 nodes', () => {
         { from: ['col', 'geometry'], to: ['out', 'geometry'] },
       ],
     );
-    const result = runCompiled(g, []) as { color: number[] };
+    const result = runCompiled(g, []) as { pointColors: number[][] };
     expect(result).toEqual(interpret(g));
-    expect(result.color).toEqual([1, 0, 0, 1]);
+    expect(result.pointColors).toEqual(Array.from({ length: 4 }, () => [1, 0, 0, 1]));
   });
 
   it('InstanceOnPoints', () => {
