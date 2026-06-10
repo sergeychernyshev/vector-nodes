@@ -1,7 +1,35 @@
-import { createGraph, type Graph, type GraphNode } from '@vector-nodes/core';
+import {
+  createGraph,
+  parameterSocketType,
+  type Graph,
+  type GraphNode,
+  type GraphParameter,
+} from '@vector-nodes/core';
 import type { Edge } from '@xyflow/react';
 
 import type { VNodeFlowNode } from './flow';
+
+/**
+ * Derive the network's function parameters from the Parameter nodes on the
+ * canvas (issue #81). Each named Parameter node exposes one argument of the
+ * generated function; its `name` param becomes the parameter `id` (codegen
+ * sanitizes both the signature arg and the in-body reference identically, so
+ * they bind). Multiple Parameter nodes sharing a name collapse to one argument,
+ * kept in first-appearance order; unnamed Parameter nodes are ignored.
+ */
+function parametersFromNodes(nodes: VNodeFlowNode[]): GraphParameter[] {
+  const params: GraphParameter[] = [];
+  const seen = new Set<string>();
+  for (const node of nodes) {
+    const type = parameterSocketType(node.data.nodeType);
+    if (type === null) continue;
+    const name = node.data.params.name;
+    if (typeof name !== 'string' || name.trim() === '' || seen.has(name)) continue;
+    seen.add(name);
+    params.push({ id: name, type });
+  }
+  return params;
+}
 
 /**
  * Convert the editor's React Flow nodes and edges back into a core {@link Graph},
@@ -10,6 +38,7 @@ import type { VNodeFlowNode } from './flow';
  */
 export function flowToGraph(nodes: VNodeFlowNode[], edges: Edge[]): Graph {
   return createGraph({
+    parameters: parametersFromNodes(nodes),
     nodes: nodes.map((node): GraphNode => {
       const graphNode: GraphNode = {
         id: node.id,

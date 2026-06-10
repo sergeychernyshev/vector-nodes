@@ -18,6 +18,13 @@ export function isParameterNodeType(type: string): boolean {
   );
 }
 
+/** The socket type a Parameter node exposes (e.g. `ParameterFloat` → `Float`), or `null`. */
+export function parameterSocketType(type: string): SocketType | null {
+  return isParameterNodeType(type)
+    ? (type.slice(PARAMETER_NODE_PREFIX.length) as SocketType)
+    : null;
+}
+
 /** Every Parameter node type, one per socket type (incl. `ParameterGeometry`). */
 export const PARAMETER_NODE_TYPES: string[] = SOCKET_TYPES.map(parameterNodeType);
 
