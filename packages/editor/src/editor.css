@@ -204,6 +204,54 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Subgraph (meta-node) editor modal */
+.subgraph {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+}
+.subgraph__panel {
+  width: 80%;
+  height: 80%;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+.subgraph__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid #ddd;
+}
+.subgraph__actions {
+  display: flex;
+  gap: 8px;
+}
+.subgraph__canvas {
+  flex: 1;
+  min-height: 0;
+}
+.subgraph__note {
+  padding: 4px 12px;
+  font-size: 12px;
+  opacity: 0.7;
+  border-top: 1px solid #eee;
+}
+
+/* Meta-node instances read distinctly */
+.vnode--meta .vnode__header {
+  background: #3a2f4a;
+  color: #e9d8ff;
+}
+
 /* Palette */
 .palette {
   width: 220px;

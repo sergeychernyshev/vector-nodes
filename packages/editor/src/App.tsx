@@ -1,6 +1,10 @@
 import {
   createBasicRegistry,
   createGraph,
+  isMetaNodeType,
+  metaNodeDefinitionToNodeDef,
+  metaNodeName,
+  metaNodeType,
   OUTPUT_NODE_TYPE,
   parseVnodes,
   serializeVnodes,
@@ -18,7 +22,10 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { checkConnection, type ConnectionLike } from './connection';
-import { downloadText, flowToGraph, maxAutoId } from './graph-io';
+import { downloadText, maxAutoId } from './graph-io';
+import { augmentedRegistry, collapse, currentGraph, expand, type MetaNodes } from './meta';
+import { loadLibrary } from './meta-library';
+import { SubgraphEditor } from './SubgraphEditor';
 import { NodeEditContext, type NodeEditApi } from './NodeEditContext';
 import { setNodeParam } from './param';
 import { clearGraph, loadGraph, saveGraph } from './storage';
@@ -38,17 +45,12 @@ import { Toolbar, type ToolbarHandle } from './Toolbar';
 import { usePreview } from './usePreview';
 import { VNode } from './VNode';
 
-const registry = createBasicRegistry();
+const baseRegistry = createBasicRegistry();
 
 // A small seed network so the canvas opens with draggable nodes.
 const seed = createGraph({
   nodes: [
-    {
-      id: 'pa',
-      type: 'PointCircle',
-      position: [80, 120],
-      params: { radius: 1, count: 8 },
-    },
+    { id: 'pa', type: 'PointCircle', position: [80, 120], params: { radius: 1, count: 8 } },
     { id: 'out', type: 'OutputGeometry', position: [440, 160] },
   ],
   links: [{ from: ['pa', 'geometry'], to: ['out', 'geometry'] }],
@@ -58,18 +60,30 @@ const nodeTypes = { [VNODE_TYPE]: VNode };
 
 // Restore the autosaved network on load, falling back to the seed.
 const initialGraph = loadGraph() ?? seed;
-const initialNodes = graphToFlowNodes(initialGraph, registry);
+const initialMetaNodes: MetaNodes = initialGraph.metaNodes ?? {};
+const initialNodes = graphToFlowNodes(
+  initialGraph,
+  augmentedRegistry(baseRegistry, initialMetaNodes),
+);
 const initialEdges = graphToFlowEdges(initialGraph);
 
 /** Editor application shell: palette + a pannable/zoomable node canvas. */
 export function App() {
   const [nodes, setNodes, onNodesChange] = useNodesState<VNodeFlowNode>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [metaNodes, setMetaNodes] = useState<MetaNodes>(initialMetaNodes);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [editingMeta, setEditingMeta] = useState<string | null>(null);
+  const [library] = useState(() => loadLibrary());
   const idCounter = useRef(maxAutoId(initialNodes));
   const toolbarRef = useRef<ToolbarHandle>(null);
 
-  // The current network as a core graph; recomputed only on node/edge changes.
-  const graph = useMemo(() => flowToGraph(nodes, edges), [nodes, edges]);
+  // Registry = base node definitions + a definition per meta-node, so instances
+  // render with their interface sockets and links type-check.
+  const registry = useMemo(() => augmentedRegistry(baseRegistry, metaNodes), [metaNodes]);
+
+  // The current network as a core graph (meta-nodes included), recomputed on change.
+  const graph = useMemo(() => currentGraph(nodes, edges, metaNodes), [nodes, edges, metaNodes]);
 
   // Autosave to localStorage on every change.
   useEffect(() => {
@@ -81,7 +95,16 @@ export function App() {
   // Evaluate the graph for the preview off the main thread (Web Worker).
   const preview = usePreview(graph);
 
-  const items = useMemo(() => paletteItems(registry), []);
+  const items = useMemo(() => {
+    const base = paletteItems(registry);
+    // Library meta-nodes not already present in this graph, for insertion.
+    const libraryItems = Object.keys(library)
+      .filter((name) => !registry.has(metaNodeType(name)))
+      .map((name) => ({ type: metaNodeType(name), label: name, category: 'Library' }));
+    return [...base, ...libraryItems].sort(
+      (a, b) => a.category.localeCompare(b.category) || a.label.localeCompare(b.label),
+    );
+  }, [registry, library]);
   const disabledTypes = useMemo(
     () => (hasOutputNode(nodes) ? new Set([OUTPUT_NODE_TYPE]) : new Set<string>()),
     [nodes],
@@ -121,8 +144,8 @@ export function App() {
   );
 
   const onSave = useCallback(() => {
-    downloadText('network.vnodes', serializeVnodes(flowToGraph(nodes, edges)));
-  }, [nodes, edges]);
+    downloadText('network.vnodes', serializeVnodes(graph));
+  }, [graph]);
 
   // Cmd/Ctrl+S saves, Cmd/Ctrl+O opens — overriding the browser defaults.
   useEffect(() => {
@@ -143,8 +166,10 @@ export function App() {
 
   const onReset = useCallback(() => {
     clearGraph();
-    setNodes(graphToFlowNodes(seed, registry));
+    setNodes(graphToFlowNodes(seed, baseRegistry));
     setEdges(graphToFlowEdges(seed));
+    setMetaNodes({});
+    setSelectedIds([]);
     idCounter.current = 0;
     clearError();
   }, [setNodes, setEdges, clearError]);
@@ -152,10 +177,13 @@ export function App() {
   const onOpen = useCallback(
     async (file: File) => {
       try {
-        const graph = parseVnodes(await file.text());
-        const loaded = graphToFlowNodes(graph, registry);
+        const opened = parseVnodes(await file.text());
+        const openedMeta = opened.metaNodes ?? {};
+        const loaded = graphToFlowNodes(opened, augmentedRegistry(baseRegistry, openedMeta));
         setNodes(loaded);
-        setEdges(graphToFlowEdges(graph));
+        setEdges(graphToFlowEdges(opened));
+        setMetaNodes(openedMeta);
+        setSelectedIds([]);
         idCounter.current = maxAutoId(loaded);
         clearError();
       } catch (err) {
@@ -167,7 +195,13 @@ export function App() {
 
   const addNode = useCallback(
     (type: string) => {
-      const def = registry.get(type);
+      // A library meta-node not yet in this graph: bring its definition in first.
+      const libName = metaNodeName(type);
+      let def = registry.get(type);
+      if (!def && libName && library[libName]) {
+        def = metaNodeDefinitionToNodeDef(libName, library[libName]);
+        setMetaNodes((m) => ({ ...m, [libName]: library[libName]! }));
+      }
       if (!def) return;
       const check = canAddNode(type, nodes);
       if (!check.ok) {
@@ -182,8 +216,39 @@ export function App() {
       setNodes((nds) => [...nds, createFlowNode(def, position, id)]);
       clearError();
     },
-    [nodes, setNodes, clearError],
+    [registry, library, nodes, setNodes, clearError],
   );
+
+  // Group: a selection may collapse if it has no Output Geometry node.
+  const canGroup =
+    selectedIds.length >= 1 &&
+    selectedIds.every((id) => nodes.find((n) => n.id === id)?.data.nodeType !== OUTPUT_NODE_TYPE);
+  // Ungroup: exactly one selected meta-node instance.
+  const ungroupId =
+    selectedIds.length === 1 &&
+    isMetaNodeType(nodes.find((n) => n.id === selectedIds[0])?.data.nodeType ?? '')
+      ? selectedIds[0]
+      : null;
+
+  const onGroup = useCallback(() => {
+    if (!canGroup) return;
+    const next = collapse({ nodes, edges, metaNodes }, selectedIds, baseRegistry);
+    setNodes(next.nodes);
+    setEdges(next.edges);
+    setMetaNodes(next.metaNodes);
+    setSelectedIds([next.instanceId]);
+    clearError();
+  }, [canGroup, nodes, edges, metaNodes, selectedIds, setNodes, setEdges, clearError]);
+
+  const onUngroup = useCallback(() => {
+    if (!ungroupId) return;
+    const next = expand({ nodes, edges, metaNodes }, ungroupId, baseRegistry);
+    setNodes(next.nodes);
+    setEdges(next.edges);
+    setMetaNodes(next.metaNodes);
+    setSelectedIds([]);
+    clearError();
+  }, [ungroupId, nodes, edges, metaNodes, setNodes, setEdges, clearError]);
 
   return (
     <NodeEditContext.Provider value={editApi}>
@@ -201,6 +266,8 @@ export function App() {
           onSave={onSave}
           onOpen={onOpen}
           onReset={onReset}
+          onGroup={canGroup ? onGroup : undefined}
+          onUngroup={ungroupId ? onUngroup : undefined}
         />
         <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
           <Palette items={items} onAdd={addNode} disabledTypes={disabledTypes} />
@@ -212,6 +279,11 @@ export function App() {
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
+              onSelectionChange={({ nodes: sel }) => setSelectedIds(sel.map((n) => n.id))}
+              onNodeDoubleClick={(_, node) => {
+                const name = metaNodeName(node.data.nodeType);
+                if (name && metaNodes[name]) setEditingMeta(name);
+              }}
               isValidConnection={isValidConnection}
               onConnectEnd={clearError}
               fitView
@@ -227,6 +299,15 @@ export function App() {
           <div role="alert" className="connection-toast">
             {errorMessage}
           </div>
+        )}
+        {editingMeta && metaNodes[editingMeta] && (
+          <SubgraphEditor
+            name={editingMeta}
+            definition={metaNodes[editingMeta]}
+            registry={registry}
+            onSave={(name, def) => setMetaNodes((m) => ({ ...m, [name]: def }))}
+            onClose={() => setEditingMeta(null)}
+          />
         )}
       </div>
     </NodeEditContext.Provider>

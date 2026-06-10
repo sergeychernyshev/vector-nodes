@@ -36,6 +36,16 @@ describe('Toolbar', () => {
     expect(onReset).toHaveBeenCalledTimes(1);
   });
 
+  it('calls onGroup / onUngroup and disables them when no handler is given', () => {
+    const onGroup = vi.fn();
+    const { getByText, rerender } = render(<Toolbar nodeCount={0} onGroup={onGroup} />);
+    fireEvent.click(getByText('Group'));
+    expect(onGroup).toHaveBeenCalledTimes(1);
+    expect((getByText('Ungroup').closest('button') as HTMLButtonElement).disabled).toBe(true);
+    rerender(<Toolbar nodeCount={0} />);
+    expect((getByText('Group').closest('button') as HTMLButtonElement).disabled).toBe(true);
+  });
+
   it('openFileDialog handle clicks the hidden file input', () => {
     const ref = createRef<ToolbarHandle>();
     const { getByLabelText } = render(<Toolbar ref={ref} nodeCount={0} />);

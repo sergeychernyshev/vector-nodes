@@ -1,5 +1,6 @@
 import {
   assertValidGraph,
+  flattenMetaNodes,
   getOutputNode,
   resolveParamDefaults,
   type Graph,
@@ -49,6 +50,9 @@ export function evaluateGraph(
   operators: OperatorTable,
   parameters: Record<string, unknown> = {},
 ): EvaluationResult {
+  // Inline any meta-node instances so evaluation matches the expanded network
+  // and the base registry/operators suffice (no per-meta-node operator needed).
+  graph = flattenMetaNodes(graph);
   assertValidGraph(graph, registry);
 
   const outputNode = getOutputNode(graph);

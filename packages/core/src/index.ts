@@ -11,3 +11,4 @@ export * from './schema.js';
 export * from './vnodes.js';
 export * from './validate-graph.js';
 export * from './nodes.js';
+export * from './meta-node.js';

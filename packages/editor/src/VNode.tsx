@@ -38,8 +38,12 @@ export function VNode({ id, data, selected }: NodeProps<VNodeFlowNode>) {
   );
   const blockParams = data.paramDefs.filter((p) => !inlineParams.has(p.name));
 
+  const classes = ['vnode'];
+  if (selected) classes.push('vnode--selected');
+  if (data.nodeType.startsWith('Meta:')) classes.push('vnode--meta');
+
   return (
-    <div className={selected ? 'vnode vnode--selected' : 'vnode'}>
+    <div className={classes.join(' ')}>
       <div className="vnode__header">{data.label}</div>
       <div className="vnode__body">
         <div className="vnode__col">
