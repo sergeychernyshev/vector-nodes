@@ -7,6 +7,7 @@ import {
   collapse,
   expand,
   flowToSubgraph,
+  renameMetaNode,
   subgraphToFlow,
   type FlowState,
 } from './meta';
@@ -59,6 +60,27 @@ describe('collapse / expand round-trip (flow level)', () => {
     expect(Object.keys(expanded.metaNodes)).toHaveLength(0);
     expect(expanded.nodes.filter((n) => n.data.nodeType === 'Translate')).toHaveLength(1);
     expect(expanded.nodes.filter((n) => n.data.nodeType === 'PointCircle')).toHaveLength(1);
+  });
+});
+
+describe('renameMetaNode (issue #66)', () => {
+  it('rekeys the definition and retypes/relabels every instance', () => {
+    const collapsed = collapse(sampleState(), ['pc', 't'], base);
+    const oldName = Object.keys(collapsed.metaNodes)[0]!;
+    const renamed = renameMetaNode(collapsed, oldName, 'MyGroup');
+
+    expect(Object.keys(renamed.metaNodes)).toEqual(['MyGroup']);
+    const instance = renamed.nodes.find((n) => n.id === collapsed.instanceId)!;
+    expect(instance.data.nodeType).toBe('Meta:MyGroup');
+    expect(instance.data.label).toBe('MyGroup');
+    // Non-instance nodes are untouched.
+    expect(renamed.nodes.find((n) => n.id === 'out')!.data.nodeType).toBe('OutputGeometry');
+  });
+
+  it('is a no-op when the name is unchanged', () => {
+    const collapsed = collapse(sampleState(), ['pc', 't'], base);
+    const name = Object.keys(collapsed.metaNodes)[0]!;
+    expect(renameMetaNode(collapsed, name, name)).toBe(collapsed);
   });
 });
 

@@ -304,6 +304,17 @@
   padding: 8px 12px;
   border-bottom: 1px solid #ddd;
 }
+.subgraph__name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+.subgraph__name input {
+  font: inherit;
+  font-weight: 400;
+  padding: 3px 6px;
+}
 .subgraph__actions {
   display: flex;
   gap: 8px;
