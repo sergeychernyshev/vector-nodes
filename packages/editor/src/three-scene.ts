@@ -1,4 +1,4 @@
-import type { Curve, Geometry, Mesh, Point } from '@vector-nodes/runtime';
+import type { Color as GeometryColor, Curve, Geometry, Mesh, Point } from '@vector-nodes/runtime';
 import {
   BufferAttribute,
   BufferGeometry,
@@ -20,6 +20,12 @@ export const PREVIEW_COLORS = {
   mesh: 0x8a8f98,
 } as const;
 
+/** Convert an RGBA geometry color (0..1) to a 0xRRGGBB number for three.js. */
+export function colorToHex(color: GeometryColor): number {
+  const ch = (v: number) => Math.max(0, Math.min(255, Math.round(v * 255)));
+  return (ch(color[0]) << 16) | (ch(color[1]) << 8) | ch(color[2]);
+}
+
 /** Flatten a list of points into a packed `[x, y, z, x, y, z, …]` array. */
 function flattenPoints(points: readonly Point[]): Float32Array {
   const data = new Float32Array(points.length * 3);
@@ -34,18 +40,21 @@ function flattenPoints(points: readonly Point[]): Float32Array {
 }
 
 /** A `THREE.Points` cloud for the bare points of a geometry bundle. */
-export function buildPoints(points: readonly Point[]): Points {
+export function buildPoints(
+  points: readonly Point[],
+  color: number = PREVIEW_COLORS.point,
+): Points {
   const geometry = new BufferGeometry();
   geometry.setAttribute('position', new BufferAttribute(flattenPoints(points), 3));
-  const material = new PointsMaterial({ color: PREVIEW_COLORS.point, size: 0.08 });
+  const material = new PointsMaterial({ color, size: 0.08 });
   return new Points(geometry, material);
 }
 
 /** A `THREE.Line` (or `LineLoop` when closed) for a single curve. */
-export function buildCurve(curve: Curve): Line {
+export function buildCurve(curve: Curve, color: number = PREVIEW_COLORS.curve): Line {
   const geometry = new BufferGeometry();
   geometry.setAttribute('position', new BufferAttribute(flattenPoints(curve.points), 3));
-  const material = new LineBasicMaterial({ color: PREVIEW_COLORS.curve });
+  const material = new LineBasicMaterial({ color });
   return curve.closed ? new LineLoop(geometry, material) : new Line(geometry, material);
 }
 
@@ -64,14 +73,14 @@ export function triangulateFace(face: readonly number[]): number[] {
 }
 
 /** A `THREE.Mesh` for a single mesh, fan-triangulating each face. */
-export function buildMesh(mesh: Mesh): ThreeMesh {
+export function buildMesh(mesh: Mesh, color: number = PREVIEW_COLORS.mesh): ThreeMesh {
   const geometry = new BufferGeometry();
   geometry.setAttribute('position', new BufferAttribute(flattenPoints(mesh.positions), 3));
   const indices = mesh.faces.flatMap(triangulateFace);
   geometry.setIndex(indices);
   geometry.computeVertexNormals();
   const material = new MeshStandardMaterial({
-    color: PREVIEW_COLORS.mesh,
+    color,
     metalness: 0.1,
     roughness: 0.8,
     flatShading: true,
@@ -87,14 +96,16 @@ export function buildMesh(mesh: Mesh): ThreeMesh {
  */
 export function buildGeometryGroup(geometry: Geometry): Group {
   const group = new Group();
+  // A bundle color (issue #55) overrides the per-kind defaults.
+  const c = geometry.color ? colorToHex(geometry.color) : undefined;
   if (geometry.points.length > 0) {
-    group.add(buildPoints(geometry.points));
+    group.add(buildPoints(geometry.points, c ?? PREVIEW_COLORS.point));
   }
   for (const curve of geometry.curves) {
-    group.add(buildCurve(curve));
+    group.add(buildCurve(curve, c ?? PREVIEW_COLORS.curve));
   }
   for (const mesh of geometry.meshes) {
-    group.add(buildMesh(mesh));
+    group.add(buildMesh(mesh, c ?? PREVIEW_COLORS.mesh));
   }
   return group;
 }

@@ -11,6 +11,7 @@ Plus a **Parameter** node per socket type (`ParameterFloat` … `ParameterGeomet
 | **Bezier Curve** (`BezierCurve`)            | `p0`: Vector, `p1`: Vector, `p2`: Vector, `p3`: Vector | `geometry`: Geometry, `points`[]: Vector | `segments`                                    |
 | **Bounding Box** (`BoundingBox`)            | `geometry`: Geometry                                   | `geometry`: Geometry                     | —                                             |
 | **Circle** (`CircleCurve`)                  | —                                                      | `geometry`: Geometry                     | `radius`, `count`                             |
+| **Set Color** (`ColorGeometry`)             | `geometry`: Geometry, `color`: Color                   | `geometry`: Geometry                     | —                                             |
 | **Instance on Points** (`InstanceOnPoints`) | `geometry`: Geometry, `points`[]: Vector               | `geometry`: Geometry                     | —                                             |
 | **Merge** (`MergeGeometry`)                 | `geometry0`, `geometry1`, … : Geometry (variadic)      | `geometry`: Geometry                     | —                                             |
 | **Point Circle** (`PointCircle`)            | —                                                      | `geometry`: Geometry, `points`[]: Vector | `radius`, `count`                             |

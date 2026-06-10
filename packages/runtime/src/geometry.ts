@@ -1,4 +1,4 @@
-import { ORIGIN, type Curve, type Geometry, type Point, type Vector } from './types.js';
+import { ORIGIN, type Color, type Curve, type Geometry, type Point, type Vector } from './types.js';
 import { add } from './vector.js';
 
 /** Apply `fn` to every point in a geometry bundle (points, curves, meshes). */
@@ -195,6 +195,11 @@ export function mergeGeometry(a: Geometry, b: Geometry): Geometry {
 /** Concatenate any number of geometry bundles (empty when none). */
 export function mergeAll(geometries: readonly Geometry[]): Geometry {
   return geometries.reduce(mergeGeometry, { points: [], curves: [], meshes: [] });
+}
+
+/** Apply a display color to a whole geometry bundle (issue #55). */
+export function colorGeometry(geometry: Geometry, color: Color): Geometry {
+  return { ...geometry, color };
 }
 
 /** Every point referenced by a geometry bundle (points, curves, mesh positions). */

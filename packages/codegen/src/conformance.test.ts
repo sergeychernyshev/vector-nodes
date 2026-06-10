@@ -239,6 +239,23 @@ describe('conformance: Phase 7 nodes', () => {
     expect(runCompiled(g, [])).toEqual({ points: [], curves: [], meshes: [] });
   });
 
+  it('ColorGeometry applies a bundle color (issue #55)', () => {
+    const g = geoGraph(
+      [
+        { id: 'pc', type: 'PointCircle', params: { radius: 1, count: 4 } },
+        { id: 'col', type: 'ColorGeometry', inputDefaults: { color: [1, 0, 0, 1] } },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      [
+        { from: ['pc', 'geometry'], to: ['col', 'geometry'] },
+        { from: ['col', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    );
+    const result = runCompiled(g, []) as { color: number[] };
+    expect(result).toEqual(interpret(g));
+    expect(result.color).toEqual([1, 0, 0, 1]);
+  });
+
   it('InstanceOnPoints', () => {
     const g = geoGraph(
       [

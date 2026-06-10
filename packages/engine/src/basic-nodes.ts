@@ -6,6 +6,7 @@ import {
   circleCurve,
   circlePoints,
   clamp,
+  colorGeometry,
   coneMesh,
   cross,
   curveGeometry,
@@ -35,6 +36,7 @@ import {
   transformGeometry,
   triangulateGeometry,
   uvSphere,
+  type Color,
   type Geometry,
   type Vector,
 } from '@vector-nodes/runtime';
@@ -174,6 +176,10 @@ const merge: NodeEvaluator = ({ inputs }) => ({
   ),
 });
 
+const colorGeometryNode: NodeEvaluator = ({ inputs }) => ({
+  geometry: colorGeometry(inputs.geometry as Geometry, inputs.color as Color),
+});
+
 const boundingBoxNode: NodeEvaluator = ({ inputs }) => ({
   geometry: { points: boundingBox(inputs.geometry as Geometry), curves: [], meshes: [] },
 });
@@ -290,6 +296,7 @@ export const BASIC_OPERATORS: OperatorTable = {
   CircleCurve: circleCurveNode,
   Polyline: polylineNode,
   MergeGeometry: merge,
+  ColorGeometry: colorGeometryNode,
   BoundingBox: boundingBoxNode,
   InstanceOnPoints: instanceOnPointsNode,
   MathFloat: mathFloat,
