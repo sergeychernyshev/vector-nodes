@@ -38,7 +38,7 @@ import { loadLibrary } from './meta-library';
 import { SubgraphEditor } from './SubgraphEditor';
 import { NodeEditContext, type NodeEditApi } from './NodeEditContext';
 import { setNodeInputDefault, setNodeParam } from './param';
-import { clearGraph, loadGraph, saveGraph } from './storage';
+import { clearGraph, loadFlag, loadGraph, saveFlag, saveGraph } from './storage';
 import {
   canAddNode,
   createFlowNode,
@@ -88,6 +88,8 @@ export function App() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingMeta, setEditingMeta] = useState<string | null>(null);
   const [library] = useState(() => loadLibrary());
+  // Node-list sidebar collapse, persisted (issue #60).
+  const [paletteCollapsed, setPaletteCollapsed] = useState(() => loadFlag('vn:palette-collapsed'));
   // A node type armed for placement (issue #44): a ghost follows the cursor and
   // the node is dropped on the next canvas click. `ghost` is its screen position.
   const [pending, setPending] = useState<string | null>(null);
@@ -512,6 +514,13 @@ export function App() {
             onAdd={armNode}
             disabledTypes={disabledTypes}
             armedType={pending}
+            collapsed={paletteCollapsed}
+            onToggleCollapse={() =>
+              setPaletteCollapsed((c) => {
+                saveFlag('vn:palette-collapsed', !c);
+                return !c;
+              })
+            }
           />
           <div
             style={{ flex: 1, minHeight: 0, cursor: pending ? 'copy' : undefined }}

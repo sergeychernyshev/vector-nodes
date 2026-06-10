@@ -9,15 +9,58 @@ export interface PaletteProps {
   disabledTypes?: ReadonlySet<string>;
   /** Node type currently armed for placement (rendered highlighted). */
   armedType?: string | null;
+  /** Whether the palette is collapsed to a thin rail (issue #60). */
+  collapsed?: boolean;
+  /** Toggle the collapsed state (omit to hide the toggle). */
+  onToggleCollapse?: () => void;
 }
 
 /** Searchable node palette; clicking an entry arms that node for placement. */
-export function Palette({ items, onAdd, disabledTypes, armedType }: PaletteProps) {
+export function Palette({
+  items,
+  onAdd,
+  disabledTypes,
+  armedType,
+  collapsed,
+  onToggleCollapse,
+}: PaletteProps) {
   const [query, setQuery] = useState('');
   const filtered = useMemo(() => filterPalette(items, query), [items, query]);
 
+  if (collapsed) {
+    return (
+      <aside className="palette palette--collapsed">
+        <button
+          type="button"
+          className="palette__collapse"
+          onClick={onToggleCollapse}
+          aria-label="Show node list"
+          aria-expanded={false}
+          title="Show nodes"
+        >
+          »
+        </button>
+      </aside>
+    );
+  }
+
   return (
     <aside className="palette">
+      <div className="palette__header">
+        <span className="palette__title">Nodes</span>
+        {onToggleCollapse && (
+          <button
+            type="button"
+            className="palette__collapse"
+            onClick={onToggleCollapse}
+            aria-label="Hide node list"
+            aria-expanded
+            title="Hide nodes"
+          >
+            «
+          </button>
+        )}
+      </div>
       <input
         className="palette__search"
         type="search"

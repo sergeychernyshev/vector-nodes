@@ -1,7 +1,15 @@
 import { createGraph } from '@vector-nodes/core';
 import { describe, expect, it } from 'vitest';
 
-import { clearGraph, loadGraph, saveGraph, STORAGE_KEY, type KeyValueStore } from './storage';
+import {
+  clearGraph,
+  loadFlag,
+  loadGraph,
+  saveFlag,
+  saveGraph,
+  STORAGE_KEY,
+  type KeyValueStore,
+} from './storage';
 
 function fakeStore(): KeyValueStore & { map: Map<string, string> } {
   const map = new Map<string, string>();
@@ -55,5 +63,17 @@ describe('storage', () => {
     saveGraph(graph, store);
     clearGraph(store);
     expect(loadGraph(store)).toBeNull();
+  });
+
+  it('persists and reads boolean flags', () => {
+    const store = fakeStore();
+    expect(loadFlag('vn:flag', false, store)).toBe(false);
+    expect(loadFlag('vn:flag', true, store)).toBe(true); // missing → fallback
+    saveFlag('vn:flag', true, store);
+    expect(loadFlag('vn:flag', false, store)).toBe(true);
+    saveFlag('vn:flag', false, store);
+    expect(loadFlag('vn:flag', true, store)).toBe(false);
+    expect(loadFlag('vn:flag', true, null)).toBe(true); // no store → fallback
+    expect(() => saveFlag('vn:flag', true, null)).not.toThrow();
   });
 });

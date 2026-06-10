@@ -49,4 +49,23 @@ describe('Palette', () => {
     });
     expect(queryByText('No matches')).not.toBeNull();
   });
+
+  it('collapses to a rail with only an expand button (issue #60)', () => {
+    const onToggle = vi.fn();
+    const { getByLabelText, queryByLabelText } = render(
+      <Palette items={items} onAdd={vi.fn()} collapsed onToggleCollapse={onToggle} />,
+    );
+    expect(queryByLabelText('Search nodes')).toBeNull();
+    fireEvent.click(getByLabelText('Show node list'));
+    expect(onToggle).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows a collapse button when expanded', () => {
+    const onToggle = vi.fn();
+    const { getByLabelText } = render(
+      <Palette items={items} onAdd={vi.fn()} onToggleCollapse={onToggle} />,
+    );
+    fireEvent.click(getByLabelText('Hide node list'));
+    expect(onToggle).toHaveBeenCalledTimes(1);
+  });
 });
