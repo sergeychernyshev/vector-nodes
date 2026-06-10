@@ -1,4 +1,4 @@
-import { PARAMETER_NODE_TYPES } from '@vector-nodes/core';
+import { orderedVariadicKeys, PARAMETER_NODE_TYPES } from '@vector-nodes/core';
 import {
   add,
   boundingBox,
@@ -19,7 +19,7 @@ import {
   length,
   linePoints,
   mapRange,
-  mergeGeometry,
+  mergeAll,
   meshGeometry,
   normalize,
   planeMesh,
@@ -166,8 +166,12 @@ const polylineNode: NodeEvaluator = ({ inputs, params }) => ({
   geometry: curveGeometry(polyline(inputs.points as Vector[], params.closed as boolean)),
 });
 
+// Merge gathers its variadic `geometry0, geometry1, …` inputs in index order
+// and concatenates them (empty geometry when none are connected) — issue #65.
 const merge: NodeEvaluator = ({ inputs }) => ({
-  geometry: mergeGeometry(inputs.a as Geometry, inputs.b as Geometry),
+  geometry: mergeAll(
+    orderedVariadicKeys(Object.keys(inputs), 'geometry').map((k) => inputs[k] as Geometry),
+  ),
 });
 
 const boundingBoxNode: NodeEvaluator = ({ inputs }) => ({
