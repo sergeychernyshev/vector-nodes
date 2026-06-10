@@ -126,6 +126,69 @@ describe('ParamControls', () => {
     const { container } = renderControls([], {});
     expect(container.querySelector('.vnode__params')).toBeNull();
   });
+
+  describe('vector-array editor (issue #83)', () => {
+    const def: ParamDefinition = { name: 'values', type: 'Vector', isArray: true, default: [] };
+
+    it('renders one xyz row per entry plus an add button', () => {
+      const { container } = renderControls([def], {
+        values: [
+          [1, 2, 3],
+          [4, 5, 6],
+        ],
+      });
+      expect(container.querySelectorAll('.vnode__vec-array-row')).toHaveLength(2);
+      expect(container.querySelector('.vnode__vec-array-add')).toBeTruthy();
+    });
+
+    it('edits one axis of one entry', () => {
+      const { setParam, getByLabelText } = renderControls([def], {
+        values: [
+          [1, 2, 3],
+          [4, 5, 6],
+        ],
+      });
+      fireEvent.change(getByLabelText('z 1'), { target: { value: '9' } });
+      expect(setParam).toHaveBeenCalledWith('n1', 'values', [
+        [1, 2, 3],
+        [4, 5, 9],
+      ]);
+    });
+
+    it('appends a zero vector on add', () => {
+      const { setParam, container } = renderControls([def], { values: [[1, 2, 3]] });
+      fireEvent.click(container.querySelector('.vnode__vec-array-add')!);
+      expect(setParam).toHaveBeenCalledWith('n1', 'values', [
+        [1, 2, 3],
+        [0, 0, 0],
+      ]);
+    });
+
+    it('removes the chosen entry', () => {
+      const { setParam, getByLabelText } = renderControls([def], {
+        values: [
+          [1, 2, 3],
+          [4, 5, 6],
+        ],
+      });
+      fireEvent.click(getByLabelText('Remove vector 0'));
+      expect(setParam).toHaveBeenCalledWith('n1', 'values', [[4, 5, 6]]);
+    });
+
+    it('starts empty (just an add button) when there are no values', () => {
+      const { container } = renderControls([def], { values: [] });
+      expect(container.querySelectorAll('.vnode__vec-array-row')).toHaveLength(0);
+      expect(container.querySelector('.vnode__vec-array-add')).toBeTruthy();
+    });
+
+    it('still shows "(array)" for non-vector array params', () => {
+      const { getByText } = renderControls(
+        [{ name: 'tags', type: 'String', isArray: true, default: [] }],
+        { tags: [] },
+      );
+      expect(getByText('(array)')).toBeTruthy();
+    });
+  });
 });
 
 describe('isEditableInput', () => {

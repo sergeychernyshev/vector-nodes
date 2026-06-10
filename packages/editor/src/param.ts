@@ -55,6 +55,11 @@ export function asVec3(value: unknown): Vec3 {
   return [0, 0, 0];
 }
 
+/** Coerce a param value to a list of 3-vectors (e.g. `VectorArray.values`, #83). */
+export function asVec3Array(value: unknown): Vec3[] {
+  return Array.isArray(value) ? value.map(asVec3) : [];
+}
+
 /** Coerce a param value to RGBA, falling back to opaque black. */
 export function asRgba(value: unknown): Rgba {
   if (Array.isArray(value) && value.length >= 4) {
