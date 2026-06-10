@@ -331,6 +331,90 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
     params: [],
   },
 
+  // Mesh primitives (Phase 8)
+  {
+    type: 'PlaneMesh',
+    label: 'Plane',
+    category: 'Mesh',
+    inputs: [],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [
+      { name: 'width', type: 'Float', default: 1 },
+      { name: 'height', type: 'Float', default: 1 },
+    ],
+  },
+  {
+    type: 'BoxMesh',
+    label: 'Cube',
+    category: 'Mesh',
+    inputs: [],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [
+      { name: 'width', type: 'Float', default: 1 },
+      { name: 'height', type: 'Float', default: 1 },
+      { name: 'depth', type: 'Float', default: 1 },
+    ],
+  },
+  {
+    type: 'GridMesh',
+    label: 'Grid',
+    category: 'Mesh',
+    inputs: [],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [
+      { name: 'countX', type: 'Integer', default: 4, min: 1 },
+      { name: 'countY', type: 'Integer', default: 4, min: 1 },
+      { name: 'sizeX', type: 'Float', default: 2 },
+      { name: 'sizeY', type: 'Float', default: 2 },
+    ],
+  },
+  {
+    type: 'UVSphere',
+    label: 'UV Sphere',
+    category: 'Mesh',
+    inputs: [],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [
+      { name: 'radius', type: 'Float', default: 1 },
+      { name: 'segments', type: 'Integer', default: 16, min: 3 },
+      { name: 'rings', type: 'Integer', default: 8, min: 2 },
+    ],
+  },
+  {
+    type: 'CylinderMesh',
+    label: 'Cylinder',
+    category: 'Mesh',
+    inputs: [],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [
+      { name: 'radius', type: 'Float', default: 1 },
+      { name: 'height', type: 'Float', default: 2 },
+      { name: 'segments', type: 'Integer', default: 16, min: 3 },
+    ],
+  },
+  {
+    type: 'ConeMesh',
+    label: 'Cone',
+    category: 'Mesh',
+    inputs: [],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [
+      { name: 'radius', type: 'Float', default: 1 },
+      { name: 'height', type: 'Float', default: 2 },
+      { name: 'segments', type: 'Integer', default: 16, min: 3 },
+    ],
+  },
+
+  // Mesh ops (Phase 8)
+  {
+    type: 'TriangulateMesh',
+    label: 'Triangulate',
+    category: 'Mesh',
+    inputs: [{ name: 'geometry', type: 'Geometry' }],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
+  },
+
   // Parameters (one per socket type, incl. Geometry)
   ...parameterDefs,
 

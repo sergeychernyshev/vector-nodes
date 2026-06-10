@@ -2,21 +2,27 @@ import { PARAMETER_NODE_TYPES } from '@vector-nodes/core';
 import {
   add,
   boundingBox,
+  boxMesh,
   circleCurve,
   circlePoints,
   clamp,
+  coneMesh,
   cross,
   curveGeometry,
+  cylinderMesh,
   distance,
   dot,
   fromList,
+  gridMesh,
   gridPoints,
   instanceOnPoints,
   length,
   linePoints,
   mapRange,
   mergeGeometry,
+  meshGeometry,
   normalize,
+  planeMesh,
   polyline,
   projectOrthographic,
   projectPerspective,
@@ -27,6 +33,8 @@ import {
   scaleAxes,
   sub,
   transformGeometry,
+  triangulateGeometry,
+  uvSphere,
   type Geometry,
   type Vector,
 } from '@vector-nodes/runtime';
@@ -207,6 +215,44 @@ const clampNode: NodeEvaluator = ({ inputs }) => ({
   value: clamp(inputs.value as number, inputs.min as number, inputs.max as number),
 });
 
+const planeMeshNode: NodeEvaluator = ({ params }) => ({
+  geometry: meshGeometry(planeMesh(params.width as number, params.height as number)),
+});
+const boxMeshNode: NodeEvaluator = ({ params }) => ({
+  geometry: meshGeometry(
+    boxMesh(params.width as number, params.height as number, params.depth as number),
+  ),
+});
+const gridMeshNode: NodeEvaluator = ({ params }) => ({
+  geometry: meshGeometry(
+    gridMesh(
+      params.countX as number,
+      params.countY as number,
+      params.sizeX as number,
+      params.sizeY as number,
+    ),
+  ),
+});
+const uvSphereNode: NodeEvaluator = ({ params }) => ({
+  geometry: meshGeometry(
+    uvSphere(params.radius as number, params.segments as number, params.rings as number),
+  ),
+});
+const cylinderMeshNode: NodeEvaluator = ({ params }) => ({
+  geometry: meshGeometry(
+    cylinderMesh(params.radius as number, params.height as number, params.segments as number),
+  ),
+});
+const coneMeshNode: NodeEvaluator = ({ params }) => ({
+  geometry: meshGeometry(
+    coneMesh(params.radius as number, params.height as number, params.segments as number),
+  ),
+});
+
+const triangulateNode: NodeEvaluator = ({ inputs }) => ({
+  geometry: triangulateGeometry(inputs.geometry as Geometry),
+});
+
 const parameter: NodeEvaluator = ({ params, parameters }) => ({
   value: parameters[params.name as string],
 });
@@ -245,5 +291,12 @@ export const BASIC_OPERATORS: OperatorTable = {
   MathFloat: mathFloat,
   MapRange: mapRangeNode,
   Clamp: clampNode,
+  PlaneMesh: planeMeshNode,
+  BoxMesh: boxMeshNode,
+  GridMesh: gridMeshNode,
+  UVSphere: uvSphereNode,
+  CylinderMesh: cylinderMeshNode,
+  ConeMesh: coneMeshNode,
+  TriangulateMesh: triangulateNode,
   ...Object.fromEntries(PARAMETER_NODE_TYPES.map((type) => [type, parameter])),
 };

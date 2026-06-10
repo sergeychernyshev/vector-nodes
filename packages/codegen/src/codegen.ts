@@ -237,6 +237,34 @@ const EMITTERS: Record<string, Emitter> = {
     expr: `{ value: clamp(${inputs.value}, ${inputs.min}, ${inputs.max}) }`,
     uses: ['clamp'],
   }),
+  PlaneMesh: ({ params }) => ({
+    expr: `{ geometry: meshGeometry(planeMesh(${lit(params.width)}, ${lit(params.height)})) }`,
+    uses: ['meshGeometry', 'planeMesh'],
+  }),
+  BoxMesh: ({ params }) => ({
+    expr: `{ geometry: meshGeometry(boxMesh(${lit(params.width)}, ${lit(params.height)}, ${lit(params.depth)})) }`,
+    uses: ['meshGeometry', 'boxMesh'],
+  }),
+  GridMesh: ({ params }) => ({
+    expr: `{ geometry: meshGeometry(gridMesh(${lit(params.countX)}, ${lit(params.countY)}, ${lit(params.sizeX)}, ${lit(params.sizeY)})) }`,
+    uses: ['meshGeometry', 'gridMesh'],
+  }),
+  UVSphere: ({ params }) => ({
+    expr: `{ geometry: meshGeometry(uvSphere(${lit(params.radius)}, ${lit(params.segments)}, ${lit(params.rings)})) }`,
+    uses: ['meshGeometry', 'uvSphere'],
+  }),
+  CylinderMesh: ({ params }) => ({
+    expr: `{ geometry: meshGeometry(cylinderMesh(${lit(params.radius)}, ${lit(params.height)}, ${lit(params.segments)})) }`,
+    uses: ['meshGeometry', 'cylinderMesh'],
+  }),
+  ConeMesh: ({ params }) => ({
+    expr: `{ geometry: meshGeometry(coneMesh(${lit(params.radius)}, ${lit(params.height)}, ${lit(params.segments)})) }`,
+    uses: ['meshGeometry', 'coneMesh'],
+  }),
+  TriangulateMesh: ({ inputs }) => ({
+    expr: `{ geometry: triangulateGeometry(${inputs.geometry}) }`,
+    uses: ['triangulateGeometry'],
+  }),
 };
 
 /**
