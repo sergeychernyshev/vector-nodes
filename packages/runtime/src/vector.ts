@@ -43,3 +43,26 @@ export function normalize(a: Vector): Vector {
 export function distance(a: Vector, b: Vector): number {
   return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 }
+
+/** Component-wise product `a * b` (non-uniform scale). */
+export function scaleAxes(a: Vector, b: Vector): Vector {
+  return [a[0] * b[0], a[1] * b[1], a[2] * b[2]];
+}
+
+/**
+ * Rotate `v` around `axis` by `angle` radians (Rodrigues' rotation). A zero-length
+ * axis leaves `v` unchanged.
+ */
+export function rotateAxisAngle(v: Vector, axis: Vector, angle: number): Vector {
+  const k = normalize(axis);
+  if (k[0] === 0 && k[1] === 0 && k[2] === 0) return [v[0], v[1], v[2]];
+  const c = Math.cos(angle);
+  const s = Math.sin(angle);
+  const kxv = cross(k, v);
+  const kdv = dot(k, v);
+  return [
+    v[0] * c + kxv[0] * s + k[0] * kdv * (1 - c),
+    v[1] * c + kxv[1] * s + k[1] * kdv * (1 - c),
+    v[2] * c + kxv[2] * s + k[2] * kdv * (1 - c),
+  ];
+}

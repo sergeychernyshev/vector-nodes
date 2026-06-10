@@ -1,20 +1,30 @@
 import { PARAMETER_NODE_TYPES } from '@vector-nodes/core';
 import {
   add,
+  boundingBox,
+  circleCurve,
   circlePoints,
+  clamp,
   cross,
+  curveGeometry,
   distance,
   dot,
   fromList,
   gridPoints,
+  instanceOnPoints,
   length,
   linePoints,
+  mapRange,
+  mergeGeometry,
   normalize,
+  polyline,
   projectOrthographic,
   projectPerspective,
   randomPoints,
+  rotateAxisAngle,
   sampleCubicBezier,
   scale,
+  scaleAxes,
   sub,
   transformGeometry,
   type Geometry,
@@ -127,6 +137,76 @@ const bezierCurve: NodeEvaluator = ({ inputs, params }) => {
   return { geometry, points };
 };
 
+const rotateGeometry: NodeEvaluator = ({ inputs }) => {
+  const geo = inputs.geometry as Geometry;
+  const axis = inputs.axis as Vector;
+  const angle = inputs.angle as number;
+  return { geometry: transformGeometry(geo, (p) => rotateAxisAngle(p, axis, angle)) };
+};
+
+const scaleGeometry: NodeEvaluator = ({ inputs }) => {
+  const geo = inputs.geometry as Geometry;
+  const factor = inputs.factor as Vector;
+  return { geometry: transformGeometry(geo, (p) => scaleAxes(p, factor)) };
+};
+
+const circleCurveNode: NodeEvaluator = ({ params }) => ({
+  geometry: curveGeometry(circleCurve(params.radius as number, params.count as number)),
+});
+
+const polylineNode: NodeEvaluator = ({ params }) => ({
+  geometry: curveGeometry(polyline(params.points as Vector[], params.closed as boolean)),
+});
+
+const merge: NodeEvaluator = ({ inputs }) => ({
+  geometry: mergeGeometry(inputs.a as Geometry, inputs.b as Geometry),
+});
+
+const boundingBoxNode: NodeEvaluator = ({ inputs }) => ({
+  geometry: { points: boundingBox(inputs.geometry as Geometry), curves: [], meshes: [] },
+});
+
+const instanceOnPointsNode: NodeEvaluator = ({ inputs }) => ({
+  geometry: instanceOnPoints(inputs.geometry as Geometry, inputs.points as Vector[]),
+});
+
+const mathFloat: NodeEvaluator = ({ inputs, params }) => {
+  const a = inputs.a as number;
+  const b = inputs.b as number;
+  switch (params.operation as string) {
+    case 'add':
+      return { value: a + b };
+    case 'subtract':
+      return { value: a - b };
+    case 'multiply':
+      return { value: a * b };
+    case 'divide':
+      return { value: a / b };
+    case 'min':
+      return { value: Math.min(a, b) };
+    case 'max':
+      return { value: Math.max(a, b) };
+    case 'power':
+      return { value: Math.pow(a, b) };
+    default:
+      throw new Error(`Unknown MathFloat operation "${params.operation}".`);
+  }
+};
+
+const mapRangeNode: NodeEvaluator = ({ inputs }) => ({
+  value: mapRange(
+    inputs.value as number,
+    inputs.fromMin as number,
+    inputs.fromMax as number,
+    inputs.toMin as number,
+    inputs.toMax as number,
+  ),
+});
+
+const clampNode: NodeEvaluator = ({ inputs }) => ({
+  value: clamp(inputs.value as number, inputs.min as number, inputs.max as number),
+});
+
 const parameter: NodeEvaluator = ({ params, parameters }) => ({
   value: parameters[params.name as string],
 });
@@ -155,5 +235,15 @@ export const BASIC_OPERATORS: OperatorTable = {
   Project: project,
   Translate: translate,
   BezierCurve: bezierCurve,
+  RotateGeometry: rotateGeometry,
+  ScaleGeometry: scaleGeometry,
+  CircleCurve: circleCurveNode,
+  Polyline: polylineNode,
+  MergeGeometry: merge,
+  BoundingBox: boundingBoxNode,
+  InstanceOnPoints: instanceOnPointsNode,
+  MathFloat: mathFloat,
+  MapRange: mapRangeNode,
+  Clamp: clampNode,
   ...Object.fromEntries(PARAMETER_NODE_TYPES.map((type) => [type, parameter])),
 };

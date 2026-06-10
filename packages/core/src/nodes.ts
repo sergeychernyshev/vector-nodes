@@ -204,6 +204,133 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
     params: [{ name: 'segments', type: 'Integer', default: 16, min: 1 }],
   },
 
+  // Transforms (Phase 7)
+  {
+    type: 'RotateGeometry',
+    label: 'Rotate',
+    category: 'Geometry',
+    inputs: [
+      { name: 'geometry', type: 'Geometry' },
+      { name: 'axis', type: 'Vector', default: [0, 0, 1] },
+      { name: 'angle', type: 'Float', default: 0 },
+    ],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
+  },
+  {
+    type: 'ScaleGeometry',
+    label: 'Scale',
+    category: 'Geometry',
+    inputs: [
+      { name: 'geometry', type: 'Geometry' },
+      { name: 'factor', type: 'Vector', default: [1, 1, 1] },
+    ],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
+  },
+
+  // Curves (Phase 7)
+  {
+    type: 'CircleCurve',
+    label: 'Circle',
+    category: 'Geometry',
+    inputs: [],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [
+      { name: 'radius', type: 'Float', default: 1 },
+      { name: 'count', type: 'Integer', default: 16, min: 3 },
+    ],
+  },
+  {
+    type: 'Polyline',
+    label: 'Polyline',
+    category: 'Geometry',
+    inputs: [],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [
+      { name: 'points', type: 'Vector', isArray: true, default: [] },
+      { name: 'closed', type: 'Boolean', default: false },
+    ],
+  },
+
+  // Combinators (Phase 7)
+  {
+    type: 'MergeGeometry',
+    label: 'Merge',
+    category: 'Geometry',
+    inputs: [
+      { name: 'a', type: 'Geometry' },
+      { name: 'b', type: 'Geometry' },
+    ],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
+  },
+  {
+    type: 'BoundingBox',
+    label: 'Bounding Box',
+    category: 'Geometry',
+    inputs: [{ name: 'geometry', type: 'Geometry' }],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
+  },
+  {
+    type: 'InstanceOnPoints',
+    label: 'Instance on Points',
+    category: 'Geometry',
+    inputs: [
+      { name: 'geometry', type: 'Geometry' },
+      { name: 'points', type: 'Vector', isArray: true, default: [] },
+    ],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
+  },
+
+  // Utility (Phase 7)
+  {
+    type: 'MathFloat',
+    label: 'Math',
+    category: 'Utility',
+    inputs: [
+      { name: 'a', type: 'Float', default: 0 },
+      { name: 'b', type: 'Float', default: 0 },
+    ],
+    outputs: [{ name: 'value', type: 'Float' }],
+    params: [
+      {
+        name: 'operation',
+        type: 'String',
+        default: 'add',
+        options: ['add', 'subtract', 'multiply', 'divide', 'min', 'max', 'power'],
+      },
+    ],
+  },
+  {
+    type: 'MapRange',
+    label: 'Map Range',
+    category: 'Utility',
+    inputs: [
+      { name: 'value', type: 'Float', default: 0 },
+      { name: 'fromMin', type: 'Float', default: 0 },
+      { name: 'fromMax', type: 'Float', default: 1 },
+      { name: 'toMin', type: 'Float', default: 0 },
+      { name: 'toMax', type: 'Float', default: 1 },
+    ],
+    outputs: [{ name: 'value', type: 'Float' }],
+    params: [],
+  },
+  {
+    type: 'Clamp',
+    label: 'Clamp',
+    category: 'Utility',
+    inputs: [
+      { name: 'value', type: 'Float', default: 0 },
+      { name: 'min', type: 'Float', default: 0 },
+      { name: 'max', type: 'Float', default: 1 },
+    ],
+    outputs: [{ name: 'value', type: 'Float' }],
+    params: [],
+  },
+
   // Parameters (one per socket type, incl. Geometry)
   ...parameterDefs,
 
