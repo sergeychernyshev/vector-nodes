@@ -30,26 +30,32 @@ export interface CaptureTransform {
 }
 
 /**
- * Edge color/width come from CSS custom properties (`--xy-edge-*`) declared on
- * the `.react-flow` container — an ancestor of the captured `.react-flow__viewport`.
- * html-to-image clones the viewport detached from that ancestor, so those
- * properties resolve to nothing and `stroke` falls back to `none`, dropping every
- * connection. Copy the container's custom properties onto the viewport for the
- * duration of the capture so the clone keeps them; returns a restorer.
+ * Edges render as `<path class="react-flow__edge-path">` styled only by a CSS
+ * rule (`stroke: var(--xy-edge-*)`). html-to-image deep-clones SVG subtrees and
+ * inlines computed styles only on the SVG *root*, never its descendants — and it
+ * doesn't carry the page's CSS rules — so the cloned edge paths lose their stroke
+ * and fall back to `none`, dropping every connection from the image (nodes use
+ * our own hex colors, so they're unaffected). Bake each edge path's resolved
+ * stroke/width/fill onto the live element as inline styles (which the deep clone
+ * preserves) for the duration of the capture; returns a restorer.
  */
-function inheritFlowVars(viewport: HTMLElement): () => void {
-  const root = viewport.closest<HTMLElement>('.react-flow');
-  if (!root) return () => {};
-  const computed = getComputedStyle(root);
-  const applied: string[] = [];
-  for (let i = 0; i < computed.length; i += 1) {
-    const name = computed.item(i);
-    if (name.startsWith('--')) {
-      viewport.style.setProperty(name, computed.getPropertyValue(name));
-      applied.push(name);
-    }
-  }
-  return () => applied.forEach((name) => viewport.style.removeProperty(name));
+export function inlineEdgeStyles(viewport: HTMLElement): () => void {
+  const paths = viewport.querySelectorAll<SVGElement>('.react-flow__edge-path');
+  const restorers: (() => void)[] = [];
+  // Colors that mean "no visible stroke", so we fall back to React Flow's default.
+  const BLANK = new Set(['', 'none', 'transparent', 'rgba(0, 0, 0, 0)']);
+  paths.forEach((path) => {
+    const computed = getComputedStyle(path);
+    const previous = path.getAttribute('style');
+    path.style.stroke = BLANK.has(computed.stroke) ? '#b1b1b7' : computed.stroke;
+    path.style.strokeWidth =
+      computed.strokeWidth && computed.strokeWidth !== '0px' ? computed.strokeWidth : '1px';
+    path.style.fill = 'none';
+    restorers.push(() =>
+      previous === null ? path.removeAttribute('style') : path.setAttribute('style', previous),
+    );
+  });
+  return () => restorers.forEach((restore) => restore());
 }
 
 /**
@@ -63,7 +69,7 @@ export function captureViewport(
   transform: CaptureTransform,
   backgroundColor: string,
 ): Promise<string> {
-  const restore = inheritFlowVars(viewport);
+  const restore = inlineEdgeStyles(viewport);
   return toPng(viewport, {
     backgroundColor,
     width: size.width,
