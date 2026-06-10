@@ -16,6 +16,7 @@ import {
   sampleCubicBezier,
   scale,
   sub,
+  transformGeometry,
   type Geometry,
   type Vector,
 } from '@vector-nodes/runtime';
@@ -24,15 +25,6 @@ import type { NodeEvaluator, OperatorTable } from './operator.js';
 
 function geometryOf(points: Vector[]): Geometry {
   return { points, curves: [], meshes: [] };
-}
-
-/** Apply `fn` to every point in a geometry bundle (points, curves, meshes). */
-function transformGeometry(geo: Geometry, fn: (p: Vector) => Vector): Geometry {
-  return {
-    points: geo.points.map(fn),
-    curves: geo.curves.map((c) => ({ ...c, points: c.points.map(fn) })),
-    meshes: geo.meshes.map((m) => ({ ...m, positions: m.positions.map(fn) })),
-  };
 }
 
 const constant: NodeEvaluator = ({ params }) => ({ value: params.value });

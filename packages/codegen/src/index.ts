@@ -1,6 +1,6 @@
 /**
- * @vector-nodes/codegen — TypeScript/JavaScript code generator for graphs.
- *
- * Placeholder entry point; real exports land in Phase 6.
+ * @vector-nodes/codegen — compile a graph to a standalone TS/JS module whose
+ * root network becomes a default-export, named function.
  */
-export const PACKAGE_NAME = '@vector-nodes/codegen';
+export * from './codegen.js';
+export * from './wrappers.js';
