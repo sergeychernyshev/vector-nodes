@@ -2,7 +2,7 @@ import type { NodeDefinition, NodeRegistry } from '@vector-nodes/core';
 import { addEdge, type Edge } from '@xyflow/react';
 
 import { socketsCompatible } from './connection';
-import { socketsOf, type FlowSocket, type PaletteItem } from './flow';
+import { socketsOf, type FlowSocket, type PaletteItem, type VNodeFlowNode } from './flow';
 
 /** How a node splices into a connection: which of its handles join each end. */
 export interface InjectionPlan {
@@ -88,4 +88,57 @@ export function spliceEdge(
       without,
     ),
   );
+}
+
+/** A direct bridge to create when a node is removed: source output → dest input. */
+export interface Reconnect {
+  source: string;
+  sourceHandle: string;
+  target: string;
+  targetHandle: string;
+}
+
+/**
+ * When nodes in `deletedIds` are removed, find direct connections that preserve
+ * the data flow they bridged: for each downstream link out of a deleted node,
+ * the first upstream link into it whose source output is compatible with the
+ * downstream destination input (the inverse of {@link spliceEdge} — see issue
+ * #43). Links to or from other deleted nodes are ignored, so multi-node chains
+ * are left for the user to rewire.
+ */
+export function planReconnects(
+  edges: Edge[],
+  nodes: VNodeFlowNode[],
+  deletedIds: Set<string>,
+): Reconnect[] {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const bridges: Reconnect[] = [];
+  const seen = new Set<string>();
+  for (const id of deletedIds) {
+    const incoming = edges.filter((e) => e.target === id && !deletedIds.has(e.source));
+    const outgoing = edges.filter((e) => e.source === id && !deletedIds.has(e.target));
+    for (const out of outgoing) {
+      const destSocket = byId.get(out.target)?.data.inputs.find((s) => s.name === out.targetHandle);
+      if (!destSocket) continue;
+      for (const inc of incoming) {
+        const srcSocket = byId
+          .get(inc.source)
+          ?.data.outputs.find((s) => s.name === inc.sourceHandle);
+        if (srcSocket && socketsCompatible(srcSocket, destSocket)) {
+          const key = `${inc.source}:${srcSocket.name}->${out.target}:${destSocket.name}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            bridges.push({
+              source: inc.source,
+              sourceHandle: srcSocket.name,
+              target: out.target,
+              targetHandle: destSocket.name,
+            });
+          }
+          break;
+        }
+      }
+    }
+  }
+  return bridges;
 }

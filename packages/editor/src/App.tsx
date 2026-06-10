@@ -26,7 +26,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { checkConnection, edgesWithoutInput, type ConnectionLike } from './connection';
 import { ConnectMenu } from './ConnectMenu';
 import { downloadText, maxAutoId } from './graph-io';
-import { planInjection, spliceEdge, suggestSourceNodes, type SourceSuggestion } from './inject';
+import {
+  planInjection,
+  planReconnects,
+  spliceEdge,
+  suggestSourceNodes,
+  type SourceSuggestion,
+} from './inject';
 import { augmentedRegistry, collapse, currentGraph, expand, type MetaNodes } from './meta';
 import { loadLibrary } from './meta-library';
 import { SubgraphEditor } from './SubgraphEditor';
@@ -368,6 +374,26 @@ export function App() {
     [connectMenu, createNodeAt, setEdges, clearError],
   );
 
+  // Deleting a node that bridged two compatible sockets heals the gap with a
+  // direct connection (the inverse of injecting a node — issue #43).
+  const onNodesDelete = useCallback(
+    (deleted: VNodeFlowNode[]) => {
+      const deletedIds = new Set(deleted.map((n) => n.id));
+      const bridges = planReconnects(edges, nodes, deletedIds);
+      if (bridges.length === 0) return;
+      setEdges((eds) => {
+        // Drop edges touching the removed nodes, then add the bridges (each
+        // replacing any existing link into its destination input).
+        let next = eds.filter((e) => !deletedIds.has(e.source) && !deletedIds.has(e.target));
+        for (const b of bridges) {
+          next = addEdge(b, edgesWithoutInput(next, b.target, b.targetHandle));
+        }
+        return next;
+      });
+    },
+    [edges, nodes, setEdges],
+  );
+
   // Group: a selection may collapse if it has no Output Geometry node.
   const canGroup =
     selectedIds.length >= 1 &&
@@ -436,6 +462,7 @@ export function App() {
               nodeTypes={nodeTypes}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
+              onNodesDelete={onNodesDelete}
               onConnect={onConnect}
               onConnectStart={onConnectStart}
               onPaneClick={(e) => placeNode(e.clientX, e.clientY)}
