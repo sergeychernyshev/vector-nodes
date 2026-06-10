@@ -39,6 +39,29 @@ describe('flowToGraph', () => {
     expect(result.links).toEqual([{ from: ['pa', 'geometry'], to: ['out', 'geometry'] }]);
   });
 
+  it('derives network parameters from named Parameter nodes (issue #81)', () => {
+    const withParams = createGraph({
+      nodes: [
+        { id: 'pf', type: 'ParameterFloat', params: { name: 'radius' } },
+        { id: 'pv', type: 'ParameterVector', params: { name: 'shift' } },
+        // Duplicate name collapses to one argument; unnamed node is ignored.
+        { id: 'pf2', type: 'ParameterFloat', params: { name: 'radius' } },
+        { id: 'pf3', type: 'ParameterFloat', params: { name: '' } },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+    });
+    const result = flowToGraph(graphToFlowNodes(withParams, registry), []);
+    expect(result.parameters).toEqual([
+      { id: 'radius', type: 'Float' },
+      { id: 'shift', type: 'Vector' },
+    ]);
+  });
+
+  it('emits no parameters when there are no Parameter nodes', () => {
+    const result = flowToGraph(graphToFlowNodes(graph, registry), graphToFlowEdges(graph));
+    expect(result.parameters).toEqual([]);
+  });
+
   it('persists per-instance input defaults (issue #23)', () => {
     const withDefaults = createGraph({
       nodes: [
