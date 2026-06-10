@@ -489,3 +489,48 @@
   opacity: 0.6;
   padding: 8px;
 }
+
+/*
+ * Portrait orientation (e.g. a tablet held upright): stack the preview on top
+ * and the canvas below (issue #61). The node list floats as a drawer over the
+ * canvas so it doesn't consume vertical space; collapse it (issue #60) to get
+ * a thin rail.
+ */
+@media (orientation: portrait) {
+  .app-main {
+    flex-direction: column;
+    position: relative;
+  }
+  .preview,
+  .preview--left,
+  .preview--right {
+    /* Override the inline width; become a full-width strip on top. */
+    width: auto !important;
+    height: 40vh;
+    border-left: none;
+    border-right: none;
+    border-bottom: 1px solid #ddd;
+    order: 0;
+  }
+  .preview__resize {
+    /* Horizontal drag-to-resize doesn't apply when stacked vertically. */
+    display: none;
+  }
+  .canvas-wrap {
+    order: 1;
+  }
+  .palette {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 7;
+    background: #fff;
+    box-shadow: 2px 0 6px rgba(0, 0, 0, 0.15);
+  }
+  .app-main--swapped .palette {
+    left: auto;
+    right: 0;
+    box-shadow: -2px 0 6px rgba(0, 0, 0, 0.15);
+  }
+}
