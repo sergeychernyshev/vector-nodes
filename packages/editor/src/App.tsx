@@ -543,6 +543,10 @@ export function App() {
       setConnectMenu(null);
       const id = createNodeAt(suggestion.type, x, y);
       if (!id) return;
+      // Array inputs accept many connections (issue #99), so add to them rather
+      // than replacing their existing links the way a scalar input does.
+      const isArrayInput =
+        getNode(nodeId)?.data.inputs.find((s) => s.name === handleId)?.isArray ?? false;
       setEdges((eds) =>
         addEdge(
           {
@@ -551,12 +555,12 @@ export function App() {
             target: nodeId,
             targetHandle: handleId,
           },
-          edgesWithoutInput(eds, nodeId, handleId),
+          isArrayInput ? eds : edgesWithoutInput(eds, nodeId, handleId),
         ),
       );
       clearError();
     },
-    [connectMenu, createNodeAt, setEdges, clearError],
+    [connectMenu, createNodeAt, setEdges, clearError, getNode],
   );
 
   // Deleting a node that bridged two compatible sockets heals the gap with a
