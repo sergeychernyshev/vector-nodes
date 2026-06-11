@@ -49,6 +49,31 @@ export function scaleAxes(a: Vector, b: Vector): Vector {
   return [a[0] * b[0], a[1] * b[1], a[2] * b[2]];
 }
 
+/** Component-wise quotient `a / b` (issue #118). */
+export function divideAxes(a: Vector, b: Vector): Vector {
+  return [a[0] / b[0], a[1] / b[1], a[2] / b[2]];
+}
+
+/** Component-wise minimum of `a` and `b` (issue #118). */
+export function minAxes(a: Vector, b: Vector): Vector {
+  return [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.min(a[2], b[2])];
+}
+
+/** Component-wise maximum of `a` and `b` (issue #118). */
+export function maxAxes(a: Vector, b: Vector): Vector {
+  return [Math.max(a[0], b[0]), Math.max(a[1], b[1]), Math.max(a[2], b[2])];
+}
+
+/**
+ * Reflect `a` across the plane through the origin with normal `n` (issue #118).
+ * `n` is normalized first; a zero-length normal leaves `a` unchanged.
+ */
+export function reflect(a: Vector, n: Vector): Vector {
+  const u = normalize(n);
+  const d = 2 * dot(a, u);
+  return [a[0] - d * u[0], a[1] - d * u[1], a[2] - d * u[2]];
+}
+
 /**
  * Rotate `v` around `axis` by `angle` radians (Rodrigues' rotation). A zero-length
  * axis leaves `v` unchanged.

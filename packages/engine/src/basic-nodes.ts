@@ -13,6 +13,7 @@ import {
   curveGeometry,
   cylinderMesh,
   distance,
+  divideAxes,
   dot,
   fillCurves,
   filletCurve,
@@ -24,8 +25,10 @@ import {
   linePoints,
   mapCurves,
   mapRange,
+  maxAxes,
   mergeAll,
   meshGeometry,
+  minAxes,
   normalize,
   planeMesh,
   polyline,
@@ -33,6 +36,7 @@ import {
   projectPerspective,
   randomPoints,
   rectanglePoints,
+  reflect,
   resampleCurve,
   reverseCurve,
   rotateAxisAngle,
@@ -77,12 +81,25 @@ const vectorMath: NodeEvaluator = ({ inputs, params }) => {
       return { vector: add(a, b), value: 0 };
     case 'subtract':
       return { vector: sub(a, b), value: 0 };
+    case 'multiply':
+      return { vector: scaleAxes(a, b), value: 0 };
+    case 'divide':
+      return { vector: divideAxes(a, b), value: 0 };
     case 'scale':
       return { vector: scale(a, s), value: 0 };
     case 'cross':
       return { vector: cross(a, b), value: 0 };
     case 'normalize':
       return { vector: normalize(a), value: 0 };
+    case 'min':
+      return { vector: minAxes(a, b), value: 0 };
+    case 'max':
+      return { vector: maxAxes(a, b), value: 0 };
+    case 'reflect':
+      return { vector: reflect(a, b), value: 0 };
+    case 'rotate':
+      // `a` rotated around the axis `b` by `scale` radians (issue #118).
+      return { vector: rotateAxisAngle(a, b, s), value: 0 };
     case 'dot':
       return { vector: zero, value: dot(a, b) };
     case 'length':
@@ -310,6 +327,32 @@ const mathFloat: NodeEvaluator = ({ inputs, params }) => {
       return { value: Math.max(a, b) };
     case 'power':
       return { value: Math.pow(a, b) };
+    case 'sine':
+      return { value: Math.sin(a) };
+    case 'cosine':
+      return { value: Math.cos(a) };
+    case 'tangent':
+      return { value: Math.tan(a) };
+    case 'atan2':
+      return { value: Math.atan2(a, b) };
+    case 'sqrt':
+      return { value: Math.sqrt(a) };
+    case 'abs':
+      return { value: Math.abs(a) };
+    case 'floor':
+      return { value: Math.floor(a) };
+    case 'ceil':
+      return { value: Math.ceil(a) };
+    case 'round':
+      return { value: Math.round(a) };
+    case 'modulo':
+      return { value: a % b };
+    case 'log':
+      return { value: Math.log(a) };
+    case 'exp':
+      return { value: Math.exp(a) };
+    case 'sign':
+      return { value: Math.sign(a) };
     default:
       throw new Error(`Unknown MathFloat operation "${params.operation}".`);
   }

@@ -135,9 +135,25 @@ const pointSource = (
 const VECTOR_MATH: Record<string, (a: string, b: string, s: string) => Emit> = {
   add: (a, b) => ({ expr: `{ vector: add(${a}, ${b}), value: 0 }`, uses: ['add'] }),
   subtract: (a, b) => ({ expr: `{ vector: sub(${a}, ${b}), value: 0 }`, uses: ['sub'] }),
+  multiply: (a, b) => ({
+    expr: `{ vector: scaleAxes(${a}, ${b}), value: 0 }`,
+    uses: ['scaleAxes'],
+  }),
+  divide: (a, b) => ({
+    expr: `{ vector: divideAxes(${a}, ${b}), value: 0 }`,
+    uses: ['divideAxes'],
+  }),
   scale: (a, _b, s) => ({ expr: `{ vector: scale(${a}, ${s}), value: 0 }`, uses: ['scale'] }),
   cross: (a, b) => ({ expr: `{ vector: cross(${a}, ${b}), value: 0 }`, uses: ['cross'] }),
   normalize: (a) => ({ expr: `{ vector: normalize(${a}), value: 0 }`, uses: ['normalize'] }),
+  min: (a, b) => ({ expr: `{ vector: minAxes(${a}, ${b}), value: 0 }`, uses: ['minAxes'] }),
+  max: (a, b) => ({ expr: `{ vector: maxAxes(${a}, ${b}), value: 0 }`, uses: ['maxAxes'] }),
+  reflect: (a, b) => ({ expr: `{ vector: reflect(${a}, ${b}), value: 0 }`, uses: ['reflect'] }),
+  // `a` rotated around the axis `b` by `scale` radians (issue #118).
+  rotate: (a, b, s) => ({
+    expr: `{ vector: rotateAxisAngle(${a}, ${b}, ${s}), value: 0 }`,
+    uses: ['rotateAxisAngle'],
+  }),
   dot: (a, b) => ({ expr: `{ vector: [0, 0, 0], value: dot(${a}, ${b}) }`, uses: ['dot'] }),
   length: (a) => ({ expr: `{ vector: [0, 0, 0], value: length(${a}) }`, uses: ['length'] }),
   distance: (a, b) => ({
@@ -309,6 +325,19 @@ const EMITTERS: Record<string, Emitter> = {
       min: `Math.min(${a}, ${b})`,
       max: `Math.max(${a}, ${b})`,
       power: `Math.pow(${a}, ${b})`,
+      sine: `Math.sin(${a})`,
+      cosine: `Math.cos(${a})`,
+      tangent: `Math.tan(${a})`,
+      atan2: `Math.atan2(${a}, ${b})`,
+      sqrt: `Math.sqrt(${a})`,
+      abs: `Math.abs(${a})`,
+      floor: `Math.floor(${a})`,
+      ceil: `Math.ceil(${a})`,
+      round: `Math.round(${a})`,
+      modulo: `${a} % ${b}`,
+      log: `Math.log(${a})`,
+      exp: `Math.exp(${a})`,
+      sign: `Math.sign(${a})`,
     };
     const op = exprs[String(params.operation)];
     if (!op) throw new Error(`codegen: unknown MathFloat operation "${String(params.operation)}".`);

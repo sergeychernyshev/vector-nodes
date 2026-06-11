@@ -153,6 +153,35 @@ describe('conformance: compiled output equals interpreter output', () => {
     expect(result.meshes[0]!.faces).toHaveLength(8);
   });
 
+  it('expanded math and vector operations drive geometry (issue #118)', () => {
+    const graph = createGraph({
+      nodes: [
+        { id: 'one', type: 'ConstFloat', params: { value: 1 } },
+        // sine(1) ≈ 0.841 becomes the circle radius.
+        { id: 'sin', type: 'MathFloat', params: { operation: 'sine' } },
+        { id: 'pc', type: 'PointCircle', params: { count: 6 } },
+        { id: 'x', type: 'ConstVector', params: { value: [1, 0, 0] } },
+        { id: 'axis', type: 'ConstVector', params: { value: [0, 0, 1] } },
+        { id: 'quarter', type: 'ConstFloat', params: { value: Math.PI / 2 } },
+        // [1,0,0] rotated a quarter turn around z ≈ [0,1,0] becomes the offset.
+        { id: 'rot', type: 'VectorMath', params: { operation: 'rotate' } },
+        { id: 't', type: 'Translate' },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [
+        { from: ['one', 'value'], to: ['sin', 'a'] },
+        { from: ['sin', 'value'], to: ['pc', 'radius'] },
+        { from: ['pc', 'geometry'], to: ['t', 'geometry'] },
+        { from: ['x', 'value'], to: ['rot', 'a'] },
+        { from: ['axis', 'value'], to: ['rot', 'b'] },
+        { from: ['quarter', 'value'], to: ['rot', 'scale'] },
+        { from: ['rot', 'vector'], to: ['t', 'offset'] },
+        { from: ['t', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    });
+    expect(runCompiled(graph, [])).toEqual(interpret(graph));
+  });
+
   it('a config field wired from another node (issue #58)', () => {
     // PointCircle.radius is an input socket now: feed it from a ConstFloat.
     const graph = createGraph({

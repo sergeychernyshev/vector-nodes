@@ -101,6 +101,43 @@ describe('VectorMath', () => {
   });
 });
 
+describe('expanded operations (issue #118)', () => {
+  it('MathFloat handles the unary and binary additions', () => {
+    const cases: [string, { a: number; b?: number }, number][] = [
+      ['sine', { a: Math.PI / 2 }, 1],
+      ['cosine', { a: 0 }, 1],
+      ['tangent', { a: 0 }, 0],
+      ['atan2', { a: 1, b: 1 }, Math.PI / 4],
+      ['sqrt', { a: 9 }, 3],
+      ['abs', { a: -4 }, 4],
+      ['floor', { a: 1.7 }, 1],
+      ['ceil', { a: 1.2 }, 2],
+      ['round', { a: 1.5 }, 2],
+      ['modulo', { a: 7, b: 3 }, 1],
+      ['log', { a: Math.E }, 1],
+      ['exp', { a: 0 }, 1],
+      ['sign', { a: -9 }, -1],
+    ];
+    for (const [operation, inputs, expected] of cases) {
+      const out = run('MathFloat', { inputs: { b: 0, ...inputs }, params: { operation } });
+      expect(out.value as number, operation).toBeCloseTo(expected, 9);
+    }
+  });
+
+  it('VectorMath handles the component-wise and geometric additions', () => {
+    const v = (op: string, inputs: Record<string, unknown>) =>
+      run('VectorMath', { inputs, params: { operation: op } }).vector as Vector;
+    expect(v('multiply', { a: [1, 2, 3], b: [2, 3, 4] })).toEqual([2, 6, 12]);
+    expect(v('divide', { a: [4, 9, 8], b: [2, 3, 4] })).toEqual([2, 3, 2]);
+    expect(v('min', { a: [1, 5, 3], b: [2, 4, 3] })).toEqual([1, 4, 3]);
+    expect(v('max', { a: [1, 5, 3], b: [2, 4, 3] })).toEqual([2, 5, 3]);
+    expect(v('reflect', { a: [1, -1, 0], b: [0, 1, 0] })).toEqual([1, 1, 0]);
+    const rotated = v('rotate', { a: [1, 0, 0], b: [0, 0, 1], scale: Math.PI / 2 });
+    expect(rotated[0]).toBeCloseTo(0, 9);
+    expect(rotated[1]).toBeCloseTo(1, 9);
+  });
+});
+
 describe('arrays and geometry sources', () => {
   it('VectorArray copies its values', () => {
     expect(run('VectorArray', { params: { values: [[1, 2, 3]] } })).toEqual({
