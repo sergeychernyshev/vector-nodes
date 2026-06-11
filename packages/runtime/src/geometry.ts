@@ -172,6 +172,110 @@ export function sampleCubicBezier(
   return out;
 }
 
+/** Evaluate a quadratic Bézier with control points `p0..p2` at parameter `t`. */
+export function quadraticBezier(p0: Vector, p1: Vector, p2: Vector, t: number): Vector {
+  const u = 1 - t;
+  const b0 = u * u;
+  const b1 = 2 * u * t;
+  const b2 = t * t;
+  return [
+    b0 * p0[0] + b1 * p1[0] + b2 * p2[0],
+    b0 * p0[1] + b1 * p1[1] + b2 * p2[1],
+    b0 * p0[2] + b1 * p1[2] + b2 * p2[2],
+  ];
+}
+
+/**
+ * Sample a quadratic Bézier into `segments + 1` points from `t = 0` to `t = 1`
+ * inclusive. `segments < 1` is treated as 1.
+ */
+export function sampleQuadraticBezier(
+  p0: Vector,
+  p1: Vector,
+  p2: Vector,
+  segments: number,
+): Point[] {
+  const n = segments < 1 ? 1 : Math.floor(segments);
+  const out: Point[] = [];
+  for (let i = 0; i <= n; i++) {
+    out.push(quadraticBezier(p0, p1, p2, i / n));
+  }
+  return out;
+}
+
+// --- Curve primitives (issue #114) ----------------------------------------------
+
+/**
+ * Vertices of a star polygon in the X–Y plane: `points` outer tips alternating
+ * with inner vertices, starting at angle 0 (an outer tip) and going
+ * counter-clockwise. `points < 2` is treated as 2.
+ */
+export function starPoints(points: number, innerRadius: number, outerRadius: number): Point[] {
+  const tips = points < 2 ? 2 : Math.floor(points);
+  const out: Point[] = [];
+  for (let i = 0; i < tips * 2; i++) {
+    const radius = i % 2 === 0 ? outerRadius : innerRadius;
+    const angle = (Math.PI * i) / tips;
+    out.push([radius * Math.cos(angle), radius * Math.sin(angle), 0]);
+  }
+  return out;
+}
+
+/**
+ * `segments + 1` points along a circular arc of `radius` in the X–Y plane,
+ * starting at `startAngle` and sweeping `sweepAngle` radians counter-clockwise.
+ * `segments < 1` is treated as 1.
+ */
+export function arcPoints(
+  radius: number,
+  startAngle: number,
+  sweepAngle: number,
+  segments: number,
+): Point[] {
+  const n = segments < 1 ? 1 : Math.floor(segments);
+  const out: Point[] = [];
+  for (let i = 0; i <= n; i++) {
+    const angle = startAngle + (sweepAngle * i) / n;
+    out.push([radius * Math.cos(angle), radius * Math.sin(angle), 0]);
+  }
+  return out;
+}
+
+/**
+ * `segments + 1` points along a spiral of `turns` counter-clockwise revolutions:
+ * the radius interpolates `startRadius → endRadius` and `z` rises linearly to
+ * `height` (0 keeps it flat). `segments < 1` is treated as 1.
+ */
+export function spiralPoints(
+  turns: number,
+  startRadius: number,
+  endRadius: number,
+  height: number,
+  segments: number,
+): Point[] {
+  const n = segments < 1 ? 1 : Math.floor(segments);
+  const out: Point[] = [];
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    const angle = 2 * Math.PI * turns * t;
+    const radius = startRadius + (endRadius - startRadius) * t;
+    out.push([radius * Math.cos(angle), radius * Math.sin(angle), height * t]);
+  }
+  return out;
+}
+
+/** The four corners of a `width × height` rectangle centered on the origin. */
+export function rectanglePoints(width: number, height: number): Point[] {
+  const w = width / 2;
+  const h = height / 2;
+  return [
+    [-w, -h, 0],
+    [w, -h, 0],
+    [w, h, 0],
+    [-w, h, 0],
+  ];
+}
+
 // --- Curves & combinators -----------------------------------------------------
 
 /** A closed polygon of `count` points on a circle of `radius` in the X–Y plane. */

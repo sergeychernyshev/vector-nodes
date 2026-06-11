@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  arcPoints,
   circlePoints,
   cubicBezier,
   fromList,
@@ -9,8 +10,13 @@ import {
   makeRng,
   projectOrthographic,
   projectPerspective,
+  quadraticBezier,
   randomPoints,
+  rectanglePoints,
   sampleCubicBezier,
+  sampleQuadraticBezier,
+  spiralPoints,
+  starPoints,
   translatePoints,
 } from './geometry';
 
@@ -177,5 +183,99 @@ describe('cubicBezier / sampleCubicBezier', () => {
 
   it('treats segments < 1 as 1', () => {
     expect(sampleCubicBezier(p0, p1, p2, p3, 0)).toEqual([p0, p3]);
+  });
+});
+
+describe('quadraticBezier / sampleQuadraticBezier', () => {
+  const p0: [number, number, number] = [-1, 0, 0];
+  const p1: [number, number, number] = [0, 1, 0];
+  const p2: [number, number, number] = [1, 0, 0];
+
+  it('hits the endpoints at t = 0 and t = 1', () => {
+    expect(quadraticBezier(p0, p1, p2, 0)).toEqual(p0);
+    expect(quadraticBezier(p0, p1, p2, 1)).toEqual(p2);
+  });
+
+  it('peaks halfway between the endpoints and the control', () => {
+    expect(quadraticBezier(p0, p1, p2, 0.5)).toEqual([0, 0.5, 0]);
+  });
+
+  it('samples segments + 1 points including both ends', () => {
+    const pts = sampleQuadraticBezier(p0, p1, p2, 4);
+    expect(pts).toHaveLength(5);
+    expect(pts[0]).toEqual(p0);
+    expect(pts[4]).toEqual(p2);
+  });
+
+  it('treats segments < 1 as 1', () => {
+    expect(sampleQuadraticBezier(p0, p1, p2, 0)).toEqual([p0, p2]);
+  });
+});
+
+describe('starPoints', () => {
+  it('alternates outer and inner radii around the circle', () => {
+    const pts = starPoints(5, 0.5, 2);
+    expect(pts).toHaveLength(10);
+    for (const [i, p] of pts.entries()) {
+      expect(Math.hypot(p[0], p[1])).toBeCloseTo(i % 2 === 0 ? 2 : 0.5, 9);
+      expect(p[2]).toBe(0);
+    }
+    // The first vertex is an outer tip at angle 0.
+    expect(pts[0]).toEqual([2, 0, 0]);
+  });
+
+  it('treats points < 2 as 2', () => {
+    expect(starPoints(0, 0.5, 1)).toHaveLength(4);
+  });
+});
+
+describe('arcPoints', () => {
+  it('spans startAngle to startAngle + sweepAngle inclusive', () => {
+    const pts = arcPoints(2, 0, Math.PI / 2, 2);
+    expect(pts).toHaveLength(3);
+    expect(pts[0]![0]).toBeCloseTo(2, 9);
+    expect(pts[0]![1]).toBeCloseTo(0, 9);
+    expect(pts[2]![0]).toBeCloseTo(0, 9);
+    expect(pts[2]![1]).toBeCloseTo(2, 9);
+  });
+
+  it('keeps every point at the radius', () => {
+    for (const p of arcPoints(3, 1, Math.PI, 8)) {
+      expect(Math.hypot(p[0], p[1])).toBeCloseTo(3, 9);
+    }
+  });
+
+  it('treats segments < 1 as 1', () => {
+    expect(arcPoints(1, 0, Math.PI, 0)).toHaveLength(2);
+  });
+});
+
+describe('spiralPoints', () => {
+  it('interpolates radius and height across the turns', () => {
+    const pts = spiralPoints(1, 0, 2, 4, 4);
+    expect(pts).toHaveLength(5);
+    expect(pts[0]).toEqual([0, 0, 0]);
+    // End of one full turn: back to angle 0 at the end radius and full height.
+    expect(pts[4]![0]).toBeCloseTo(2, 9);
+    expect(pts[4]![1]).toBeCloseTo(0, 9);
+    expect(pts[4]![2]).toBeCloseTo(4, 9);
+    // Halfway: half a turn (angle π), half the radius and height.
+    expect(pts[2]![0]).toBeCloseTo(-1, 9);
+    expect(pts[2]![2]).toBeCloseTo(2, 9);
+  });
+
+  it('stays flat when height is 0', () => {
+    for (const p of spiralPoints(2, 0.5, 1, 0, 16)) expect(p[2]).toBe(0);
+  });
+});
+
+describe('rectanglePoints', () => {
+  it('returns the four corners centered on the origin', () => {
+    expect(rectanglePoints(2, 4)).toEqual([
+      [-1, -2, 0],
+      [1, -2, 0],
+      [1, 2, 0],
+      [-1, 2, 0],
+    ]);
   });
 });

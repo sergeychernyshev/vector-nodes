@@ -1,6 +1,7 @@
 import { PARAMETER_NODE_TYPES } from '@vector-nodes/core';
 import {
   add,
+  arcPoints,
   boundingBox,
   boxMesh,
   circleCurve,
@@ -28,10 +29,14 @@ import {
   projectOrthographic,
   projectPerspective,
   randomPoints,
+  rectanglePoints,
   rotateAxisAngle,
   sampleCubicBezier,
+  sampleQuadraticBezier,
   scale,
   scaleAxes,
+  spiralPoints,
+  starPoints,
   sub,
   transformGeometry,
   triangulateGeometry,
@@ -168,6 +173,69 @@ const polylineNode: NodeEvaluator = ({ inputs, params }) => ({
   geometry: curveGeometry(polyline(inputs.points as Vector[], params.closed as boolean)),
 });
 
+// Curve primitives (issue #114): point-list generators wrapped as single curves.
+const starCurveNode: NodeEvaluator = ({ inputs }) => ({
+  geometry: curveGeometry(
+    polyline(
+      starPoints(
+        inputs.points as number,
+        inputs.innerRadius as number,
+        inputs.outerRadius as number,
+      ),
+      true,
+    ),
+  ),
+});
+
+const arcCurveNode: NodeEvaluator = ({ inputs }) => ({
+  geometry: curveGeometry(
+    polyline(
+      arcPoints(
+        inputs.radius as number,
+        inputs.startAngle as number,
+        inputs.sweepAngle as number,
+        inputs.segments as number,
+      ),
+    ),
+  ),
+});
+
+const spiralCurveNode: NodeEvaluator = ({ inputs }) => ({
+  geometry: curveGeometry(
+    polyline(
+      spiralPoints(
+        inputs.turns as number,
+        inputs.startRadius as number,
+        inputs.endRadius as number,
+        inputs.height as number,
+        inputs.segments as number,
+      ),
+    ),
+  ),
+});
+
+const rectangleCurveNode: NodeEvaluator = ({ inputs }) => ({
+  geometry: curveGeometry(
+    polyline(rectanglePoints(inputs.width as number, inputs.height as number), true),
+  ),
+});
+
+// Mirrors BezierCurve: the sampled points are exposed as a field output too.
+const quadraticBezierNode: NodeEvaluator = ({ inputs }) => {
+  const points = sampleQuadraticBezier(
+    inputs.p0 as Vector,
+    inputs.p1 as Vector,
+    inputs.p2 as Vector,
+    inputs.segments as number,
+  );
+  const geometry: Geometry = {
+    points,
+    curves: [{ points, closed: false }],
+    meshes: [],
+  };
+  return { geometry, points };
+};
+
 // Merge concatenates its array `geometry` input — every connection into the one
 // handle, in order (empty geometry when none are connected) — issue #99.
 const merge: NodeEvaluator = ({ inputs }) => ({
@@ -293,6 +361,11 @@ export const BASIC_OPERATORS: OperatorTable = {
   ScaleGeometry: scaleGeometry,
   CircleCurve: circleCurveNode,
   Polyline: polylineNode,
+  StarCurve: starCurveNode,
+  ArcCurve: arcCurveNode,
+  SpiralCurve: spiralCurveNode,
+  RectangleCurve: rectangleCurveNode,
+  QuadraticBezier: quadraticBezierNode,
   MergeGeometry: merge,
   ColorGeometry: colorGeometryNode,
   BoundingBox: boundingBoxNode,
