@@ -4,6 +4,7 @@ import {
   arcPoints,
   circlePoints,
   cubicBezier,
+  filletCurve,
   fromList,
   gridPoints,
   linePoints,
@@ -282,6 +283,68 @@ describe('rectanglePoints', () => {
       [1, 2, 0],
       [-1, 2, 0],
     ]);
+  });
+});
+
+describe('filletCurve (issue #116)', () => {
+  // A right angle at (1, 0): segments along +x then +y, both length 1.
+  const corner = {
+    points: [
+      [0, 0, 0],
+      [1, 0, 0],
+      [1, 1, 0],
+    ] as [number, number, number][],
+    closed: false,
+    color: [0, 1, 0, 1] as [number, number, number, number],
+  };
+
+  it('replaces a right-angle corner with a tangent arc', () => {
+    const out = filletCurve(corner, 0.5, 2);
+    // endpoint, tangent, arc midpoint, tangent, endpoint
+    expect(out.points).toHaveLength(5);
+    expect(out.points[0]).toEqual([0, 0, 0]);
+    expect(out.points[1]).toEqual([0.5, 0, 0]);
+    // The far tangent point comes out of the arc rotation — compare loosely.
+    expect(out.points[3]![0]).toBeCloseTo(1, 9);
+    expect(out.points[3]![1]).toBeCloseTo(0.5, 9);
+    expect(out.points[4]).toEqual([1, 1, 0]);
+    // The arc midpoint sits on the radius-0.5 circle centered at (0.5, 0.5).
+    const mid = out.points[2]!;
+    expect(Math.hypot(mid[0] - 0.5, mid[1] - 0.5)).toBeCloseTo(0.5, 9);
+    expect(mid[0]).toBeGreaterThan(0.5);
+    expect(mid[1]).toBeLessThan(0.5);
+    expect(out.color).toEqual([0, 1, 0, 1]);
+  });
+
+  it('caps the tangent offset at half the shorter segment', () => {
+    const out = filletCurve(corner, 100, 1);
+    // Tangents at the segment midpoints; resolution 1 is a chamfer.
+    expect(out.points).toHaveLength(4);
+    expect(out.points[0]).toEqual([0, 0, 0]);
+    expect(out.points[1]).toEqual([0.5, 0, 0]);
+    expect(out.points[2]![0]).toBeCloseTo(1, 9);
+    expect(out.points[2]![1]).toBeCloseTo(0.5, 9);
+    expect(out.points[3]).toEqual([1, 1, 0]);
+  });
+
+  it('rounds every corner of a closed curve, wrap-around included', () => {
+    const square = { points: rectanglePoints(2, 2), closed: true };
+    const out = filletCurve(square, 0.25, 4);
+    expect(out.closed).toBe(true);
+    expect(out.points).toHaveLength(4 * 5);
+  });
+
+  it('leaves straight corners and radius <= 0 untouched', () => {
+    const line = {
+      points: [
+        [0, 0, 0],
+        [1, 0, 0],
+        [2, 0, 0],
+      ] as [number, number, number][],
+      closed: false,
+    };
+    expect(filletCurve(line, 0.5, 4).points).toEqual(line.points);
+    expect(filletCurve(corner, 0, 4).points).toEqual(corner.points);
   });
 });
 

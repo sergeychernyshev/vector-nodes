@@ -270,6 +270,11 @@ const EMITTERS: Record<string, Emitter> = {
     expr: `{ geometry: mapCurves(${inputs.geometry}, (c) => trimCurve(c, ${inputs.start}, ${inputs.end})) }`,
     uses: ['mapCurves', 'trimCurve'],
   }),
+  // Rounded corners (issue #116).
+  FilletCurve: ({ inputs }) => ({
+    expr: `{ geometry: mapCurves(${inputs.geometry}, (c) => filletCurve(c, ${inputs.radius}, ${inputs.resolution})) }`,
+    uses: ['mapCurves', 'filletCurve'],
+  }),
   MergeGeometry: ({ inputs }) => ({
     // `inputs.geometry` is already an array expression of the connected sources.
     expr: `{ geometry: mergeAll(${inputs.geometry}) }`,

@@ -1,5 +1,15 @@
 import { ORIGIN, type Color, type Curve, type Geometry, type Point, type Vector } from './types.js';
-import { add, distance } from './vector.js';
+import {
+  add,
+  cross,
+  distance,
+  dot,
+  length,
+  normalize,
+  rotateAxisAngle,
+  scale,
+  sub,
+} from './vector.js';
 
 /**
  * Apply `fn` to every point in a geometry bundle (points, curves, meshes).
@@ -382,6 +392,80 @@ export function subdivideCurve(curve: Curve, cuts: number): Curve {
 /** Reverse a curve's point order (closed/color preserved). */
 export function reverseCurve(curve: Curve): Curve {
   return { ...curve, points: fromList(curve.points).reverse() };
+}
+
+// --- Fillet (issue #116) --------------------------------------------------------
+
+/**
+ * The fillet arc replacing one corner `p` (between `prev` and `next`): a
+ * circular arc tangent to both segments, sampled as `res` segments (`res + 1`
+ * points, tangent point to tangent point). Straight, spiked, or degenerate
+ * corners return the corner itself.
+ */
+function filletCorner(prev: Point, p: Point, next: Point, radius: number, res: number): Point[] {
+  const toPrev = sub(prev, p);
+  const toNext = sub(next, p);
+  const lenPrev = length(toPrev);
+  const lenNext = length(toNext);
+  if (lenPrev === 0 || lenNext === 0) return [[p[0], p[1], p[2]]];
+  const d1 = scale(toPrev, 1 / lenPrev);
+  const d2 = scale(toNext, 1 / lenNext);
+  const theta = Math.acos(Math.min(Math.max(dot(d1, d2), -1), 1));
+  // Straight corners (θ≈π) have nothing to round; spikes (θ≈0) collapse.
+  if (theta < 1e-9 || Math.PI - theta < 1e-9) return [[p[0], p[1], p[2]]];
+  const half = theta / 2;
+  // Tangent offset for the requested radius, capped at half the shorter
+  // adjacent segment (which shrinks the effective radius to match).
+  const t = Math.min(radius / Math.tan(half), Math.min(lenPrev, lenNext) / 2);
+  const r = t * Math.tan(half);
+  if (r <= 0) return [[p[0], p[1], p[2]]];
+  const t1 = add(p, scale(d1, t));
+  const t2 = add(p, scale(d2, t));
+  const center = add(p, scale(normalize(add(d1, d2)), r / Math.sin(half)));
+  const v1 = sub(t1, center);
+  const v2 = sub(t2, center);
+  // Right-hand rule: rotating v1 about cross(v1, v2) by the arc angle (≤ π)
+  // always sweeps toward v2.
+  const axis = cross(v1, v2);
+  const axisLen = length(axis);
+  if (axisLen === 0) return [[p[0], p[1], p[2]]];
+  const n = scale(axis, 1 / axisLen);
+  const phi = Math.acos(Math.min(Math.max(dot(v1, v2) / (r * r), -1), 1));
+  const out: Point[] = [];
+  for (let j = 0; j <= res; j++) {
+    out.push(add(center, rotateAxisAngle(v1, n, (phi * j) / res)));
+  }
+  return out;
+}
+
+/**
+ * Round a curve's corners (issue #116): every interior corner — and, for
+ * closed curves, every corner including the wrap-around — is replaced by a
+ * circular arc tangent to both adjacent segments, sampled as `resolution` arc
+ * segments. `radius` is the target arc radius; where adjacent segments are too
+ * short the tangent offset is capped at half the shorter one, shrinking the
+ * effective radius. `radius <= 0`, short curves, and straight corners pass
+ * through unchanged. Color and the closed flag are preserved.
+ */
+export function filletCurve(curve: Curve, radius: number, resolution: number): Curve {
+  const pts = curve.points;
+  const res = resolution < 1 ? 1 : Math.floor(resolution);
+  const corners = curve.closed ? pts.length : pts.length - 2;
+  if (radius <= 0 || pts.length < 3 || corners < 1) {
+    return { ...curve, points: fromList(pts) };
+  }
+  const out: Point[] = [];
+  const first = pts[0]!;
+  if (!curve.closed) out.push([first[0], first[1], first[2]]);
+  for (let k = 0; k < corners; k++) {
+    const i = curve.closed ? k : k + 1;
+    const prev = pts[(i - 1 + pts.length) % pts.length]!;
+    const next = pts[(i + 1) % pts.length]!;
+    out.push(...filletCorner(prev, pts[i]!, next, radius, res));
+  }
+  const last = pts[pts.length - 1]!;
+  if (!curve.closed) out.push([last[0], last[1], last[2]]);
+  return { ...curve, points: out };
 }
 
 /**

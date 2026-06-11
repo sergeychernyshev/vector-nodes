@@ -231,6 +231,27 @@ describe('curve primitives (issue #114)', () => {
     expect(trimmed.curves[0]!.points[0]).toEqual([0.5, 0, 0]);
   });
 
+  it('FilletCurve rounds corners through the bundle (issue #116)', () => {
+    const bundle: Geometry = {
+      points: [],
+      curves: [
+        {
+          points: [
+            [0, 0, 0],
+            [1, 0, 0],
+            [1, 1, 0],
+          ],
+          closed: false,
+        },
+      ],
+      meshes: [],
+    };
+    const out = run('FilletCurve', { inputs: { geometry: bundle, radius: 0.5, resolution: 2 } })
+      .geometry as Geometry;
+    expect(out.curves[0]!.points).toHaveLength(5);
+    expect(out.curves[0]!.points[1]).toEqual([0.5, 0, 0]);
+  });
+
   it('QuadraticBezier mirrors BezierCurve with a points field output', () => {
     const out = run('QuadraticBezier', {
       inputs: { p0: [-1, 0, 0], p1: [0, 1, 0], p2: [1, 0, 0], segments: 2 },
