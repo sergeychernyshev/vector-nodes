@@ -280,9 +280,8 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
     type: 'MergeGeometry',
     label: 'Merge',
     category: 'Geometry',
-    // Variable number of geometry inputs (issue #65): geometry0, geometry1, …
-    inputs: [],
-    variadicInput: { name: 'geometry', type: 'Geometry' },
+    // One array input that accepts many geometry connections (issue #99).
+    inputs: [{ name: 'geometry', type: 'Geometry', isArray: true, default: [] }],
     outputs: [{ name: 'geometry', type: 'Geometry' }],
     params: [],
   },

@@ -27,12 +27,15 @@ function findSocket(sockets: FlowSocket[], name: string): FlowSocket | undefined
 }
 
 /**
- * Whether an output socket may feed an input socket: field/single must agree and
- * the types must be implicitly convertible. The shared rule behind link
+ * Whether an output socket may feed an input socket: a single value into a single
+ * input, an array into an array, or a single value into an *array* input (it
+ * contributes one element — issue #99); a field output into a single input is
+ * rejected. Types must be implicitly convertible. The shared rule behind link
  * validation ({@link checkConnection}) and node injection.
  */
 export function socketsCompatible(out: FlowSocket, input: FlowSocket): boolean {
-  return out.isArray === input.isArray && canConvertImplicitly(out.type, input.type);
+  const fieldOk = !out.isArray || input.isArray; // reject only field → single value
+  return fieldOk && canConvertImplicitly(out.type, input.type);
 }
 
 /**
@@ -69,12 +72,10 @@ export function checkConnection(
   // allowed and replaces the old one (see `edgesWithoutInput`) rather than being
   // rejected.
 
-  if (outSocket.isArray !== inSocket.isArray) {
-    return reject(
-      `Cannot connect a ${outSocket.isArray ? 'field' : 'single value'} to a ${
-        inSocket.isArray ? 'field' : 'single value'
-      }.`,
-    );
+  // A field (array) output can't drive a single-value input; a single value into
+  // an array input is fine — it contributes one element (issue #99).
+  if (outSocket.isArray && !inSocket.isArray) {
+    return reject('Cannot connect a field to a single value.');
   }
 
   if (!canConvertImplicitly(outSocket.type, inSocket.type)) {

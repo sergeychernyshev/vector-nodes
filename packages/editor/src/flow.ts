@@ -2,7 +2,6 @@ import {
   metaNodeDefinitionToNodeDef,
   metaNodeName,
   OUTPUT_NODE_TYPE,
-  parseVariadicIndex,
   resolveParamDefaults,
   socketColor,
   type Graph,
@@ -73,63 +72,6 @@ export function socketsOf(def: NodeDefinition): {
   };
 }
 
-/**
- * The input sockets to render on a node *instance*, given which input handles
- * currently have a link. For a node with a variadic input (issue #65) this is
- * the fixed inputs plus one socket per used variadic index and one trailing
- * empty socket, so there's always a free handle to connect another input.
- */
-export function instanceInputs(
-  def: NodeDefinition,
-  incomingHandles: Iterable<string>,
-): FlowSocket[] {
-  const base = socketsOf(def).inputs;
-  const variadic = def.variadicInput;
-  if (!variadic) return base;
-  let maxIndex = -1;
-  for (const handle of incomingHandles) {
-    const index = parseVariadicIndex(variadic.name, handle);
-    if (index !== null && index > maxIndex) maxIndex = index;
-  }
-  const sockets: FlowSocket[] = Array.from({ length: maxIndex + 2 }, (_, i) => ({
-    name: `${variadic.name}${i}`,
-    type: variadic.type,
-    isArray: variadic.isArray ?? false,
-  }));
-  return [...base, ...sockets];
-}
-
-/** Whether two socket lists are equal by name/type/field (ignoring defaults). */
-function sameSockets(a: FlowSocket[], b: FlowSocket[]): boolean {
-  return (
-    a.length === b.length &&
-    a.every((s, i) => s.name === b[i]!.name && s.type === b[i]!.type && s.isArray === b[i]!.isArray)
-  );
-}
-
-/**
- * Recompute variadic nodes' input sockets from the current edges so their
- * handles grow/shrink as connections change (issue #65). Returns the same array
- * reference when nothing changed, so it's safe to call from an effect.
- */
-export function reconcileVariadicInputs(
-  nodes: VNodeFlowNode[],
-  edges: Edge[],
-  registry: NodeRegistry,
-): VNodeFlowNode[] {
-  let changed = false;
-  const next = nodes.map((node) => {
-    const def = registry.get(node.data.nodeType);
-    if (!def?.variadicInput) return node;
-    const incoming = edges.filter((e) => e.target === node.id).map((e) => e.targetHandle ?? '');
-    const desired = instanceInputs(def, incoming);
-    if (sameSockets(node.data.inputs, desired)) return node;
-    changed = true;
-    return { ...node, data: { ...node.data, inputs: desired } };
-  });
-  return changed ? next : nodes;
-}
-
 /** Inline style for a socket handle: its Blender color. */
 export function socketStyle(socket: FlowSocket): { background: string } {
   return { background: socketColor(socket.type) };
@@ -142,13 +84,6 @@ export function socketClassName(socket: FlowSocket): string {
 
 /** Convert a graph's nodes into React Flow nodes, resolving labels/sockets via the registry. */
 export function graphToFlowNodes(graph: Graph, registry: NodeRegistry): VNodeFlowNode[] {
-  // Variadic nodes size their input handles from how many links target them.
-  const incoming = new Map<string, string[]>();
-  for (const link of graph.links) {
-    const list = incoming.get(link.to[0]);
-    if (list) list.push(link.to[1]);
-    else incoming.set(link.to[0], [link.to[1]]);
-  }
   return graph.nodes.map((node) => {
     const def = registry.get(node.type);
     // Config that's now an input socket may still live under `params` in older
@@ -170,7 +105,7 @@ export function graphToFlowNodes(graph: Graph, registry: NodeRegistry): VNodeFlo
         nodeType: node.type,
         params,
         paramDefs: def?.params ?? [],
-        inputs: def ? instanceInputs(def, incoming.get(node.id) ?? []) : [],
+        inputs: def ? socketsOf(def).inputs : [],
         outputs: def ? socketsOf(def).outputs : [],
         inputDefaults: { ...seededDefaults, ...(node.inputDefaults ?? {}) },
       },
@@ -208,8 +143,7 @@ export function createFlowNode(
       nodeType: def.type,
       params: resolveParamDefaults(def),
       paramDefs: def.params,
-      // A fresh node has no links yet; variadic nodes start with one empty socket.
-      inputs: instanceInputs(def, []),
+      inputs: sockets.inputs,
       outputs: sockets.outputs,
       inputDefaults: {},
     },

@@ -56,15 +56,13 @@ describe('suggestSourceNodes', () => {
     expect(suggestions.map((s) => s.type)).not.toContain('ConstFloat');
   });
 
-  it('matches field inputs only to field outputs', () => {
+  it('matches a field input to both field and scalar sources (issue #99)', () => {
     const fieldInput = { name: 'points', type: 'Vector' as const, isArray: true };
-    const suggestions = suggestSourceNodes(registry, fieldInput);
-    for (const s of suggestions) {
-      const out = socketsOf(registry.require(s.type)).outputs.find(
-        (o) => o.name === s.outputHandle,
-      );
-      expect(out?.isArray).toBe(true);
-    }
+    const suggestions = suggestSourceNodes(registry, fieldInput).map((s) => s.type);
+    // A scalar Vector source (Point) is now collectible into the field, and a
+    // field source (PointGrid.points) still passes through.
+    expect(suggestions).toContain('Point');
+    expect(suggestions).toContain('PointGrid');
   });
 });
 

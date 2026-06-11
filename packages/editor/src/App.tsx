@@ -72,7 +72,6 @@ import {
   hasOutputNode,
   isTap,
   paletteItems,
-  reconcileVariadicInputs,
   resolveAddableDef,
   VNODE_TYPE,
   type VNodeFlowNode,
@@ -154,7 +153,7 @@ export function App() {
   const pendingShift = useRef<{ newNodeId: string; downstreamIds: Set<string> } | null>(null);
   const idCounter = useRef(maxAutoId(initialNodes));
   const toolbarRef = useRef<ToolbarHandle>(null);
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, getNode } = useReactFlow<VNodeFlowNode>();
 
   // Registry = base node definitions + a definition per meta-node, so instances
   // render with their interface sockets and links type-check.
@@ -181,11 +180,6 @@ export function App() {
     saveGraph(graph);
   }, [graph]);
 
-  // Grow/shrink variadic nodes' input handles as their connections change
-  // (issue #65). reconcile returns the same array when nothing changed.
-  useEffect(() => {
-    setNodes((nds) => reconcileVariadicInputs(nds, edges, registry));
-  }, [edges, registry, setNodes]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const lastReason = useRef<string | null>(null);
 
@@ -253,13 +247,22 @@ export function App() {
   const onConnect = useCallback(
     (connection: Connection) => {
       takeSnapshot();
-      // Replace any existing link into this input (issue #41), then add the new one.
+      // Array inputs accept any number of connections (issue #99); a scalar input
+      // replaces its existing link (issue #41) before the new one is added.
+      const targetSocket = getNode(connection.target ?? '')?.data.inputs.find(
+        (s) => s.name === connection.targetHandle,
+      );
       setEdges((eds) =>
-        addEdge(connection, edgesWithoutInput(eds, connection.target, connection.targetHandle)),
+        addEdge(
+          connection,
+          targetSocket?.isArray
+            ? eds
+            : edgesWithoutInput(eds, connection.target, connection.targetHandle),
+        ),
       );
       clearError();
     },
-    [setEdges, clearError, takeSnapshot],
+    [setEdges, clearError, takeSnapshot, getNode],
   );
 
   const editApi = useMemo<NodeEditApi>(

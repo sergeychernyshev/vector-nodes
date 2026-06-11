@@ -142,10 +142,12 @@ export function validateGraph(graph: Graph, registry: NodeRegistry): GraphValida
 
     const fromDef = checkEndpointNode(link.from, 'from');
     const toDef = checkEndpointNode(link.to, 'to');
+    const toSocket = toDef ? resolveInputSocket(toDef, endpointSocket(link.to)) : undefined;
 
-    // Detect more than one link into the same input socket.
+    // Detect more than one link into the same input socket. Array inputs accept
+    // any number of connections (issue #99), so they are exempt.
     const toKey = endpointLabel(link.to);
-    if (inputSeen.has(toKey)) {
+    if (inputSeen.has(toKey) && !(toSocket?.isArray ?? false)) {
       issues.push({
         code: 'duplicate-input-link',
         linkIndex,
@@ -157,7 +159,6 @@ export function validateGraph(graph: Graph, registry: NodeRegistry): GraphValida
     if (fromDef === undefined || toDef === undefined) return;
 
     const fromSocket = findSocket(fromDef.outputs, endpointSocket(link.from));
-    const toSocket = resolveInputSocket(toDef, endpointSocket(link.to));
     if (fromSocket === undefined) {
       issues.push({
         code: 'dangling-link-socket',
@@ -176,15 +177,16 @@ export function validateGraph(graph: Graph, registry: NodeRegistry): GraphValida
     }
     if (fromSocket === undefined || toSocket === undefined) return;
 
-    if ((fromSocket.isArray ?? false) !== (toSocket.isArray ?? false)) {
+    // A field (array) output can't drive a single-value input. The reverse —
+    // a single value into an array input — is allowed: it contributes one
+    // element, and array inputs collect every connection (issue #99).
+    if ((fromSocket.isArray ?? false) && !(toSocket.isArray ?? false)) {
       issues.push({
         code: 'field-mismatch',
         linkIndex,
         message: `Link ${endpointLabel(link.from)} → ${endpointLabel(
           link.to,
-        )} connects a ${fromSocket.isArray ? 'field' : 'single value'} to a ${
-          toSocket.isArray ? 'field' : 'single value'
-        }.`,
+        )} connects a field to a single value.`,
       });
     } else if (!canConvertImplicitly(fromSocket.type, toSocket.type)) {
       issues.push({

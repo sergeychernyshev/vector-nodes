@@ -3,10 +3,9 @@ import {
   flattenMetaNodes,
   getOutputNode,
   isParameterNodeType,
-  orderedVariadicKeys,
   resolveParamDefaults,
-  variadicSocketIndex,
   type Graph,
+  type GraphLink,
   type GraphNode,
   type NodeRegistry,
   type SocketType,
@@ -228,9 +227,8 @@ const EMITTERS: Record<string, Emitter> = {
     uses: ['curveGeometry', 'polyline'],
   }),
   MergeGeometry: ({ inputs }) => ({
-    expr: `{ geometry: mergeAll([${orderedVariadicKeys(Object.keys(inputs), 'geometry')
-      .map((k) => inputs[k])
-      .join(', ')}]) }`,
+    // `inputs.geometry` is already an array expression of the connected sources.
+    expr: `{ geometry: mergeAll(${inputs.geometry}) }`,
     uses: ['mergeAll'],
   }),
   ColorGeometry: ({ inputs }) => ({
@@ -321,6 +319,15 @@ export function generate(graph: Graph, registry: NodeRegistry): GeneratedModule 
   const uses = new Set<string>();
   const varOf = new Map<string, string>();
 
+  /** Whether a link's source output socket is itself a field (array). */
+  function sourceIsArray(link: GraphLink): boolean {
+    const sourceNode = nodeById.get(link.from[0]);
+    if (!sourceNode) return false;
+    return (
+      registry.get(sourceNode.type)?.outputs.find((s) => s.name === link.from[1])?.isArray ?? false
+    );
+  }
+
   function emitNode(id: string): string {
     const existing = varOf.get(id);
     if (existing) return existing;
@@ -331,8 +338,22 @@ export function generate(graph: Graph, registry: NodeRegistry): GeneratedModule 
 
     const inputs: Record<string, string> = {};
     for (const socket of def.inputs) {
-      const link = flat.links.find((l) => l.to[0] === id && l.to[1] === socket.name);
       const override = node.inputDefaults?.[socket.name];
+      if (socket.isArray) {
+        // Array inputs collect every connection into an array expression (issue
+        // #99); a single field source passes through as the whole array.
+        const links = flat.links.filter((l) => l.to[0] === id && l.to[1] === socket.name);
+        if (links.length > 0) {
+          const exprs = links.map((l) => `${emitNode(l.from[0])}.${l.from[1]}`);
+          inputs[socket.name] =
+            links.length === 1 && sourceIsArray(links[0]!) ? exprs[0]! : `[${exprs.join(', ')}]`;
+        } else if (override !== undefined) inputs[socket.name] = lit(override);
+        else if (node.params?.[socket.name] !== undefined)
+          inputs[socket.name] = lit(node.params[socket.name]);
+        else inputs[socket.name] = lit(socket.default ?? []);
+        continue;
+      }
+      const link = flat.links.find((l) => l.to[0] === id && l.to[1] === socket.name);
       if (link) inputs[socket.name] = `${emitNode(link.from[0])}.${link.from[1]}`;
       else if (override !== undefined) inputs[socket.name] = lit(override);
       else if (node.params?.[socket.name] !== undefined)
@@ -340,14 +361,6 @@ export function generate(graph: Graph, registry: NodeRegistry): GeneratedModule 
         inputs[socket.name] = lit(node.params[socket.name]);
       else if (socket.default !== undefined) inputs[socket.name] = lit(socket.default);
       else inputs[socket.name] = 'undefined';
-    }
-    // Variadic inputs (issue #65): every link into a `${name}n` socket.
-    if (def.variadicInput) {
-      for (const link of flat.links) {
-        if (link.to[0] === id && variadicSocketIndex(def, link.to[1]) !== null) {
-          inputs[link.to[1]] = `${emitNode(link.from[0])}.${link.from[1]}`;
-        }
-      }
     }
     const params = { ...resolveParamDefaults(def), ...node.params };
 

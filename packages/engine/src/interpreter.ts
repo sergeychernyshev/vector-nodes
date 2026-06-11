@@ -3,8 +3,8 @@ import {
   flattenMetaNodes,
   getOutputNode,
   resolveParamDefaults,
-  variadicSocketIndex,
   type Graph,
+  type GraphLink,
   type GraphNode,
   type NodeDefinition,
   type NodeRegistry,
@@ -68,9 +68,34 @@ export function evaluateGraph(
   const nodeById = new Map<string, GraphNode>();
   for (const node of graph.nodes) nodeById.set(node.id, node);
 
+  /** Whether a link's source output socket is itself a field (array). */
+  function sourceIsArray(link: GraphLink): boolean {
+    const sourceNode = nodeById.get(link.from[0]);
+    if (!sourceNode) return false;
+    const def = registry.get(sourceNode.type);
+    return def?.outputs.find((s) => s.name === link.from[1])?.isArray ?? false;
+  }
+
   function resolveInputs(node: GraphNode, def: NodeDefinition): Record<string, unknown> {
     const inputs: Record<string, unknown> = {};
     for (const socket of def.inputs) {
+      if (socket.isArray) {
+        // Array inputs collect every connection (issue #99): each scalar source
+        // contributes one element, in link order. A single field (array) source
+        // passes through as the whole array (e.g. a wired point field).
+        const links = graph.links.filter((l) => l.to[0] === node.id && l.to[1] === socket.name);
+        if (links.length > 0) {
+          const values = links.map((l) => evaluateNode(l.from[0])[l.from[1]]);
+          inputs[socket.name] = links.length === 1 && sourceIsArray(links[0]!) ? values[0] : values;
+        } else if (node.inputDefaults?.[socket.name] !== undefined) {
+          inputs[socket.name] = node.inputDefaults[socket.name];
+        } else if (node.params?.[socket.name] !== undefined) {
+          inputs[socket.name] = node.params[socket.name];
+        } else {
+          inputs[socket.name] = socket.default ?? [];
+        }
+        continue;
+      }
       const link = graph.links.find((l) => l.to[0] === node.id && l.to[1] === socket.name);
       if (link) {
         const sourceOutputs = evaluateNode(link.from[0]);
@@ -84,14 +109,6 @@ export function evaluateGraph(
         inputs[socket.name] = node.params[socket.name];
       } else if (socket.default !== undefined) {
         inputs[socket.name] = socket.default;
-      }
-    }
-    // Variadic inputs (issue #65): every link into a `${name}n` socket.
-    if (def.variadicInput) {
-      for (const link of graph.links) {
-        if (link.to[0] === node.id && variadicSocketIndex(def, link.to[1]) !== null) {
-          inputs[link.to[1]] = evaluateNode(link.from[0])[link.from[1]];
-        }
       }
     }
     return inputs;
