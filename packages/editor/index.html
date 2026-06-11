@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vector Nodes — Editor</title>
     <style>
+      /* Mirror the theme defaults from editor.css so the page paints in the
+         user's preferred scheme before the bundle loads (no white flash). */
+      :root {
+        color-scheme: light dark;
+      }
       html,
       body,
       #root {
@@ -17,6 +22,14 @@
           system-ui,
           -apple-system,
           sans-serif;
+        background: #fff;
+        color: #1a1a1a;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #1e1e1e;
+          color: #ddd;
+        }
       }
     </style>
   </head>

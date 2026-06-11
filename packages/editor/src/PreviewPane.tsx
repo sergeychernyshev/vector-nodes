@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { summarizeGeometry, type PreviewResult } from './preview';
 import { DEFAULT_PREVIEW_WIDTH, previewWidthFromClientX } from './preview-resize';
+import { SidebarIcon } from './SidebarIcon';
 import { SvgView } from './SvgView';
 import { ThreeView } from './ThreeView';
 
@@ -93,7 +94,7 @@ export function PreviewPane({
           aria-expanded={false}
           title="Show preview"
         >
-          «
+          <SidebarIcon side={side} />
         </button>
       </aside>
     );
@@ -118,7 +119,7 @@ export function PreviewPane({
             aria-expanded
             title="Hide preview"
           >
-            »
+            <SidebarIcon side={side} />
           </button>
         )}
         <span>Preview</span>

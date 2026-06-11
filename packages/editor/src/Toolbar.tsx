@@ -57,7 +57,7 @@ export const Toolbar = forwardRef<ToolbarHandle, ToolbarProps>(function Toolbar(
     <header
       style={{
         padding: '8px 12px',
-        borderBottom: '1px solid #ddd',
+        borderBottom: '1px solid var(--border)',
         display: 'flex',
         gap: 12,
         alignItems: 'baseline',

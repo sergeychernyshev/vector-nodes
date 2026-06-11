@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { filterPalette, type PaletteItem } from './flow';
+import { SidebarIcon } from './SidebarIcon';
 
 export interface PaletteProps {
   items: PaletteItem[];
@@ -13,6 +14,8 @@ export interface PaletteProps {
   collapsed?: boolean;
   /** Toggle the collapsed state (omit to hide the toggle). */
   onToggleCollapse?: () => void;
+  /** Which side the palette is docked on; picks the toggle icon (issue #62). */
+  side?: 'left' | 'right';
 }
 
 /** Searchable node palette; clicking an entry arms that node for placement. */
@@ -23,6 +26,7 @@ export function Palette({
   armedType,
   collapsed,
   onToggleCollapse,
+  side = 'left',
 }: PaletteProps) {
   const [query, setQuery] = useState('');
   const filtered = useMemo(() => filterPalette(items, query), [items, query]);
@@ -38,7 +42,7 @@ export function Palette({
           aria-expanded={false}
           title="Show nodes"
         >
-          »
+          <SidebarIcon side={side} />
         </button>
       </aside>
     );
@@ -57,7 +61,7 @@ export function Palette({
             aria-expanded
             title="Hide nodes"
           >
-            «
+            <SidebarIcon side={side} />
           </button>
         )}
       </div>

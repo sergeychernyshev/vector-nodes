@@ -1,3 +1,43 @@
+/*
+ * Theme: the chrome (toolbar, sidebars, menus, dialogs) follows the browser's
+ * light/dark preference via these variables; `color-scheme` makes native
+ * controls (inputs, buttons, scrollbars) follow too. Node cards stay dark in
+ * both themes (Blender-style), and React Flow's own surfaces follow the
+ * preference via colorMode="system" on <ReactFlow>.
+ */
+:root {
+  color-scheme: light dark;
+  --text: #1a1a1a;
+  --surface: #fff;
+  --border: #ddd;
+  --border-strong: #ccc;
+  --control-bg: #f6f6f6;
+  --control-hover: #ececec;
+  --accent: #4a90d9;
+  --accent-border: #357ab8;
+  --accent-hover: #4385c9;
+  --error-bg: #fdecea;
+  --error-text: #8a1c13;
+  --error-border: #f5c6cb;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #ddd;
+    --surface: #1e1e1e;
+    --border: #3f3f3f;
+    --border-strong: #555;
+    --control-bg: #2f2f2f;
+    --control-hover: #3a3a3a;
+    --error-bg: #3a1f1d;
+    --error-text: #f1a9a0;
+    --error-border: #7a2e26;
+  }
+}
+body {
+  background: var(--surface);
+  color: var(--text);
+}
+
 /* Editor body: node list | canvas | preview (issue #62 swaps the sides). */
 .app-main {
   flex: 1;
@@ -11,7 +51,7 @@
 .app-main--swapped .palette {
   order: 3;
   border-right: none;
-  border-left: 1px solid #ddd;
+  border-left: 1px solid var(--border);
 }
 .app-main--swapped .canvas-wrap {
   order: 2;
@@ -275,7 +315,7 @@
 .preview {
   width: 240px;
   flex-shrink: 0;
-  border-left: 1px solid #ddd;
+  border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow: auto;
@@ -283,7 +323,7 @@
 }
 .preview--left {
   border-left: none;
-  border-right: 1px solid #ddd;
+  border-right: 1px solid var(--border);
 }
 .preview__resize {
   position: absolute;
@@ -308,15 +348,29 @@
   padding-top: 8px;
 }
 .preview__collapse {
-  border: 1px solid #ccc;
-  background: #f6f6f6;
+  border: 1px solid var(--border-strong);
+  background: var(--control-bg);
+  color: inherit;
   border-radius: 4px;
   cursor: pointer;
   line-height: 1;
   padding: 4px 8px;
 }
 .preview__collapse:hover {
-  background: #ececec;
+  background: var(--control-hover);
+}
+/* Sidebar collapse/expand icons (packages/editor/icons): shrink the raw SVG
+   and recolor its hardcoded strokes so they follow the theme. */
+.sidebar-icon {
+  display: inline-flex;
+}
+.sidebar-icon svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+.sidebar-icon path {
+  stroke: currentColor;
 }
 .preview__header {
   display: flex;
@@ -325,11 +379,11 @@
   justify-content: space-between;
   padding: 8px 12px;
   font-weight: 600;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--border);
 }
 .preview__toggle {
   display: inline-flex;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-strong);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -337,14 +391,15 @@
   padding: 2px 10px;
   font-size: 12px;
   border: none;
-  background: #f6f6f6;
+  background: var(--control-bg);
+  color: inherit;
   cursor: pointer;
 }
 .preview__toggle-btn + .preview__toggle-btn {
-  border-left: 1px solid #ccc;
+  border-left: 1px solid var(--border-strong);
 }
 .preview__toggle-btn[aria-pressed='true'] {
-  background: #4a90d9;
+  background: var(--accent);
   color: #fff;
 }
 /* The preview fills the whole pane; the renderer is absolutely positioned so it
@@ -369,9 +424,9 @@
 .preview__error {
   margin: 8px;
   padding: 8px 10px;
-  background: #fdecea;
-  color: #8a1c13;
-  border: 1px solid #f5c6cb;
+  background: var(--error-bg);
+  color: var(--error-text);
+  border: 1px solid var(--error-border);
   border-radius: 4px;
   font-size: 12px;
 }
@@ -419,7 +474,7 @@
   height: 80%;
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--surface);
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
@@ -429,7 +484,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--border);
 }
 .toolbar__generate {
   display: inline-flex;
@@ -458,7 +513,7 @@
   padding: 4px 12px;
   font-size: 12px;
   opacity: 0.7;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--border);
 }
 
 /* Meta-node instances read distinctly */
@@ -471,7 +526,7 @@
 .palette {
   width: 220px;
   flex-shrink: 0;
-  border-right: 1px solid #ddd;
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -489,15 +544,16 @@
   font-weight: 600;
 }
 .palette__collapse {
-  border: 1px solid #ccc;
-  background: #f6f6f6;
+  border: 1px solid var(--border-strong);
+  background: var(--control-bg);
+  color: inherit;
   border-radius: 4px;
   cursor: pointer;
   line-height: 1;
   padding: 4px 8px;
 }
 .palette__collapse:hover {
-  background: #ececec;
+  background: var(--control-hover);
 }
 .palette__search {
   margin: 8px;
@@ -516,22 +572,23 @@
   gap: 8px;
   padding: 6px 8px;
   margin-bottom: 4px;
-  background: #f6f6f6;
-  border: 1px solid #ddd;
+  background: var(--control-bg);
+  border: 1px solid var(--border);
+  color: inherit;
   border-radius: 4px;
   cursor: pointer;
   text-align: left;
 }
 .palette__item:hover:not(:disabled) {
-  background: #ececec;
+  background: var(--control-hover);
 }
 .palette__item--armed {
-  background: #4a90d9;
+  background: var(--accent);
   color: #fff;
-  border-color: #357ab8;
+  border-color: var(--accent-border);
 }
 .palette__item--armed:hover:not(:disabled) {
-  background: #4385c9;
+  background: var(--accent-hover);
 }
 .palette__item--armed .palette__item-category {
   color: #fff;
@@ -551,8 +608,8 @@
   max-height: 320px;
   display: flex;
   flex-direction: column;
-  background: #fff;
-  border: 1px solid #ccc;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
   border-radius: 6px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
   overflow: hidden;
@@ -560,7 +617,7 @@
 .connect-menu__search {
   margin: 6px;
   padding: 5px 8px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 4px;
   font: inherit;
 }
@@ -577,14 +634,15 @@
   gap: 8px;
   padding: 6px 8px;
   margin-bottom: 2px;
-  background: #f6f6f6;
-  border: 1px solid #ddd;
+  background: var(--control-bg);
+  border: 1px solid var(--border);
+  color: inherit;
   border-radius: 4px;
   cursor: pointer;
   text-align: left;
 }
 .connect-menu__item:hover {
-  background: #ececec;
+  background: var(--control-hover);
 }
 .connect-menu__item-category {
   opacity: 0.6;
@@ -651,7 +709,7 @@
     height: 40vh;
     border-left: none;
     border-right: none;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid var(--border);
     order: 0;
   }
   .preview__resize {
@@ -667,7 +725,7 @@
     left: 0;
     bottom: 0;
     z-index: 7;
-    background: #fff;
+    background: var(--surface);
     box-shadow: 2px 0 6px rgba(0, 0, 0, 0.15);
   }
   .app-main--swapped .palette {
