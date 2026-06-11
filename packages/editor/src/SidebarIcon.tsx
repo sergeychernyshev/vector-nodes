@@ -20,7 +20,6 @@ export function SidebarIcon({ side }: { side: 'left' | 'right' }) {
     <span
       className="sidebar-icon"
       aria-hidden
-      // eslint-disable-next-line react/no-danger -- static, bundled SVG markup
       dangerouslySetInnerHTML={{ __html: ICONS[side] }}
     />
   );
