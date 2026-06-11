@@ -34,6 +34,8 @@ import {
   polyline,
   projectOrthographic,
   projectPerspective,
+  randomFloats,
+  randomInts,
   randomPoints,
   rectanglePoints,
   reflect,
@@ -358,6 +360,19 @@ const mathFloat: NodeEvaluator = ({ inputs, params }) => {
   }
 };
 
+// Seeded, composable randomness (issue #119): each output kind draws its own
+// stream from the same seed, so wiring one output doesn't reshuffle another.
+const randomValue: NodeEvaluator = ({ inputs }) => {
+  const min = inputs.min as number;
+  const max = inputs.max as number;
+  const seed = inputs.seed as number;
+  const count = inputs.count as number;
+  const values = randomFloats(count, min, max, seed);
+  const integers = randomInts(count, min, max, seed);
+  const vectors = randomPoints(count, [min, min, min], [max, max, max], seed);
+  return { value: values[0], integer: integers[0], vector: vectors[0], values, integers, vectors };
+};
+
 const mapRangeNode: NodeEvaluator = ({ inputs }) => ({
   value: mapRange(
     inputs.value as number,
@@ -458,6 +473,7 @@ export const BASIC_OPERATORS: OperatorTable = {
   BoundingBox: boundingBoxNode,
   InstanceOnPoints: instanceOnPointsNode,
   MathFloat: mathFloat,
+  RandomValue: randomValue,
   MapRange: mapRangeNode,
   Clamp: clampNode,
   PlaneMesh: planeMeshNode,

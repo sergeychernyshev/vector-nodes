@@ -138,6 +138,38 @@ describe('expanded operations (issue #118)', () => {
   });
 });
 
+describe('RandomValue (issue #119)', () => {
+  const inputs = { min: 2, max: 5, seed: 9, count: 4 };
+
+  it('is deterministic for a seed and respects the range', () => {
+    const a = run('RandomValue', { inputs });
+    const b = run('RandomValue', { inputs });
+    expect(a).toEqual(b);
+    expect(a.value as number).toBeGreaterThanOrEqual(2);
+    expect(a.value as number).toBeLessThan(5);
+    expect(Number.isInteger(a.integer)).toBe(true);
+    for (const c of a.vector as Vector) {
+      expect(c).toBeGreaterThanOrEqual(2);
+      expect(c).toBeLessThan(5);
+    }
+  });
+
+  it('sizes the array outputs by count and leads with the scalars', () => {
+    const out = run('RandomValue', { inputs });
+    expect(out.values).toHaveLength(4);
+    expect(out.integers).toHaveLength(4);
+    expect(out.vectors).toHaveLength(4);
+    expect((out.values as number[])[0]).toBe(out.value);
+    expect((out.vectors as Vector[])[0]).toEqual(out.vector);
+  });
+
+  it('reshuffles with the seed', () => {
+    const a = run('RandomValue', { inputs });
+    const b = run('RandomValue', { inputs: { ...inputs, seed: 10 } });
+    expect(a.values).not.toEqual(b.values);
+  });
+});
+
 describe('arrays and geometry sources', () => {
   it('VectorArray copies its values', () => {
     expect(run('VectorArray', { params: { values: [[1, 2, 3]] } })).toEqual({

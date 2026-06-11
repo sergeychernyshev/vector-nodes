@@ -343,6 +343,21 @@ const EMITTERS: Record<string, Emitter> = {
     if (!op) throw new Error(`codegen: unknown MathFloat operation "${String(params.operation)}".`);
     return { expr: `{ value: ${op} }`, uses: [] };
   },
+  // Seeded randomness (issue #119): one stream per output kind, shared seed.
+  RandomValue: ({ varName, inputs }) => {
+    const vals = `${varName}_vals`;
+    const ints = `${varName}_ints`;
+    const vecs = `${varName}_vecs`;
+    return {
+      pre: [
+        `const ${vals} = randomFloats(${inputs.count}, ${inputs.min}, ${inputs.max}, ${inputs.seed});`,
+        `const ${ints} = randomInts(${inputs.count}, ${inputs.min}, ${inputs.max}, ${inputs.seed});`,
+        `const ${vecs} = randomPoints(${inputs.count}, [${inputs.min}, ${inputs.min}, ${inputs.min}], [${inputs.max}, ${inputs.max}, ${inputs.max}], ${inputs.seed});`,
+      ],
+      expr: `{ value: ${vals}[0], integer: ${ints}[0], vector: ${vecs}[0], values: ${vals}, integers: ${ints}, vectors: ${vecs} }`,
+      uses: ['randomFloats', 'randomInts', 'randomPoints'],
+    };
+  },
   MapRange: ({ inputs }) => ({
     expr: `{ value: mapRange(${inputs.value}, ${inputs.fromMin}, ${inputs.fromMax}, ${inputs.toMin}, ${inputs.toMax}) }`,
     uses: ['mapRange'],

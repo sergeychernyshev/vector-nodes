@@ -508,6 +508,28 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
       },
     ],
   },
+  // Seeded, composable randomness (issue #119). Scalar range; the vector
+  // outputs draw each component from the same [min, max].
+  {
+    type: 'RandomValue',
+    label: 'Random Value',
+    category: 'Utility',
+    inputs: [
+      { name: 'min', type: 'Float', default: 0 },
+      { name: 'max', type: 'Float', default: 1 },
+      { name: 'seed', type: 'Integer', default: 0 },
+      { name: 'count', type: 'Integer', default: 1, min: 1 },
+    ],
+    outputs: [
+      { name: 'value', type: 'Float' },
+      { name: 'integer', type: 'Integer' },
+      { name: 'vector', type: 'Vector' },
+      { name: 'values', type: 'Float', isArray: true },
+      { name: 'integers', type: 'Integer', isArray: true },
+      { name: 'vectors', type: 'Vector', isArray: true },
+    ],
+    params: [],
+  },
   {
     type: 'MapRange',
     label: 'Map Range',
