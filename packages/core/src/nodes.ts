@@ -402,6 +402,16 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
     params: [],
   },
 
+  // Fill closed curves into mesh faces (issue #117).
+  {
+    type: 'FillCurve',
+    label: 'Fill Curve',
+    category: 'Geometry',
+    inputs: [{ name: 'geometry', type: 'Geometry' }],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
+  },
+
   // Combinators (Phase 7)
   {
     type: 'MergeGeometry',
