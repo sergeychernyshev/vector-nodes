@@ -182,6 +182,28 @@ describe('conformance: compiled output equals interpreter output', () => {
     expect(runCompiled(graph, [])).toEqual(interpret(graph));
   });
 
+  it('random values drive a polyline and a circle radius (issue #119)', () => {
+    const graph = createGraph({
+      nodes: [
+        { id: 'rand', type: 'RandomValue', params: { min: -1, max: 1, seed: 7, count: 5 } },
+        { id: 'pl', type: 'Polyline', params: { closed: false } },
+        { id: 'pc', type: 'PointCircle', params: { count: 6 } },
+        { id: 'm', type: 'MergeGeometry' },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [
+        { from: ['rand', 'vectors'], to: ['pl', 'points'] },
+        { from: ['rand', 'value'], to: ['pc', 'radius'] },
+        { from: ['pl', 'geometry'], to: ['m', 'geometry'] },
+        { from: ['pc', 'geometry'], to: ['m', 'geometry'] },
+        { from: ['m', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    });
+    const result = runCompiled(graph, []) as { curves: { points: unknown[] }[] };
+    expect(result).toEqual(interpret(graph));
+    expect(result.curves[0]!.points).toHaveLength(5);
+  });
+
   it('a config field wired from another node (issue #58)', () => {
     // PointCircle.radius is an input socket now: feed it from a ConstFloat.
     const graph = createGraph({
