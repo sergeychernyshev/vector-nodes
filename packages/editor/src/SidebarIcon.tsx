@@ -17,10 +17,6 @@ const ICONS = {
  */
 export function SidebarIcon({ side }: { side: 'left' | 'right' }) {
   return (
-    <span
-      className="sidebar-icon"
-      aria-hidden
-      dangerouslySetInnerHTML={{ __html: ICONS[side] }}
-    />
+    <span className="sidebar-icon" aria-hidden dangerouslySetInnerHTML={{ __html: ICONS[side] }} />
   );
 }
