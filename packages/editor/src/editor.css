@@ -700,17 +700,33 @@ body {
   .app-main {
     flex-direction: column;
     position: relative;
+    /* Shared by the preview strip and the palette drawer so the drawer can
+       start exactly where the canvas does (below the preview). */
+    --portrait-preview-height: 40vh;
   }
   .preview,
   .preview--left,
   .preview--right {
-    /* Override the inline width; become a full-width strip on top. */
+    /* Override the inline width; become a full-width strip on top. Border-box
+       so the strip's total height is exactly the shared variable, which the
+       palette drawer below uses as its top edge. */
     width: auto !important;
-    height: 40vh;
+    height: var(--portrait-preview-height);
+    box-sizing: border-box;
     border-left: none;
     border-right: none;
     border-bottom: 1px solid var(--border);
     order: 0;
+  }
+  /* Collapsed: the strip — and the drawer offset, via the shared variable —
+     shrinks to a thin bar; the toggle stays in the top-left corner instead of
+     centering in the full-width strip. */
+  .app-main:has(.preview--collapsed) {
+    --portrait-preview-height: 40px;
+  }
+  .preview--collapsed {
+    align-items: flex-start;
+    padding-left: 8px;
   }
   .preview__resize {
     /* Horizontal drag-to-resize doesn't apply when stacked vertically. */
@@ -721,7 +737,9 @@ body {
   }
   .palette {
     position: absolute;
-    top: 0;
+    /* Only as tall as the canvas: start below the preview strip so the
+       drawer and its collapsed rail never cover the preview on top. */
+    top: var(--portrait-preview-height);
     left: 0;
     bottom: 0;
     z-index: 7;
