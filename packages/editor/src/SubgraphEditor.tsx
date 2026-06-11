@@ -154,6 +154,7 @@ export function SubgraphEditor({
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
               isValidConnection={isValidConnection}
+              colorMode="system"
               fitView
             >
               <Background />

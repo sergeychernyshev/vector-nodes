@@ -691,6 +691,7 @@ export function App() {
               onAdd={armNode}
               disabledTypes={disabledTypes}
               armedType={pending}
+              side={sidebarsSwapped ? 'right' : 'left'}
               collapsed={paletteCollapsed}
               onToggleCollapse={() =>
                 setPaletteCollapsed((c) => {
@@ -756,6 +757,7 @@ export function App() {
                 }}
                 isValidConnection={isValidConnection}
                 onConnectEnd={onConnectEnd}
+                colorMode="system"
                 fitView
               >
                 <Background />
