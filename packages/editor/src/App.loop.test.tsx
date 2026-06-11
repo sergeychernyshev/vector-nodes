@@ -51,5 +51,32 @@ describe('App ↔ React Flow prop stability (regression for React #185 update lo
     expect(second).not.toBe(first); // a re-render actually happened
     expect(second.onNodeDragStart).toBe(first.onNodeDragStart);
     expect(second.onSelectionDragStart).toBe(first.onSelectionDragStart);
+    // Every tracked handler must stay stable so React Flow's StoreUpdater doesn't
+    // rewrite its store on each render (the #185 update-loop class).
+    expect(second.onConnect).toBe(first.onConnect);
+    expect(second.onConnectEnd).toBe(first.onConnectEnd);
+    expect(second.onNodesDelete).toBe(first.onNodesDelete);
+    expect(second.isValidConnection).toBe(first.isValidConnection);
+    expect(second.onSelectionChange).toBe(first.onSelectionChange);
+  });
+
+  it('onSelectionChange is stable and ignores an unchanged selection', () => {
+    // React Flow registers onSelectionChange in an effect keyed on the handler
+    // and invokes it; an inline handler that returns a fresh array each time
+    // loops forever. The handler must be stable and bail out when ids are equal.
+    render(
+      <ReactFlowProvider>
+        <App />
+      </ReactFlowProvider>,
+    );
+    const before = captured.props.length;
+    const handler = captured.props.at(-1)!.onSelectionChange as (p: {
+      nodes: { id: string }[];
+    }) => void;
+    expect(typeof handler).toBe('function');
+
+    // Re-reporting the same (empty) selection must not trigger a re-render.
+    act(() => handler({ nodes: [] }));
+    expect(captured.props.length).toBe(before);
   });
 });
