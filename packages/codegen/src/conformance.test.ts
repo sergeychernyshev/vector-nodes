@@ -119,6 +119,23 @@ describe('conformance: compiled output equals interpreter output', () => {
     expect(result.curves[0]!.points).toHaveLength(24);
   });
 
+  it('rectangle with rounded corners (issue #116)', () => {
+    const graph = createGraph({
+      nodes: [
+        { id: 'rect', type: 'RectangleCurve', params: { width: 3, height: 2 } },
+        { id: 'fillet', type: 'FilletCurve', params: { radius: 0.4, resolution: 6 } },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [
+        { from: ['rect', 'geometry'], to: ['fillet', 'geometry'] },
+        { from: ['fillet', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    });
+    const result = runCompiled(graph, []) as { curves: { points: unknown[] }[] };
+    expect(result).toEqual(interpret(graph));
+    expect(result.curves[0]!.points).toHaveLength(4 * 7);
+  });
+
   it('a config field wired from another node (issue #58)', () => {
     // PointCircle.radius is an input socket now: feed it from a ConstFloat.
     const graph = createGraph({

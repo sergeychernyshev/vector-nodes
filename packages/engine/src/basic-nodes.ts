@@ -14,6 +14,7 @@ import {
   cylinderMesh,
   distance,
   dot,
+  filletCurve,
   fromList,
   gridMesh,
   gridPoints,
@@ -244,6 +245,13 @@ const trimCurveNode: NodeEvaluator = ({ inputs }) => ({
   ),
 });
 
+// Rounded corners (issue #116).
+const filletCurveNode: NodeEvaluator = ({ inputs }) => ({
+  geometry: mapCurves(inputs.geometry as Geometry, (c) =>
+    filletCurve(c, inputs.radius as number, inputs.resolution as number),
+  ),
+});
+
 // Mirrors BezierCurve: the sampled points are exposed as a field output too.
 const quadraticBezierNode: NodeEvaluator = ({ inputs }) => {
   const points = sampleQuadraticBezier(
@@ -394,6 +402,7 @@ export const BASIC_OPERATORS: OperatorTable = {
   SubdivideCurve: subdivideCurveNode,
   ReverseCurve: reverseCurveNode,
   TrimCurve: trimCurveNode,
+  FilletCurve: filletCurveNode,
   MergeGeometry: merge,
   ColorGeometry: colorGeometryNode,
   BoundingBox: boundingBoxNode,

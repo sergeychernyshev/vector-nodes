@@ -376,6 +376,19 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
     outputs: [{ name: 'geometry', type: 'Geometry' }],
     params: [],
   },
+  // Rounded corners (issue #116).
+  {
+    type: 'FilletCurve',
+    label: 'Fillet Curve',
+    category: 'Geometry',
+    inputs: [
+      { name: 'geometry', type: 'Geometry' },
+      { name: 'radius', type: 'Float', default: 0.1, min: 0 },
+      { name: 'resolution', type: 'Integer', default: 4, min: 1 },
+    ],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
+  },
   {
     type: 'TrimCurve',
     label: 'Trim Curve',
