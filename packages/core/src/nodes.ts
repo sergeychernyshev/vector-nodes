@@ -345,6 +345,50 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
     params: [],
   },
 
+  // Curve sampling ops (issue #115): per-curve rewrites; points/meshes pass through.
+  {
+    type: 'ResampleCurve',
+    label: 'Resample Curve',
+    category: 'Geometry',
+    inputs: [
+      { name: 'geometry', type: 'Geometry' },
+      { name: 'count', type: 'Integer', default: 16, min: 2 },
+    ],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
+  },
+  {
+    type: 'SubdivideCurve',
+    label: 'Subdivide Curve',
+    category: 'Geometry',
+    inputs: [
+      { name: 'geometry', type: 'Geometry' },
+      { name: 'cuts', type: 'Integer', default: 1, min: 0 },
+    ],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
+  },
+  {
+    type: 'ReverseCurve',
+    label: 'Reverse Curve',
+    category: 'Geometry',
+    inputs: [{ name: 'geometry', type: 'Geometry' }],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
+  },
+  {
+    type: 'TrimCurve',
+    label: 'Trim Curve',
+    category: 'Geometry',
+    inputs: [
+      { name: 'geometry', type: 'Geometry' },
+      { name: 'start', type: 'Float', default: 0, min: 0, max: 1 },
+      { name: 'end', type: 'Float', default: 1, min: 0, max: 1 },
+    ],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
+  },
+
   // Combinators (Phase 7)
   {
     type: 'MergeGeometry',

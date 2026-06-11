@@ -1,5 +1,5 @@
 import { ORIGIN, type Color, type Curve, type Geometry, type Point, type Vector } from './types.js';
-import { add } from './vector.js';
+import { add, distance } from './vector.js';
 
 /**
  * Apply `fn` to every point in a geometry bundle (points, curves, meshes).
@@ -291,6 +291,123 @@ export function polyline(points: readonly Vector[], closed = false): Curve {
 /** A geometry bundle containing a single curve. */
 export function curveGeometry(curve: Curve): Geometry {
   return { points: [], curves: [curve], meshes: [] };
+}
+
+// --- Curve sampling ops (issue #115) --------------------------------------------
+
+/**
+ * Apply `fn` to every curve in a bundle, leaving points and meshes (and
+ * `pointColors`) untouched.
+ */
+export function mapCurves(geo: Geometry, fn: (curve: Curve) => Curve): Geometry {
+  return { ...geo, curves: geo.curves.map(fn) };
+}
+
+/**
+ * Cumulative arc lengths along a curve's segments: entry `i` is the distance
+ * from the start to point `i`; `closed` appends the wrap-around segment.
+ */
+function cumulativeLengths(points: readonly Point[], closed: boolean): number[] {
+  const cums = [0];
+  for (let i = 1; i < points.length; i++) {
+    cums.push(cums[i - 1]! + distance(points[i - 1]!, points[i]!));
+  }
+  if (closed && points.length > 1) {
+    cums.push(cums[points.length - 1]! + distance(points[points.length - 1]!, points[0]!));
+  }
+  return cums;
+}
+
+/** The position at arc length `target` (clamped), lerped along the segments. */
+function pointAtArcLength(points: readonly Point[], cums: number[], target: number): Point {
+  const total = cums[cums.length - 1]!;
+  const t = Math.min(Math.max(target, 0), total);
+  let i = 0;
+  while (i < cums.length - 2 && cums[i + 1]! < t) i++;
+  const a = points[i % points.length]!;
+  const b = points[(i + 1) % points.length]!;
+  const segLen = cums[i + 1]! - cums[i]!;
+  const f = segLen === 0 ? 0 : (t - cums[i]!) / segLen;
+  return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+}
+
+/**
+ * Redistribute a curve to `count` evenly spaced points by arc length. Open
+ * curves keep both endpoints (`count` points from start to end inclusive);
+ * closed curves get `count` points around the loop with no duplicate at the
+ * seam. `count < 2` is treated as 2; degenerate curves (fewer than 2 points or
+ * zero length) are returned as copies.
+ */
+export function resampleCurve(curve: Curve, count: number): Curve {
+  const n = count < 2 ? 2 : Math.floor(count);
+  const pts = curve.points;
+  if (pts.length < 2) return { ...curve, points: fromList(pts) };
+  const cums = cumulativeLengths(pts, curve.closed);
+  const total = cums[cums.length - 1]!;
+  if (total === 0) return { ...curve, points: fromList(pts) };
+  const steps = curve.closed ? n : n - 1;
+  const out: Point[] = [];
+  for (let i = 0; i < n; i++) {
+    out.push(pointAtArcLength(pts, cums, (total * i) / steps));
+  }
+  return { ...curve, points: out };
+}
+
+/**
+ * Insert `cuts` evenly spaced points into every segment (the wrap-around
+ * segment included for closed curves). `cuts < 1` returns a copy.
+ */
+export function subdivideCurve(curve: Curve, cuts: number): Curve {
+  const k = Math.floor(cuts);
+  const pts = curve.points;
+  if (k < 1 || pts.length < 2) return { ...curve, points: fromList(pts) };
+  const segs = curve.closed ? pts.length : pts.length - 1;
+  const out: Point[] = [];
+  for (let i = 0; i < segs; i++) {
+    const a = pts[i]!;
+    const b = pts[(i + 1) % pts.length]!;
+    out.push([a[0], a[1], a[2]]);
+    for (let j = 1; j <= k; j++) {
+      const f = j / (k + 1);
+      out.push([a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f]);
+    }
+  }
+  if (!curve.closed) {
+    const last = pts[pts.length - 1]!;
+    out.push([last[0], last[1], last[2]]);
+  }
+  return { ...curve, points: out };
+}
+
+/** Reverse a curve's point order (closed/color preserved). */
+export function reverseCurve(curve: Curve): Curve {
+  return { ...curve, points: fromList(curve.points).reverse() };
+}
+
+/**
+ * Keep the arc-length fraction `[start, end]` of an open curve (both clamped
+ * to `[0, 1]`, `end` to at least `start`). Closed and degenerate curves are
+ * returned as copies — trimming applies to open strokes.
+ */
+export function trimCurve(curve: Curve, start: number, end: number): Curve {
+  const pts = curve.points;
+  if (curve.closed || pts.length < 2) return { ...curve, points: fromList(pts) };
+  const s = Math.min(Math.max(start, 0), 1);
+  const e = Math.min(Math.max(end, s), 1);
+  const cums = cumulativeLengths(pts, false);
+  const total = cums[cums.length - 1]!;
+  if (total === 0) return { ...curve, points: fromList(pts) };
+  const from = total * s;
+  const to = total * e;
+  const out: Point[] = [pointAtArcLength(pts, cums, from)];
+  for (let i = 1; i < pts.length - 1; i++) {
+    if (cums[i]! > from && cums[i]! < to) {
+      const p = pts[i]!;
+      out.push([p[0], p[1], p[2]]);
+    }
+  }
+  out.push(pointAtArcLength(pts, cums, to));
+  return { ...curve, points: out };
 }
 
 /** Per-point colors padded/truncated to `points.length` (`null` = default). */
