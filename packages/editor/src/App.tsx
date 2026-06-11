@@ -175,6 +175,19 @@ export function App() {
   );
   const { takeSnapshot } = history;
 
+  // Latest nodes/edges/registry for referentially *stable* React Flow handlers.
+  // React Flow's StoreUpdater tracks handler props and rewrites any changed
+  // reference into its store; a handler that depends on `nodes`/`edges` directly
+  // gets a new reference on every edit, which can spiral into a "Maximum update
+  // depth exceeded" loop (the same class as the #185 fix). Reading through refs
+  // keeps the handlers stable while still seeing the current values.
+  const nodesRef = useRef(nodes);
+  nodesRef.current = nodes;
+  const edgesRef = useRef(edges);
+  edgesRef.current = edges;
+  const registryRef = useRef(registry);
+  registryRef.current = registry;
+
   // Autosave to localStorage on every change.
   useEffect(() => {
     saveGraph(graph);
@@ -231,18 +244,15 @@ export function App() {
     setErrorMessage(null);
   }, []);
 
-  const isValidConnection = useCallback(
-    (connection: ConnectionLike) => {
-      const result = checkConnection(connection, nodes);
-      const reason = result.ok ? null : (result.reason ?? 'Invalid connection.');
-      if (lastReason.current !== reason) {
-        lastReason.current = reason;
-        setErrorMessage(reason);
-      }
-      return result.ok;
-    },
-    [nodes],
-  );
+  const isValidConnection = useCallback((connection: ConnectionLike) => {
+    const result = checkConnection(connection, nodesRef.current);
+    const reason = result.ok ? null : (result.reason ?? 'Invalid connection.');
+    if (lastReason.current !== reason) {
+      lastReason.current = reason;
+      setErrorMessage(reason);
+    }
+    return result.ok;
+  }, []);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -483,6 +493,18 @@ export function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, [pending]);
 
+  // Track the selected node ids. Must be a *stable* handler: React Flow registers
+  // onSelectionChange in an effect keyed on the handler reference, so an inline
+  // one re-fires every render — and since we'd hand back a fresh array each time,
+  // that spirals into a "Maximum update depth" loop. Stable ref + a bail-out when
+  // the id set is unchanged keeps it quiet.
+  const onSelectionChange = useCallback(({ nodes: sel }: { nodes: { id: string }[] }) => {
+    setSelectedIds((prev) => {
+      const next = sel.map((n) => n.id);
+      return prev.length === next.length && prev.every((id, i) => id === next[i]) ? prev : next;
+    });
+  }, []);
+
   const onConnectStart = useCallback((_: unknown, params: OnConnectStartParams) => {
     connecting.current = params;
   }, []);
@@ -518,7 +540,7 @@ export function App() {
       if (!info || info.handleType !== 'target' || !info.nodeId || !info.handleId) return;
       const targetEl = event.target as Element | null;
       if (!targetEl?.classList?.contains('react-flow__pane')) return;
-      const node = nodes.find((n) => n.id === info.nodeId);
+      const node = nodesRef.current.find((n) => n.id === info.nodeId);
       const input = node?.data.inputs.find((s) => s.name === info.handleId);
       if (!input) return;
       const point = 'changedTouches' in event ? event.changedTouches[0] : (event as MouseEvent);
@@ -528,10 +550,10 @@ export function App() {
         y: point.clientY,
         nodeId: info.nodeId,
         handleId: info.handleId,
-        suggestions: suggestSourceNodes(registry, input),
+        suggestions: suggestSourceNodes(registryRef.current, input),
       });
     },
-    [nodes, registry, clearError],
+    [clearError],
   );
 
   // Choosing a source from the connect menu creates it and wires its output to
@@ -569,7 +591,7 @@ export function App() {
     (deleted: VNodeFlowNode[]) => {
       takeSnapshot();
       const deletedIds = new Set(deleted.map((n) => n.id));
-      const bridges = planReconnects(edges, nodes, deletedIds);
+      const bridges = planReconnects(edgesRef.current, nodesRef.current, deletedIds);
       if (bridges.length === 0) return;
       setEdges((eds) => {
         // Drop edges touching the removed nodes, then add the bridges (each
@@ -581,7 +603,7 @@ export function App() {
         return next;
       });
     },
-    [edges, nodes, setEdges, takeSnapshot],
+    [setEdges, takeSnapshot],
   );
 
   // Group: a selection may collapse if it has no Output Geometry node.
@@ -727,7 +749,7 @@ export function App() {
                 onConnect={onConnect}
                 onConnectStart={onConnectStart}
                 onEdgeClick={onEdgeClick}
-                onSelectionChange={({ nodes: sel }) => setSelectedIds(sel.map((n) => n.id))}
+                onSelectionChange={onSelectionChange}
                 onNodeDoubleClick={(_, node) => {
                   const name = metaNodeName(node.data.nodeType);
                   if (name && metaNodes[name]) setEditingMeta(name);
