@@ -51,6 +51,43 @@ describe('conformance: compiled output equals interpreter output', () => {
     expect(runCompiled(graph, [])).toEqual(interpret(graph));
   });
 
+  it('curve primitives merged together (issue #114)', () => {
+    const graph = createGraph({
+      nodes: [
+        { id: 'star', type: 'StarCurve', params: { points: 6, innerRadius: 0.4, outerRadius: 1 } },
+        {
+          id: 'arc',
+          type: 'ArcCurve',
+          params: { radius: 2, startAngle: 0.5, sweepAngle: 2, segments: 12 },
+        },
+        {
+          id: 'spiral',
+          type: 'SpiralCurve',
+          params: { turns: 1.5, startRadius: 0.2, endRadius: 1, height: 0.5, segments: 24 },
+        },
+        { id: 'rect', type: 'RectangleCurve', params: { width: 3, height: 2 } },
+        {
+          id: 'qb',
+          type: 'QuadraticBezier',
+          params: { p0: [-1, 0, 0], p1: [0, 2, 0], p2: [1, 0, 0], segments: 8 },
+        },
+        { id: 'm', type: 'MergeGeometry' },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [
+        { from: ['star', 'geometry'], to: ['m', 'geometry'] },
+        { from: ['arc', 'geometry'], to: ['m', 'geometry'] },
+        { from: ['spiral', 'geometry'], to: ['m', 'geometry'] },
+        { from: ['rect', 'geometry'], to: ['m', 'geometry'] },
+        { from: ['qb', 'geometry'], to: ['m', 'geometry'] },
+        { from: ['m', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    });
+    const result = runCompiled(graph, []) as { curves: unknown[] };
+    expect(result).toEqual(interpret(graph));
+    expect(result.curves).toHaveLength(5);
+  });
+
   it('a config field wired from another node (issue #58)', () => {
     // PointCircle.radius is an input socket now: feed it from a ConstFloat.
     const graph = createGraph({

@@ -226,6 +226,33 @@ const EMITTERS: Record<string, Emitter> = {
     expr: `{ geometry: curveGeometry(polyline(${inputs.points}, ${inputs.closed})) }`,
     uses: ['curveGeometry', 'polyline'],
   }),
+  // Curve primitives (issue #114).
+  StarCurve: ({ inputs }) => ({
+    expr: `{ geometry: curveGeometry(polyline(starPoints(${inputs.points}, ${inputs.innerRadius}, ${inputs.outerRadius}), true)) }`,
+    uses: ['curveGeometry', 'polyline', 'starPoints'],
+  }),
+  ArcCurve: ({ inputs }) => ({
+    expr: `{ geometry: curveGeometry(polyline(arcPoints(${inputs.radius}, ${inputs.startAngle}, ${inputs.sweepAngle}, ${inputs.segments}))) }`,
+    uses: ['curveGeometry', 'polyline', 'arcPoints'],
+  }),
+  SpiralCurve: ({ inputs }) => ({
+    expr: `{ geometry: curveGeometry(polyline(spiralPoints(${inputs.turns}, ${inputs.startRadius}, ${inputs.endRadius}, ${inputs.height}, ${inputs.segments}))) }`,
+    uses: ['curveGeometry', 'polyline', 'spiralPoints'],
+  }),
+  RectangleCurve: ({ inputs }) => ({
+    expr: `{ geometry: curveGeometry(polyline(rectanglePoints(${inputs.width}, ${inputs.height}), true)) }`,
+    uses: ['curveGeometry', 'polyline', 'rectanglePoints'],
+  }),
+  QuadraticBezier: ({ varName, inputs }) => {
+    const pts = `${varName}_pts`;
+    return {
+      pre: [
+        `const ${pts} = sampleQuadraticBezier(${inputs.p0}, ${inputs.p1}, ${inputs.p2}, ${inputs.segments});`,
+      ],
+      expr: `{ geometry: { points: ${pts}, curves: [{ points: ${pts}, closed: false }], meshes: [] }, points: ${pts} }`,
+      uses: ['sampleQuadraticBezier'],
+    };
+  },
   MergeGeometry: ({ inputs }) => ({
     // `inputs.geometry` is already an array expression of the connected sources.
     expr: `{ geometry: mergeAll(${inputs.geometry}) }`,

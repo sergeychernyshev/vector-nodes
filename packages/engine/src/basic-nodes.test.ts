@@ -157,6 +157,62 @@ describe('geometry transforms', () => {
   });
 });
 
+describe('curve primitives (issue #114)', () => {
+  const curveOf = (out: Record<string, unknown>) => (out.geometry as Geometry).curves[0]!;
+
+  it('StarCurve builds a closed star with 2× points vertices', () => {
+    const curve = curveOf(
+      run('StarCurve', { inputs: { points: 5, innerRadius: 0.5, outerRadius: 1 } }),
+    );
+    expect(curve.closed).toBe(true);
+    expect(curve.points).toHaveLength(10);
+  });
+
+  it('ArcCurve builds an open arc of segments + 1 points', () => {
+    const curve = curveOf(
+      run('ArcCurve', {
+        inputs: { radius: 1, startAngle: 0, sweepAngle: Math.PI, segments: 8 },
+      }),
+    );
+    expect(curve.closed).toBe(false);
+    expect(curve.points).toHaveLength(9);
+  });
+
+  it('SpiralCurve rises to its height', () => {
+    const curve = curveOf(
+      run('SpiralCurve', {
+        inputs: { turns: 2, startRadius: 0, endRadius: 1, height: 3, segments: 10 },
+      }),
+    );
+    expect(curve.closed).toBe(false);
+    expect(curve.points.at(-1)![2]).toBeCloseTo(3, 9);
+  });
+
+  it('RectangleCurve builds a closed quad', () => {
+    const curve = curveOf(run('RectangleCurve', { inputs: { width: 2, height: 1 } }));
+    expect(curve.closed).toBe(true);
+    expect(curve.points).toEqual([
+      [-1, -0.5, 0],
+      [1, -0.5, 0],
+      [1, 0.5, 0],
+      [-1, 0.5, 0],
+    ]);
+  });
+
+  it('QuadraticBezier mirrors BezierCurve with a points field output', () => {
+    const out = run('QuadraticBezier', {
+      inputs: { p0: [-1, 0, 0], p1: [0, 1, 0], p2: [1, 0, 0], segments: 2 },
+    });
+    const geo = out.geometry as Geometry;
+    expect(geo.curves[0]!.points).toEqual([
+      [-1, 0, 0],
+      [0, 0.5, 0],
+      [1, 0, 0],
+    ]);
+    expect(out.points).toEqual(geo.curves[0]!.points);
+  });
+});
+
 describe('Parameter nodes', () => {
   it('read the bound network parameter', () => {
     const ctx = {

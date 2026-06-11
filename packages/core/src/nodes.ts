@@ -275,6 +275,76 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
     params: [],
   },
 
+  // Curve primitives (issue #114)
+  {
+    type: 'StarCurve',
+    label: 'Star',
+    category: 'Geometry',
+    inputs: [
+      { name: 'points', type: 'Integer', default: 5, min: 2 },
+      { name: 'innerRadius', type: 'Float', default: 0.5 },
+      { name: 'outerRadius', type: 'Float', default: 1 },
+    ],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
+  },
+  {
+    type: 'ArcCurve',
+    label: 'Arc',
+    category: 'Geometry',
+    // Angles are radians, consistent with RotateGeometry.
+    inputs: [
+      { name: 'radius', type: 'Float', default: 1 },
+      { name: 'startAngle', type: 'Float', default: 0 },
+      { name: 'sweepAngle', type: 'Float', default: Math.PI / 2 },
+      { name: 'segments', type: 'Integer', default: 16, min: 1 },
+    ],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
+  },
+  {
+    type: 'SpiralCurve',
+    label: 'Spiral',
+    category: 'Geometry',
+    inputs: [
+      { name: 'turns', type: 'Float', default: 2 },
+      { name: 'startRadius', type: 'Float', default: 0 },
+      { name: 'endRadius', type: 'Float', default: 1 },
+      { name: 'height', type: 'Float', default: 0 },
+      { name: 'segments', type: 'Integer', default: 64, min: 1 },
+    ],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
+  },
+  {
+    type: 'RectangleCurve',
+    label: 'Rectangle',
+    category: 'Geometry',
+    inputs: [
+      { name: 'width', type: 'Float', default: 1 },
+      { name: 'height', type: 'Float', default: 1 },
+    ],
+    outputs: [{ name: 'geometry', type: 'Geometry' }],
+    params: [],
+  },
+  {
+    type: 'QuadraticBezier',
+    label: 'Quadratic Bezier',
+    category: 'Geometry',
+    // Defaults draw a visible arch (unlike all-zero, which is a degenerate point).
+    inputs: [
+      { name: 'p0', type: 'Vector', default: [-1, 0, 0] },
+      { name: 'p1', type: 'Vector', default: [0, 1, 0] },
+      { name: 'p2', type: 'Vector', default: [1, 0, 0] },
+      { name: 'segments', type: 'Integer', default: 16, min: 1 },
+    ],
+    outputs: [
+      { name: 'geometry', type: 'Geometry' },
+      { name: 'points', type: 'Vector', isArray: true },
+    ],
+    params: [],
+  },
+
   // Combinators (Phase 7)
   {
     type: 'MergeGeometry',

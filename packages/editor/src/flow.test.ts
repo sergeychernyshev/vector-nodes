@@ -167,7 +167,10 @@ describe('palette', () => {
 
   it('filters by label, type, or category (case-insensitive)', () => {
     const items = paletteItems(registry);
-    expect(filterPalette(items, 'bezier').map((i) => i.type)).toEqual(['BezierCurve']);
+    expect(filterPalette(items, 'bezier').map((i) => i.type)).toEqual([
+      'BezierCurve',
+      'QuadraticBezier',
+    ]);
     expect(filterPalette(items, 'GEOMETRY').length).toBeGreaterThan(0);
     expect(filterPalette(items, '')).toHaveLength(items.length);
     expect(filterPalette(items, 'zzz-nope')).toHaveLength(0);
