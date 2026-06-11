@@ -24,7 +24,7 @@ import {
   type Edge,
   type OnConnectStartParams,
 } from '@xyflow/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 
 import { checkConnection, edgesWithoutInput, type ConnectionLike } from './connection';
 import { ConnectMenu } from './ConnectMenu';
@@ -122,6 +122,12 @@ export function App() {
   const [previewCollapsed, setPreviewCollapsed] = useState(() => loadFlag('vn:preview-collapsed'));
   // Swap the two sidebars (palette ↔ preview), persisted (issue #62).
   const [sidebarsSwapped, setSidebarsSwapped] = useState(() => loadFlag('vn:sidebars-swapped'));
+  // Preview strip height when docked on top (portrait, issue #61): dragged via
+  // its bottom border, persisted by PreviewPane. null = the CSS default (40vh).
+  const [previewHeight, setPreviewHeight] = useState<number | null>(() => {
+    const value = Number(loadString('vn:preview-height', ''));
+    return Number.isFinite(value) && value > 0 ? value : null;
+  });
   // Target language for code generation, persisted (issue #67).
   const [codeLanguage, setCodeLanguage] = useState(() =>
     loadString('vn:codegen-language', 'typescript'),
@@ -685,7 +691,17 @@ export function App() {
               setCodeLanguage(lang);
             }}
           />
-          <div className={sidebarsSwapped ? 'app-main app-main--swapped' : 'app-main'}>
+          <div
+            className={sidebarsSwapped ? 'app-main app-main--swapped' : 'app-main'}
+            // The dragged portrait strip height; the strip and the palette
+            // drawer below both read this variable. Omitted while collapsed so
+            // the stylesheet's thin-bar override wins over the inline value.
+            style={
+              previewHeight != null && !previewCollapsed
+                ? ({ '--portrait-preview-height': `${previewHeight}px` } as CSSProperties)
+                : undefined
+            }
+          >
             <Palette
               items={items}
               onAdd={armNode}
@@ -779,6 +795,7 @@ export function App() {
             <PreviewPane
               result={preview}
               side={sidebarsSwapped ? 'left' : 'right'}
+              onResizeHeight={setPreviewHeight}
               collapsed={previewCollapsed}
               onToggleCollapse={() =>
                 setPreviewCollapsed((c) => {

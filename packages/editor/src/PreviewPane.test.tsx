@@ -75,4 +75,30 @@ describe('PreviewPane', () => {
     fireEvent.click(getByLabelText('Hide preview'));
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
+
+  it('reports bottom-border drags and persists the height on release', () => {
+    // The environment's localStorage is a non-functional stub; replace it to
+    // observe the write.
+    const setItem = vi.fn();
+    vi.stubGlobal('localStorage', { getItem: () => null, setItem });
+    try {
+      const onResizeHeight = vi.fn();
+      const { getByLabelText } = render(
+        <PreviewPane result={{ geometry: sampleGeometry() }} onResizeHeight={onResizeHeight} />,
+      );
+      fireEvent.pointerDown(getByLabelText('Resize preview height'));
+      // jsdom reports the pane's top at 0, so the height is just clientY.
+      fireEvent.pointerMove(window, { clientY: 300 });
+      expect(onResizeHeight).toHaveBeenLastCalledWith(300);
+      fireEvent.pointerUp(window);
+      expect(setItem).toHaveBeenCalledWith('vn:preview-height', '300');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('omits the bottom resize handle without an onResizeHeight handler', () => {
+    const { queryByLabelText } = render(<PreviewPane result={{ geometry: sampleGeometry() }} />);
+    expect(queryByLabelText('Resize preview height')).toBeNull();
+  });
 });

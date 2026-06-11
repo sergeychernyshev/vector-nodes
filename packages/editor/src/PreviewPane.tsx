@@ -1,12 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { summarizeGeometry, type PreviewResult } from './preview';
-import { DEFAULT_PREVIEW_WIDTH, previewWidthFromClientX } from './preview-resize';
+import {
+  DEFAULT_PREVIEW_WIDTH,
+  previewHeightFromClientY,
+  previewWidthFromClientX,
+} from './preview-resize';
 import { SidebarIcon } from './SidebarIcon';
 import { SvgView } from './SvgView';
 import { ThreeView } from './ThreeView';
 
 const WIDTH_STORAGE_KEY = 'vn:preview-width';
+const HEIGHT_STORAGE_KEY = 'vn:preview-height';
 
 /**
  * Tracks the portrait-orientation media query: that's when the preview docks
@@ -45,6 +50,11 @@ export interface PreviewPaneProps {
   onToggleCollapse?: () => void;
   /** Which side the pane is docked on; drives the resize handle (issue #62). */
   side?: 'left' | 'right';
+  /**
+   * Reports drags of the strip's bottom border when the preview is docked on
+   * top (portrait); the owner applies the height (omit to disable).
+   */
+  onResizeHeight?: (height: number) => void;
 }
 
 /** Which renderer the preview shows. The underlying network is always 3D. */
@@ -61,10 +71,14 @@ export function PreviewPane({
   collapsed,
   onToggleCollapse,
   side = 'right',
+  onResizeHeight,
 }: PreviewPaneProps) {
   const [mode, setMode] = useState<PreviewMode>('3d');
   const [width, setWidth] = useState(loadPreviewWidth);
-  const dragging = useRef(false);
+  const dragging = useRef<false | 'width' | 'height'>(false);
+  const paneRef = useRef<HTMLElement>(null);
+  // Last height reported during a bottom-border drag, persisted on release.
+  const lastHeight = useRef<number | null>(null);
   const sideRef = useRef(side);
   sideRef.current = side;
 
@@ -77,25 +91,47 @@ export function PreviewPane({
   // edge and persisted so it survives reloads.
   const onResizeStart = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     event.preventDefault();
-    dragging.current = true;
+    dragging.current = 'width';
     document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, []);
+
+  // Drag the bottom border to resize the strip's height when the preview is
+  // docked on top of the canvas (portrait).
+  const onHeightResizeStart = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    dragging.current = 'height';
+    document.body.style.cursor = 'row-resize';
     document.body.style.userSelect = 'none';
   }, []);
 
   useEffect(() => {
     const onMove = (event: PointerEvent) => {
-      if (!dragging.current) return;
-      setWidth(previewWidthFromClientX(event.clientX, window.innerWidth, sideRef.current));
+      if (dragging.current === 'width') {
+        setWidth(previewWidthFromClientX(event.clientX, window.innerWidth, sideRef.current));
+      } else if (dragging.current === 'height') {
+        const paneTop = paneRef.current?.getBoundingClientRect().top ?? 0;
+        const height = previewHeightFromClientY(event.clientY, window.innerHeight, paneTop);
+        lastHeight.current = height;
+        onResizeHeight?.(height);
+      }
     };
     const onUp = () => {
       if (!dragging.current) return;
+      const wasHeightDrag = dragging.current === 'height';
       dragging.current = false;
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
       try {
-        window.localStorage.setItem(WIDTH_STORAGE_KEY, String(width));
+        if (wasHeightDrag) {
+          if (lastHeight.current != null) {
+            window.localStorage.setItem(HEIGHT_STORAGE_KEY, String(lastHeight.current));
+          }
+        } else {
+          window.localStorage.setItem(WIDTH_STORAGE_KEY, String(width));
+        }
       } catch {
-        // Ignore storage failures (private mode, quota): width stays in memory.
+        // Ignore storage failures (private mode, quota): size stays in memory.
       }
     };
     window.addEventListener('pointermove', onMove);
@@ -104,7 +140,7 @@ export function PreviewPane({
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
     };
-  }, [width]);
+  }, [width, onResizeHeight]);
 
   // Collapsed: a thin rail with an expand button (rendered after all hooks).
   if (collapsed) {
@@ -125,7 +161,7 @@ export function PreviewPane({
   }
 
   return (
-    <aside className={`preview preview--${side}`} style={{ width }}>
+    <aside ref={paneRef} className={`preview preview--${side}`} style={{ width }}>
       <div
         className={`preview__resize preview__resize--${side}`}
         role="separator"
@@ -133,6 +169,15 @@ export function PreviewPane({
         aria-label="Resize preview"
         onPointerDown={onResizeStart}
       />
+      {onResizeHeight && (
+        <div
+          className="preview__resize preview__resize--bottom"
+          role="separator"
+          aria-orientation="horizontal"
+          aria-label="Resize preview height"
+          onPointerDown={onHeightResizeStart}
+        />
+      )}
       <div className="preview__header">
         {onToggleCollapse && (
           <button

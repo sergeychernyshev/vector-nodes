@@ -21,3 +21,28 @@ export function previewWidthFromClientX(
   const max = Math.max(MIN_PREVIEW_WIDTH, viewportWidth * MAX_PREVIEW_FRACTION);
   return Math.min(Math.max(raw, MIN_PREVIEW_WIDTH), max);
 }
+
+/** Smallest the preview strip may be dragged, in pixels (portrait, issue #61). */
+export const MIN_PREVIEW_HEIGHT = 120;
+/** Largest the preview strip may grow, as a fraction of the space below its top edge. */
+export const MAX_PREVIEW_HEIGHT_FRACTION = 0.7;
+
+/**
+ * Preview strip height (px) for a drag at `clientY` when the preview is docked
+ * on top of the canvas (portrait). The height is the distance from the strip's
+ * top edge (`paneTop`, below the toolbar) to the pointer, clamped to
+ * {@link MIN_PREVIEW_HEIGHT}…{@link MAX_PREVIEW_HEIGHT_FRACTION} of the space
+ * below that edge. Pure, so the drag math is unit-testable.
+ */
+export function previewHeightFromClientY(
+  clientY: number,
+  viewportHeight: number,
+  paneTop: number,
+): number {
+  const raw = clientY - paneTop;
+  const max = Math.max(
+    MIN_PREVIEW_HEIGHT,
+    (viewportHeight - paneTop) * MAX_PREVIEW_HEIGHT_FRACTION,
+  );
+  return Math.min(Math.max(raw, MIN_PREVIEW_HEIGHT), max);
+}
