@@ -8,16 +8,21 @@ import {
   gridPoints,
   linePoints,
   makeRng,
+  mapCurves,
   projectOrthographic,
   projectPerspective,
   quadraticBezier,
   randomPoints,
   rectanglePoints,
+  resampleCurve,
+  reverseCurve,
   sampleCubicBezier,
   sampleQuadraticBezier,
   spiralPoints,
   starPoints,
+  subdivideCurve,
   translatePoints,
+  trimCurve,
 } from './geometry';
 
 describe('fromList', () => {
@@ -277,5 +282,135 @@ describe('rectanglePoints', () => {
       [1, 2, 0],
       [-1, 2, 0],
     ]);
+  });
+});
+
+describe('curve sampling ops (issue #115)', () => {
+  // An open L-shape of total length 2 with unevenly spaced points.
+  const open = {
+    points: [
+      [0, 0, 0],
+      [1, 0, 0],
+      [1, 1, 0],
+    ] as [number, number, number][],
+    closed: false,
+    color: [1, 0, 0, 1] as [number, number, number, number],
+  };
+
+  describe('mapCurves', () => {
+    it('rewrites curves and leaves points/meshes/pointColors alone', () => {
+      const geo = {
+        points: [[9, 9, 9]] as [number, number, number][],
+        curves: [open],
+        meshes: [],
+        pointColors: [null],
+      };
+      const out = mapCurves(geo, reverseCurve);
+      expect(out.points).toBe(geo.points);
+      expect(out.pointColors).toBe(geo.pointColors);
+      expect(out.curves[0]!.points[0]).toEqual([1, 1, 0]);
+      expect(geo.curves[0]!.points[0]).toEqual([0, 0, 0]);
+    });
+  });
+
+  describe('resampleCurve', () => {
+    it('spaces an open curve evenly by arc length, keeping the endpoints', () => {
+      const out = resampleCurve(open, 5);
+      expect(out.points).toHaveLength(5);
+      expect(out.points[0]).toEqual([0, 0, 0]);
+      expect(out.points[4]).toEqual([1, 1, 0]);
+      // Halfway along the length-2 path is the corner.
+      expect(out.points[2]).toEqual([1, 0, 0]);
+      expect(out.closed).toBe(false);
+      expect(out.color).toEqual([1, 0, 0, 1]);
+    });
+
+    it('distributes a closed loop with no duplicate at the seam', () => {
+      const square = {
+        points: rectanglePoints(2, 2),
+        closed: true,
+      };
+      const out = resampleCurve(square, 8);
+      expect(out.points).toHaveLength(8);
+      // Perimeter 8 → one point every unit; corners survive at every other step.
+      expect(out.points[0]).toEqual([-1, -1, 0]);
+      expect(out.points[1]).toEqual([0, -1, 0]);
+      expect(out.points[2]).toEqual([1, -1, 0]);
+    });
+
+    it('copies degenerate curves unchanged', () => {
+      const dot = { points: [[1, 1, 1]] as [number, number, number][], closed: false };
+      expect(resampleCurve(dot, 10).points).toEqual(dot.points);
+    });
+  });
+
+  describe('subdivideCurve', () => {
+    it('inserts cuts per segment on open curves', () => {
+      const out = subdivideCurve(open, 1);
+      expect(out.points).toEqual([
+        [0, 0, 0],
+        [0.5, 0, 0],
+        [1, 0, 0],
+        [1, 0.5, 0],
+        [1, 1, 0],
+      ]);
+    });
+
+    it('subdivides the wrap-around segment of closed curves', () => {
+      const triangle = {
+        points: [
+          [0, 0, 0],
+          [1, 0, 0],
+          [0, 1, 0],
+        ] as [number, number, number][],
+        closed: true,
+      };
+      expect(subdivideCurve(triangle, 1).points).toHaveLength(6);
+    });
+
+    it('returns a copy when cuts < 1', () => {
+      const out = subdivideCurve(open, 0);
+      expect(out.points).toEqual(open.points);
+      expect(out.points).not.toBe(open.points);
+    });
+  });
+
+  describe('reverseCurve', () => {
+    it('flips point order and keeps the flags', () => {
+      const out = reverseCurve(open);
+      expect(out.points).toEqual([
+        [1, 1, 0],
+        [1, 0, 0],
+        [0, 0, 0],
+      ]);
+      expect(out.closed).toBe(false);
+      expect(out.color).toEqual([1, 0, 0, 1]);
+    });
+  });
+
+  describe('trimCurve', () => {
+    it('keeps the arc-length window of an open curve', () => {
+      const out = trimCurve(open, 0.25, 0.75);
+      expect(out.points).toEqual([
+        [0.5, 0, 0],
+        [1, 0, 0],
+        [1, 0.5, 0],
+      ]);
+    });
+
+    it('clamps and orders the bounds', () => {
+      expect(trimCurve(open, -1, 2).points).toEqual(open.points);
+      // end below start collapses to the start position.
+      const collapsed = trimCurve(open, 0.5, 0.25);
+      expect(collapsed.points).toEqual([
+        [1, 0, 0],
+        [1, 0, 0],
+      ]);
+    });
+
+    it('passes closed curves through unchanged', () => {
+      const loop = { points: rectanglePoints(1, 1), closed: true };
+      expect(trimCurve(loop, 0.25, 0.75).points).toEqual(loop.points);
+    });
   });
 });

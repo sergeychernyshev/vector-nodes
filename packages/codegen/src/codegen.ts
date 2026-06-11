@@ -253,6 +253,23 @@ const EMITTERS: Record<string, Emitter> = {
       uses: ['sampleQuadraticBezier'],
     };
   },
+  // Curve sampling ops (issue #115).
+  ResampleCurve: ({ inputs }) => ({
+    expr: `{ geometry: mapCurves(${inputs.geometry}, (c) => resampleCurve(c, ${inputs.count})) }`,
+    uses: ['mapCurves', 'resampleCurve'],
+  }),
+  SubdivideCurve: ({ inputs }) => ({
+    expr: `{ geometry: mapCurves(${inputs.geometry}, (c) => subdivideCurve(c, ${inputs.cuts})) }`,
+    uses: ['mapCurves', 'subdivideCurve'],
+  }),
+  ReverseCurve: ({ inputs }) => ({
+    expr: `{ geometry: mapCurves(${inputs.geometry}, reverseCurve) }`,
+    uses: ['mapCurves', 'reverseCurve'],
+  }),
+  TrimCurve: ({ inputs }) => ({
+    expr: `{ geometry: mapCurves(${inputs.geometry}, (c) => trimCurve(c, ${inputs.start}, ${inputs.end})) }`,
+    uses: ['mapCurves', 'trimCurve'],
+  }),
   MergeGeometry: ({ inputs }) => ({
     // `inputs.geometry` is already an array expression of the connected sources.
     expr: `{ geometry: mergeAll(${inputs.geometry}) }`,

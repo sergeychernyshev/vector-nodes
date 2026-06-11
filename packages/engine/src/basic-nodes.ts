@@ -20,6 +20,7 @@ import {
   instanceOnPoints,
   length,
   linePoints,
+  mapCurves,
   mapRange,
   mergeAll,
   meshGeometry,
@@ -30,6 +31,8 @@ import {
   projectPerspective,
   randomPoints,
   rectanglePoints,
+  resampleCurve,
+  reverseCurve,
   rotateAxisAngle,
   sampleCubicBezier,
   sampleQuadraticBezier,
@@ -38,6 +41,8 @@ import {
   spiralPoints,
   starPoints,
   sub,
+  subdivideCurve,
+  trimCurve,
   transformGeometry,
   triangulateGeometry,
   uvSphere,
@@ -220,6 +225,25 @@ const rectangleCurveNode: NodeEvaluator = ({ inputs }) => ({
   ),
 });
 
+// Curve sampling ops (issue #115): per-curve rewrites; points/meshes pass through.
+const resampleCurveNode: NodeEvaluator = ({ inputs }) => ({
+  geometry: mapCurves(inputs.geometry as Geometry, (c) => resampleCurve(c, inputs.count as number)),
+});
+
+const subdivideCurveNode: NodeEvaluator = ({ inputs }) => ({
+  geometry: mapCurves(inputs.geometry as Geometry, (c) => subdivideCurve(c, inputs.cuts as number)),
+});
+
+const reverseCurveNode: NodeEvaluator = ({ inputs }) => ({
+  geometry: mapCurves(inputs.geometry as Geometry, reverseCurve),
+});
+
+const trimCurveNode: NodeEvaluator = ({ inputs }) => ({
+  geometry: mapCurves(inputs.geometry as Geometry, (c) =>
+    trimCurve(c, inputs.start as number, inputs.end as number),
+  ),
+});
+
 // Mirrors BezierCurve: the sampled points are exposed as a field output too.
 const quadraticBezierNode: NodeEvaluator = ({ inputs }) => {
   const points = sampleQuadraticBezier(
@@ -366,6 +390,10 @@ export const BASIC_OPERATORS: OperatorTable = {
   SpiralCurve: spiralCurveNode,
   RectangleCurve: rectangleCurveNode,
   QuadraticBezier: quadraticBezierNode,
+  ResampleCurve: resampleCurveNode,
+  SubdivideCurve: subdivideCurveNode,
+  ReverseCurve: reverseCurveNode,
+  TrimCurve: trimCurveNode,
   MergeGeometry: merge,
   ColorGeometry: colorGeometryNode,
   BoundingBox: boundingBoxNode,

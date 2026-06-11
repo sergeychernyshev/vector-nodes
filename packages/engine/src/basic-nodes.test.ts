@@ -199,6 +199,38 @@ describe('curve primitives (issue #114)', () => {
     ]);
   });
 
+  it('curve sampling ops rewrite curves and pass points through (issue #115)', () => {
+    const bundle: Geometry = {
+      points: [[5, 5, 5]],
+      curves: [
+        {
+          points: [
+            [0, 0, 0],
+            [1, 0, 0],
+            [1, 1, 0],
+          ],
+          closed: false,
+        },
+      ],
+      meshes: [],
+    };
+    const resampled = run('ResampleCurve', { inputs: { geometry: bundle, count: 5 } })
+      .geometry as Geometry;
+    expect(resampled.curves[0]!.points).toHaveLength(5);
+    expect(resampled.points).toEqual([[5, 5, 5]]);
+
+    const subdivided = run('SubdivideCurve', { inputs: { geometry: bundle, cuts: 1 } })
+      .geometry as Geometry;
+    expect(subdivided.curves[0]!.points).toHaveLength(5);
+
+    const reversed = run('ReverseCurve', { inputs: { geometry: bundle } }).geometry as Geometry;
+    expect(reversed.curves[0]!.points[0]).toEqual([1, 1, 0]);
+
+    const trimmed = run('TrimCurve', { inputs: { geometry: bundle, start: 0.25, end: 0.75 } })
+      .geometry as Geometry;
+    expect(trimmed.curves[0]!.points[0]).toEqual([0.5, 0, 0]);
+  });
+
   it('QuadraticBezier mirrors BezierCurve with a points field output', () => {
     const out = run('QuadraticBezier', {
       inputs: { p0: [-1, 0, 0], p1: [0, 1, 0], p2: [1, 0, 0], segments: 2 },

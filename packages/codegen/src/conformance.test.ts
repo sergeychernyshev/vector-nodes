@@ -88,6 +88,37 @@ describe('conformance: compiled output equals interpreter output', () => {
     expect(result.curves).toHaveLength(5);
   });
 
+  it('curve sampling ops chained (issue #115)', () => {
+    const graph = createGraph({
+      nodes: [
+        { id: 'star', type: 'StarCurve', params: { points: 5, innerRadius: 0.5, outerRadius: 1 } },
+        { id: 'sub', type: 'SubdivideCurve', params: { cuts: 2 } },
+        { id: 'res', type: 'ResampleCurve', params: { count: 24 } },
+        { id: 'rev', type: 'ReverseCurve' },
+        {
+          id: 'qb',
+          type: 'QuadraticBezier',
+          params: { p0: [-1, 0, 0], p1: [0, 2, 0], p2: [1, 0, 0], segments: 16 },
+        },
+        { id: 'trim', type: 'TrimCurve', params: { start: 0.2, end: 0.8 } },
+        { id: 'm', type: 'MergeGeometry' },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [
+        { from: ['star', 'geometry'], to: ['sub', 'geometry'] },
+        { from: ['sub', 'geometry'], to: ['res', 'geometry'] },
+        { from: ['res', 'geometry'], to: ['rev', 'geometry'] },
+        { from: ['rev', 'geometry'], to: ['m', 'geometry'] },
+        { from: ['qb', 'geometry'], to: ['trim', 'geometry'] },
+        { from: ['trim', 'geometry'], to: ['m', 'geometry'] },
+        { from: ['m', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    });
+    const result = runCompiled(graph, []) as { curves: { points: unknown[] }[] };
+    expect(result).toEqual(interpret(graph));
+    expect(result.curves[0]!.points).toHaveLength(24);
+  });
+
   it('a config field wired from another node (issue #58)', () => {
     // PointCircle.radius is an input socket now: feed it from a ConstFloat.
     const graph = createGraph({
