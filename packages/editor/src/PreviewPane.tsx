@@ -165,13 +165,25 @@ function PreviewSummary({ result }: PreviewPaneProps) {
     ? summarizeGeometry(result.geometry)
     : { points: 0, curves: 0, meshes: 0 };
   return (
-    <dl className="preview__summary">
-      <dt>Points</dt>
-      <dd data-testid="preview-points">{summary.points}</dd>
-      <dt>Curves</dt>
-      <dd data-testid="preview-curves">{summary.curves}</dd>
-      <dt>Meshes</dt>
-      <dd data-testid="preview-meshes">{summary.meshes}</dd>
-    </dl>
+    <div className="preview__summary" aria-label="Element counts">
+      <span className="preview__count">
+        <span className="preview__count-value" data-testid="preview-points">
+          {summary.points}
+        </span>
+        <span className="preview__count-label">points</span>
+      </span>
+      <span className="preview__count">
+        <span className="preview__count-value" data-testid="preview-curves">
+          {summary.curves}
+        </span>
+        <span className="preview__count-label">curves</span>
+      </span>
+      <span className="preview__count">
+        <span className="preview__count-value" data-testid="preview-meshes">
+          {summary.meshes}
+        </span>
+        <span className="preview__count-label">meshes</span>
+      </span>
+    </div>
   );
 }
