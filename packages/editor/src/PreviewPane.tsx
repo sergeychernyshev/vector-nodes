@@ -8,6 +8,25 @@ import { ThreeView } from './ThreeView';
 
 const WIDTH_STORAGE_KEY = 'vn:preview-width';
 
+/**
+ * Tracks the portrait-orientation media query: that's when the preview docks
+ * on top of the canvas instead of beside it (issue #61). Guarded so jsdom
+ * (no/stub matchMedia) just reports landscape.
+ */
+function useIsPortrait(): boolean {
+  const [portrait, setPortrait] = useState(
+    () => window.matchMedia?.('(orientation: portrait)').matches ?? false,
+  );
+  useEffect(() => {
+    const query = window.matchMedia?.('(orientation: portrait)');
+    if (!query) return;
+    const onChange = () => setPortrait(query.matches);
+    query.addEventListener('change', onChange);
+    return () => query.removeEventListener('change', onChange);
+  }, []);
+  return portrait;
+}
+
 function loadPreviewWidth(): number {
   try {
     const raw = window.localStorage.getItem(WIDTH_STORAGE_KEY);
@@ -48,6 +67,11 @@ export function PreviewPane({
   const dragging = useRef(false);
   const sideRef = useRef(side);
   sideRef.current = side;
+
+  // Docked on top (portrait): the toggle points at the strip's edge — top
+  // while expanded, bottom (the canvas edge it collapsed to) when collapsed.
+  const isPortrait = useIsPortrait();
+  const iconSide = isPortrait ? (collapsed ? 'bottom' : 'top') : side;
 
   // Drag the left border to resize; width is measured from the viewport's right
   // edge and persisted so it survives reloads.
@@ -94,7 +118,7 @@ export function PreviewPane({
           aria-expanded={false}
           title="Show preview"
         >
-          <SidebarIcon side={side} />
+          <SidebarIcon side={iconSide} />
         </button>
       </aside>
     );
@@ -119,7 +143,7 @@ export function PreviewPane({
             aria-expanded
             title="Hide preview"
           >
-            <SidebarIcon side={side} />
+            <SidebarIcon side={iconSide} />
           </button>
         )}
         <span>Preview</span>
