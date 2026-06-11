@@ -252,6 +252,28 @@ describe('curve primitives (issue #114)', () => {
     expect(out.curves[0]!.points[1]).toEqual([0.5, 0, 0]);
   });
 
+  it('FillCurve converts closed curves to meshes (issue #117)', () => {
+    const bundle: Geometry = {
+      points: [],
+      curves: [
+        {
+          points: [
+            [0, 0, 0],
+            [1, 0, 0],
+            [1, 1, 0],
+            [0, 1, 0],
+          ],
+          closed: true,
+        },
+      ],
+      meshes: [],
+    };
+    const out = run('FillCurve', { inputs: { geometry: bundle } }).geometry as Geometry;
+    expect(out.curves).toHaveLength(0);
+    expect(out.meshes).toHaveLength(1);
+    expect(out.meshes[0]!.faces).toHaveLength(2);
+  });
+
   it('QuadraticBezier mirrors BezierCurve with a points field output', () => {
     const out = run('QuadraticBezier', {
       inputs: { p0: [-1, 0, 0], p1: [0, 1, 0], p2: [1, 0, 0], segments: 2 },

@@ -275,6 +275,11 @@ const EMITTERS: Record<string, Emitter> = {
     expr: `{ geometry: mapCurves(${inputs.geometry}, (c) => filletCurve(c, ${inputs.radius}, ${inputs.resolution})) }`,
     uses: ['mapCurves', 'filletCurve'],
   }),
+  // Closed curves → mesh faces (issue #117).
+  FillCurve: ({ inputs }) => ({
+    expr: `{ geometry: fillCurves(${inputs.geometry}) }`,
+    uses: ['fillCurves'],
+  }),
   MergeGeometry: ({ inputs }) => ({
     // `inputs.geometry` is already an array expression of the connected sources.
     expr: `{ geometry: mergeAll(${inputs.geometry}) }`,

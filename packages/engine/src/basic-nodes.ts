@@ -14,6 +14,7 @@ import {
   cylinderMesh,
   distance,
   dot,
+  fillCurves,
   filletCurve,
   fromList,
   gridMesh,
@@ -252,6 +253,11 @@ const filletCurveNode: NodeEvaluator = ({ inputs }) => ({
   ),
 });
 
+// Closed curves → mesh faces (issue #117).
+const fillCurveNode: NodeEvaluator = ({ inputs }) => ({
+  geometry: fillCurves(inputs.geometry as Geometry),
+});
+
 // Mirrors BezierCurve: the sampled points are exposed as a field output too.
 const quadraticBezierNode: NodeEvaluator = ({ inputs }) => {
   const points = sampleQuadraticBezier(
@@ -403,6 +409,7 @@ export const BASIC_OPERATORS: OperatorTable = {
   ReverseCurve: reverseCurveNode,
   TrimCurve: trimCurveNode,
   FilletCurve: filletCurveNode,
+  FillCurve: fillCurveNode,
   MergeGeometry: merge,
   ColorGeometry: colorGeometryNode,
   BoundingBox: boundingBoxNode,

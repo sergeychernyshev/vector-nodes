@@ -136,6 +136,23 @@ describe('conformance: compiled output equals interpreter output', () => {
     expect(result.curves[0]!.points).toHaveLength(4 * 7);
   });
 
+  it('a filled star (issue #117)', () => {
+    const graph = createGraph({
+      nodes: [
+        { id: 'star', type: 'StarCurve', params: { points: 5, innerRadius: 0.5, outerRadius: 1 } },
+        { id: 'fill', type: 'FillCurve' },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [
+        { from: ['star', 'geometry'], to: ['fill', 'geometry'] },
+        { from: ['fill', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    });
+    const result = runCompiled(graph, []) as { meshes: { faces: unknown[] }[] };
+    expect(result).toEqual(interpret(graph));
+    expect(result.meshes[0]!.faces).toHaveLength(8);
+  });
+
   it('a config field wired from another node (issue #58)', () => {
     // PointCircle.radius is an input socket now: feed it from a ConstFloat.
     const graph = createGraph({
