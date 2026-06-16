@@ -54,3 +54,30 @@ export function rewireForAltDrag(
   }
   return next;
 }
+
+/**
+ * Rewire edges for an alt+shift-drag duplicate: the original keeps all its
+ * connections and the clone gets a parallel copy of them — every input edge
+ * (from the same sources) plus every output edge whose target can take another
+ * connection (`canDuplicateOutput`, e.g. an array input). Output edges into a
+ * single-value input are skipped, since the original already holds that slot.
+ * `edgeId` mints a unique id per duplicated edge.
+ */
+export function rewireCloneWithConnections(
+  edges: Edge[],
+  originalId: string,
+  cloneId: string,
+  edgeId: (edge: Edge) => string,
+  canDuplicateOutput: (edge: Edge) => boolean,
+): Edge[] {
+  const next: Edge[] = [...edges];
+  for (const edge of edges) {
+    if (edge.source === originalId && canDuplicateOutput(edge)) {
+      next.push({ ...edge, id: edgeId(edge), source: cloneId });
+    }
+    if (edge.target === originalId) {
+      next.push({ ...edge, id: edgeId(edge), target: cloneId });
+    }
+  }
+  return next;
+}

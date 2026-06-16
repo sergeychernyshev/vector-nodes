@@ -31,7 +31,7 @@ import { checkConnection, edgesWithoutInput, type ConnectionLike } from './conne
 import { ConnectMenu } from './ConnectMenu';
 import { constantSeedValue } from './constant-seed';
 import { captureViewport, downloadDataUrl, exportImageSize, IMAGE_PADDING } from './export-image';
-import { cloneFlowNode, rewireForAltDrag } from './duplicate';
+import { cloneFlowNode, rewireCloneWithConnections, rewireForAltDrag } from './duplicate';
 import { downloadText, maxAutoId } from './graph-io';
 import {
   downstreamNodeIds,
@@ -589,8 +589,11 @@ export function App() {
 
   // Alt+drag duplicates the node (issue #98): a clone is left at the origin with
   // the original's full wiring, while the dragged node is pulled away as a copy
-  // carrying duplicates of its input connections (no outputs). Built only from
-  // the drag argument + functional updaters, so the handler stays stable.
+  // carrying duplicates of its input connections (no outputs). Alt+Shift+drag
+  // instead leaves a *fully wired* clone — the original keeps everything and the
+  // clone gets a parallel copy of its inputs plus its outputs into targets that
+  // can take another connection. Built from the drag argument + functional
+  // updaters (and stable refs), so the handler stays referentially stable.
   const onNodeDragStart = useCallback(
     (event: MouseEvent | TouchEvent, node: VNodeFlowNode) => {
       takeSnapshot();
@@ -598,7 +601,18 @@ export function App() {
       const cloneId = `n${(idCounter.current += 1)}`;
       const clone = cloneFlowNode(node, cloneId);
       setNodes((nds) => [...nds, clone]);
-      setEdges((eds) => rewireForAltDrag(eds, node.id, cloneId, (e) => `${e.id}__${cloneId}`));
+      const edgeId = (e: Edge) => `${e.id}__${cloneId}`;
+      if (event.shiftKey) {
+        const canDuplicateOutput = (e: Edge) =>
+          nodesRef.current
+            .find((n) => n.id === e.target)
+            ?.data.inputs.find((s) => s.name === e.targetHandle)?.isArray ?? false;
+        setEdges((eds) =>
+          rewireCloneWithConnections(eds, node.id, cloneId, edgeId, canDuplicateOutput),
+        );
+      } else {
+        setEdges((eds) => rewireForAltDrag(eds, node.id, cloneId, edgeId));
+      }
     },
     [takeSnapshot, setNodes, setEdges],
   );

@@ -2,7 +2,7 @@ import { createBasicRegistry, createGraph } from '@vector-nodes/core';
 import type { Edge } from '@xyflow/react';
 import { describe, expect, it } from 'vitest';
 
-import { cloneFlowNode, rewireForAltDrag } from './duplicate';
+import { cloneFlowNode, rewireCloneWithConnections, rewireForAltDrag } from './duplicate';
 import { graphToFlowNodes } from './flow';
 
 const registry = createBasicRegistry();
@@ -66,5 +66,42 @@ describe('rewireForAltDrag (issue #98)', () => {
 
   it('adds exactly one edge (the duplicated input)', () => {
     expect(result).toHaveLength(edges.length + 1);
+  });
+});
+
+describe('rewireCloneWithConnections (alt+shift-drag)', () => {
+  // src → A; A → M.points (array target); A → T.val (single-value target).
+  const edges: Edge[] = [
+    { id: 'in', source: 'src', sourceHandle: 'v', target: 'A', targetHandle: 'a' },
+    { id: 'arr', source: 'A', sourceHandle: 'out', target: 'M', targetHandle: 'points' },
+    { id: 'sc', source: 'A', sourceHandle: 'out', target: 'T', targetHandle: 'val' },
+  ];
+  const canDuplicateOutput = (e: Edge) => e.targetHandle === 'points'; // only the array input
+  const result = rewireCloneWithConnections(
+    edges,
+    'A',
+    'B',
+    (e) => `${e.id}__B`,
+    canDuplicateOutput,
+  );
+
+  it("keeps all of the original's edges", () => {
+    expect(result.find((e) => e.id === 'in')).toEqual(edges[0]);
+    expect(result.find((e) => e.id === 'arr')).toEqual(edges[1]);
+    expect(result.find((e) => e.id === 'sc')).toEqual(edges[2]);
+  });
+
+  it("duplicates the original's inputs into the clone", () => {
+    const dup = result.find((e) => e.id === 'in__B')!;
+    expect(dup.source).toBe('src');
+    expect(dup.target).toBe('B');
+  });
+
+  it('duplicates outputs into array targets but skips single-value targets', () => {
+    const arrDup = result.find((e) => e.id === 'arr__B')!;
+    expect(arrDup.source).toBe('B');
+    expect(arrDup.target).toBe('M');
+    // The single-value output slot is already held by the original, so skip it.
+    expect(result.find((e) => e.id === 'sc__B')).toBeUndefined();
   });
 });
