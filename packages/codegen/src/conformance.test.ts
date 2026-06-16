@@ -244,6 +244,24 @@ describe('conformance: compiled output equals interpreter output', () => {
     expect(result.curves[0]!.points).toHaveLength(8); // 4 + 3 + 1, flat
   });
 
+  it('a Time node drives geometry and matches the interpreter (issue #138)', () => {
+    const graph = createGraph({
+      metadata: { name: 'pulsing' },
+      nodes: [
+        { id: 'tm', type: 'Time', params: { fps: 30 } },
+        { id: 'pc', type: 'PointCircle', params: { count: 6 } },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [
+        { from: ['tm', 'seconds'], to: ['pc', 'radius'] },
+        { from: ['pc', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    });
+    const seconds = 2;
+    // Compiled: `time` is a positional argument; interpreted: the `time` parameter.
+    expect(runCompiled(graph, [seconds])).toEqual(interpret(graph, { time: seconds }));
+  });
+
   it('per-instance inputDefaults on an unconnected input', () => {
     const graph = createGraph({
       nodes: [

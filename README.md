@@ -122,6 +122,9 @@ Conventions carried over from Blender:
   function. A parameter can be **any** socket type, including `Geometry` — input geometry is not
   special, it's just a `Geometry`-typed parameter. A network may declare **multiple** named
   parameters of any types (several `Geometry` inputs, several scalars, etc.).
+- **Time** — animation clock emitting `seconds`, `milliseconds`, and an fps-scaled `frame` index.
+  Driven by the engine's `time` parameter; a network that uses it gains a leading `time: number`
+  argument in the compiled function, which the caller advances each frame.
 
 ### Points & vectors (the spec's basics)
 

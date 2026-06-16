@@ -87,6 +87,23 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
   constantDef('ConstColor', 'Color', [0, 0, 0, 1]),
   constantDef('ConstString', 'String', ''),
 
+  // Animation time source (issue #138). Driven by the engine's `time` parameter
+  // (seconds); `milliseconds` and `frame` are derived. In compiled output the
+  // network gains a leading `time: number` argument the caller advances per
+  // frame. `fps` only affects the derived `frame` count.
+  {
+    type: 'Time',
+    label: 'Time',
+    category: 'Input',
+    inputs: [],
+    outputs: [
+      { name: 'seconds', type: 'Float' },
+      { name: 'milliseconds', type: 'Float' },
+      { name: 'frame', type: 'Integer' },
+    ],
+    params: [{ name: 'fps', type: 'Float', default: 60, min: 0 }],
+  },
+
   // Vector construction / decomposition
   {
     type: 'Point',

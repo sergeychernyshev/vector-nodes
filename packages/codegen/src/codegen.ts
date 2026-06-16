@@ -162,6 +162,12 @@ const VECTOR_MATH: Record<string, (a: string, b: string, s: string) => Emit> = {
   }),
 };
 
+/**
+ * The implicit leading argument a compiled network gains when it contains a
+ * `Time` node (issue #138): the current animation time in seconds.
+ */
+const TIME_PARAM = 'time';
+
 const EMITTERS: Record<string, Emitter> = {
   ConstFloat: ({ params }) => ({ expr: `{ value: ${lit(params.value)} }`, uses: [] }),
   ConstInteger: ({ params }) => ({ expr: `{ value: ${lit(params.value)} }`, uses: [] }),
@@ -169,6 +175,12 @@ const EMITTERS: Record<string, Emitter> = {
   ConstVector: ({ params }) => ({ expr: `{ value: ${lit(params.value)} }`, uses: [] }),
   ConstColor: ({ params }) => ({ expr: `{ value: ${lit(params.value)} }`, uses: [] }),
   ConstString: ({ params }) => ({ expr: `{ value: ${lit(params.value)} }`, uses: [] }),
+  // Animation time (issue #138): seconds comes from the injected `time` argument;
+  // milliseconds and the fps-scaled frame index are derived inline.
+  Time: ({ params }) => ({
+    expr: `{ seconds: ${TIME_PARAM}, milliseconds: ${TIME_PARAM} * 1000, frame: Math.floor(${TIME_PARAM} * ${lit(Number(params.fps ?? 60))}) }`,
+    uses: [],
+  }),
   Point: xyz('point'),
   Vector: xyz('vector'),
   CombineXYZ: xyz('vector'),
@@ -494,6 +506,11 @@ export function generate(graph: Graph, registry: NodeRegistry): GeneratedModule 
     name: sanitize(p.id),
     tsType: tsTypeOf(p.type),
   }));
+  // A Time node (issue #138) makes the network time-dependent: expose the
+  // current time (seconds) as a leading argument the caller advances per frame.
+  if (flat.nodes.some((n) => n.type === 'Time') && !params.some((p) => p.name === TIME_PARAM)) {
+    params.unshift({ name: TIME_PARAM, tsType: 'number' });
+  }
   const name = sanitize(graph.metadata?.name ?? 'generated');
   const body = [...statements, `return ${returnExpr};`].join('\n  ');
   const usesList = [...uses].sort();

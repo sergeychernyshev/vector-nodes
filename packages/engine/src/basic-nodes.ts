@@ -429,6 +429,14 @@ const parameter: NodeEvaluator = ({ params, parameters }) => ({
   value: parameters[params.name as string],
 });
 
+// Animation time source (issue #138): reads the engine-wide `time` parameter
+// (seconds, default 0) and derives milliseconds and an fps-scaled frame index.
+const timeNode: NodeEvaluator = ({ params, parameters }) => {
+  const seconds = (parameters.time as number) ?? 0;
+  const fps = params.fps as number;
+  return { seconds, milliseconds: seconds * 1000, frame: Math.floor(seconds * fps) };
+};
+
 /** Interpreter operators for the basic node set (paired with core definitions). */
 export const BASIC_OPERATORS: OperatorTable = {
   ConstFloat: constant,
@@ -483,5 +491,6 @@ export const BASIC_OPERATORS: OperatorTable = {
   CylinderMesh: cylinderMeshNode,
   ConeMesh: coneMeshNode,
   TriangulateMesh: triangulateNode,
+  Time: timeNode,
   ...Object.fromEntries(PARAMETER_NODE_TYPES.map((type) => [type, parameter])),
 };

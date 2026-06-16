@@ -138,6 +138,28 @@ describe('expanded operations (issue #118)', () => {
   });
 });
 
+describe('Time (issue #138)', () => {
+  it('derives milliseconds and an fps-scaled frame from the time parameter', () => {
+    const out = run('Time', { params: { fps: 30 }, parameters: { time: 2 } });
+    expect(out).toEqual({ seconds: 2, milliseconds: 2000, frame: 60 });
+  });
+
+  it('floors the frame index between whole frames', () => {
+    const out = run('Time', { params: { fps: 24 }, parameters: { time: 1.5 } });
+    expect(out.frame).toBe(36);
+    const mid = run('Time', { params: { fps: 24 }, parameters: { time: 1.51 } });
+    expect(mid.frame).toBe(36); // 36.24 floored
+  });
+
+  it('defaults to time zero when the parameter is absent', () => {
+    expect(run('Time', { params: { fps: 60 } })).toEqual({
+      seconds: 0,
+      milliseconds: 0,
+      frame: 0,
+    });
+  });
+});
+
 describe('RandomValue (issue #119)', () => {
   const inputs = { min: 2, max: 5, seed: 9, count: 4 };
 
