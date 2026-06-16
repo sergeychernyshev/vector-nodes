@@ -77,6 +77,7 @@ import {
   paletteItems,
   resolveAddableDef,
   VNODE_TYPE,
+  type FlowNodeData,
   type VNodeFlowNode,
 } from './flow';
 import { Palette } from './Palette';
@@ -254,6 +255,18 @@ export function App() {
     () => (hasOutputNode(nodes) ? new Set([OUTPUT_NODE_TYPE]) : new Set<string>()),
     [nodes],
   );
+
+  // Default node data per palette type, so the list can show each node's icon
+  // (issue #142). Built once per registry/library/items change so the icons'
+  // geometry isn't re-evaluated on every render.
+  const paletteData = useMemo(() => {
+    const map = new Map<string, FlowNodeData>();
+    for (const item of items) {
+      const { def } = resolveAddableDef(item.type, registry, library);
+      if (def) map.set(item.type, createFlowNode(def, { x: 0, y: 0 }, item.type).data);
+    }
+    return map;
+  }, [items, registry, library]);
 
   // The armed node's data, used to render a full preview under the cursor.
   const ghostData = useMemo(() => {
@@ -762,6 +775,7 @@ export function App() {
           >
             <Palette
               items={items}
+              nodeData={paletteData}
               onAdd={armNode}
               disabledTypes={disabledTypes}
               armedType={pending}

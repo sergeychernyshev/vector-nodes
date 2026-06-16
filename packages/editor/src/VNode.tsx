@@ -23,12 +23,12 @@ import { SvgView } from './SvgView';
  * produce geometry, a 2D render of their output with default values; otherwise a
  * value swatch/number or the label's initial.
  */
-function NodeIcon({ data }: { data: FlowNodeData }) {
+export function NodeIcon({ data }: { data: FlowNodeData }) {
   const geometry = useMemo(() => nodeDefaultGeometry(data), [data]);
   if (geometry) {
     return (
       <span className="vnode__icon vnode__icon--geo" aria-hidden="true">
-        <SvgView geometry={geometry} tint="#fff" />
+        <SvgView geometry={geometry} tint="#fff" weight={4} padding={0.06} />
       </span>
     );
   }

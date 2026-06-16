@@ -127,4 +127,27 @@ describe('SvgView', () => {
     expect(container.querySelector('polyline')?.getAttribute('stroke')).toBe('#fff');
     expect(container.querySelector('polygon')?.getAttribute('fill')).toBe('#fff');
   });
+
+  it('scales stroke width and point size by weight (issue #142)', () => {
+    const geo = geometry({
+      points: [[0, 0, 0]],
+      curves: [
+        {
+          points: [
+            [0, 0, 0],
+            [10, 0, 0],
+          ],
+          closed: false,
+        },
+      ],
+    });
+    const strokeOf = (weight: number) => {
+      const { container } = render(<SvgView geometry={geo} weight={weight} />);
+      const w = Number(container.querySelector('polyline')!.getAttribute('stroke-width'));
+      cleanup();
+      return w;
+    };
+    // weight 4 → 4× the default stroke width.
+    expect(strokeOf(4)).toBeCloseTo(strokeOf(1) * 4, 6);
+  });
 });
