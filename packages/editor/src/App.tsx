@@ -590,9 +590,10 @@ export function App() {
   // Alt+drag duplicates the node (issue #98): a clone is left at the origin with
   // the original's full wiring, while the dragged node is pulled away as a copy
   // carrying duplicates of its input connections (no outputs). Alt+Shift+drag
-  // instead leaves a *fully wired* clone — the original keeps everything and the
-  // clone gets a parallel copy of its inputs plus its outputs into targets that
-  // can take another connection. Built from the drag argument + functional
+  // instead wires the dragged copy in parallel too — same inputs, and outputs
+  // into targets that can take another connection (array inputs); an output into
+  // a single-value input stays on the node left at the origin so the copy
+  // doesn't steal the one slot. Built from the drag argument + functional
   // updaters (and stable refs), so the handler stays referentially stable.
   const onNodeDragStart = useCallback(
     (event: MouseEvent | TouchEvent, node: VNodeFlowNode) => {

@@ -85,23 +85,28 @@ describe('rewireCloneWithConnections (alt+shift-drag)', () => {
     canDuplicateOutput,
   );
 
-  it("keeps all of the original's edges", () => {
-    expect(result.find((e) => e.id === 'in')).toEqual(edges[0]);
-    expect(result.find((e) => e.id === 'arr')).toEqual(edges[1]);
-    expect(result.find((e) => e.id === 'sc')).toEqual(edges[2]);
+  it('keeps the dragged copy wired to its inputs and array outputs', () => {
+    expect(result.find((e) => e.id === 'in')).toEqual(edges[0]); // input kept
+    expect(result.find((e) => e.id === 'arr')).toEqual(edges[1]); // array output kept
   });
 
-  it("duplicates the original's inputs into the clone", () => {
+  it("duplicates the dragged node's inputs into the clone", () => {
     const dup = result.find((e) => e.id === 'in__B')!;
     expect(dup.source).toBe('src');
     expect(dup.target).toBe('B');
   });
 
-  it('duplicates outputs into array targets but skips single-value targets', () => {
+  it('duplicates an array output so both feed it', () => {
     const arrDup = result.find((e) => e.id === 'arr__B')!;
     expect(arrDup.source).toBe('B');
     expect(arrDup.target).toBe('M');
-    // The single-value output slot is already held by the original, so skip it.
-    expect(result.find((e) => e.id === 'sc__B')).toBeUndefined();
+  });
+
+  it('moves a single-value output to the clone, leaving the dragged copy without it', () => {
+    // The original (now the clone left at the origin) keeps the single slot.
+    const moved = result.find((e) => e.id === 'sc__B')!;
+    expect(moved.source).toBe('B');
+    expect(moved.target).toBe('T');
+    expect(result.find((e) => e.id === 'sc')).toBeUndefined();
   });
 });
