@@ -101,7 +101,10 @@ describe('PreviewPane', () => {
   });
 
   it('restores a previously saved 2D mode from localStorage', () => {
-    vi.stubGlobal('localStorage', { getItem: (key: string) => (key === 'vn:preview-mode' ? '2d' : null), setItem: vi.fn() });
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => (key === 'vn:preview-mode' ? '2d' : null),
+      setItem: vi.fn(),
+    });
     try {
       const { queryByTestId, getByRole } = render(
         <PreviewPane result={{ geometry: sampleGeometry() }} />,
