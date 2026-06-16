@@ -2,7 +2,7 @@ import { createGraph } from '@vector-nodes/core';
 import { emptyGeometry } from '@vector-nodes/runtime';
 import { describe, expect, it } from 'vitest';
 
-import { evaluatePreview, summarizeGeometry } from './preview';
+import { evaluatePreview, previewNodeGeometry, summarizeGeometry } from './preview';
 
 describe('evaluatePreview', () => {
   it('evaluates a valid graph and returns geometry', () => {
@@ -133,6 +133,18 @@ describe('evaluatePreview', () => {
     // A vector connection previews its [x, y, z]; geometry links are not displayable.
     expect(inputs.t!.offset).toEqual([1, 2, 3]);
     expect(inputs.t!.geometry).toBeUndefined();
+  });
+});
+
+describe('previewNodeGeometry (issue #141)', () => {
+  it('evaluates a single node from its params for the ghost preview', () => {
+    const geo = previewNodeGeometry('PointCircle', 'geometry', { radius: 1, count: 6 });
+    expect(geo?.points).toHaveLength(6);
+  });
+
+  it('honors inputDefaults', () => {
+    const geo = previewNodeGeometry('PointCircle', 'geometry', {}, { count: 3 });
+    expect(geo?.points).toHaveLength(3);
   });
 });
 

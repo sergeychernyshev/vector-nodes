@@ -1,4 +1,4 @@
-import { createBasicRegistry, type Graph } from '@vector-nodes/core';
+import { createBasicRegistry, createGraph, type Graph } from '@vector-nodes/core';
 import { BASIC_OPERATORS, evaluateGraph } from '@vector-nodes/engine';
 import { emptyGeometry, type Geometry } from '@vector-nodes/runtime';
 
@@ -78,6 +78,28 @@ function isDisplayableInput(value: unknown): boolean {
     value.length <= 4 &&
     value.every((n) => typeof n === 'number')
   );
+}
+
+/**
+ * Evaluate a single node in isolation with its default params/inputs and return
+ * the geometry from its `geometryOutput` socket (issue #141). Used for the live
+ * preview shown in the placement ghost while a node is dragged onto the canvas.
+ * Returns `undefined` if the node produces no geometry (e.g. an unknown type).
+ */
+export function previewNodeGeometry(
+  type: string,
+  geometryOutput: string,
+  params: Record<string, unknown> = {},
+  inputDefaults: Record<string, unknown> = {},
+): Geometry | undefined {
+  const graph = createGraph({
+    nodes: [
+      { id: 'g', type, params, inputDefaults },
+      { id: 'out', type: 'OutputGeometry' },
+    ],
+    links: [{ from: ['g', geometryOutput], to: ['out', 'geometry'] }],
+  });
+  return evaluatePreview(graph).geometry;
 }
 
 /** Element counts of a geometry bundle, for a lightweight preview summary. */

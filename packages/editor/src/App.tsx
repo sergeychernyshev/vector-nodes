@@ -82,6 +82,7 @@ import {
   type VNodeFlowNode,
 } from './flow';
 import { Palette } from './Palette';
+import { previewNodeGeometry } from './preview';
 import { PreviewPane } from './PreviewPane';
 import { Toolbar, type ToolbarHandle } from './Toolbar';
 import { useUndoRedo } from './useUndoRedo';
@@ -284,6 +285,21 @@ export function App() {
     return def ? createFlowNode(def, { x: 0, y: 0 }, 'ghost').data : null;
   }, [pending, registry, library]);
 
+  // Live geometry preview for the armed node, evaluated from its defaults, so the
+  // ghost shows its output while being dragged onto the canvas (issue #141).
+  const ghostGeometry = useMemo(() => {
+    if (!ghostData) return undefined;
+    const geomOut = ghostData.outputs.find((s) => s.type === 'Geometry' && !s.isArray);
+    return geomOut
+      ? previewNodeGeometry(
+          ghostData.nodeType,
+          geomOut.name,
+          ghostData.params,
+          ghostData.inputDefaults,
+        )
+      : undefined;
+  }, [ghostData]);
+
   const clearError = useCallback(() => {
     lastReason.current = null;
     setErrorMessage(null);
@@ -465,6 +481,15 @@ export function App() {
       const position = screenToFlowPosition({ x: screenX, y: screenY });
       const id = `n${(idCounter.current += 1)}`;
       setNodes((nds) => [...nds, createFlowNode(def, position, id)]);
+      // Open the per-node preview by default for geometry-producing nodes (issue
+      // #141), so a freshly placed node shows its output without a manual toggle.
+      if (def.outputs.some((s) => s.type === 'Geometry' && !s.isArray)) {
+        setOpenPreviews((prev) => {
+          const next = new Set(prev).add(id);
+          saveString('vn:preview-nodes', [...next].join(','));
+          return next;
+        });
+      }
       return id;
     },
     [registry, library, nodes, screenToFlowPosition, setNodes, takeSnapshot],
@@ -945,7 +970,7 @@ export function App() {
             />
           </div>
           {pending && ghost && ghostData && (
-            <PlacementGhost data={ghostData} x={ghost.x} y={ghost.y} />
+            <PlacementGhost data={ghostData} geometry={ghostGeometry} x={ghost.x} y={ghost.y} />
           )}
           {connectMenu && (
             <ConnectMenu
