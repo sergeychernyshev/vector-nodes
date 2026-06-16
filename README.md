@@ -116,8 +116,8 @@ Conventions carried over from Blender:
 ### Inputs & primitives
 
 - **Float / Integer / Boolean / Vector / Color / String** constant nodes
-- **Combine Color** — build an RGBA color from channel components, with a mode for **RGB / HSL /
-  HSV** input plus an opacity (alpha) channel
+- **Combine RGB / Combine HSL / Combine HSV** — build an RGBA color from channel components in the
+  chosen color space, each with an opacity (alpha) channel
 - **Parameter** — a named, typed external input that becomes one argument of the generated
   function. A parameter can be **any** socket type, including `Geometry` — input geometry is not
   special, it's just a `Geometry`-typed parameter. A network may declare **multiple** named

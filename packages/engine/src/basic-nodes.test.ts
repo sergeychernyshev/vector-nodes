@@ -170,19 +170,17 @@ describe('RandomValue (issue #119)', () => {
   });
 });
 
-describe('CombineColor (issue #139)', () => {
-  it('passes RGB channels through with alpha', () => {
-    const out = run('CombineColor', {
-      params: { mode: 'RGB' },
+describe('Combine color nodes (issue #139)', () => {
+  it('Combine RGB passes channels through with alpha', () => {
+    const out = run('CombineColorRGB', {
       inputs: { red: 0.2, green: 0.4, blue: 0.6, alpha: 0.8 },
     });
     expect(out).toEqual({ color: [0.2, 0.4, 0.6, 0.8] });
   });
 
-  it('converts HSL inputs into RGBA', () => {
-    const out = run('CombineColor', {
-      params: { mode: 'HSL' },
-      inputs: { red: 1 / 3, green: 1, blue: 0.5, alpha: 1 },
+  it('Combine HSL converts to RGBA', () => {
+    const out = run('CombineColorHSL', {
+      inputs: { hue: 1 / 3, saturation: 1, lightness: 0.5, alpha: 1 },
     });
     const color = out.color as number[];
     expect(color[0]).toBeCloseTo(0, 6);
@@ -191,10 +189,9 @@ describe('CombineColor (issue #139)', () => {
     expect(color[3]).toBe(1);
   });
 
-  it('converts HSV inputs into RGBA', () => {
-    const out = run('CombineColor', {
-      params: { mode: 'HSV' },
-      inputs: { red: 2 / 3, green: 1, blue: 1, alpha: 0.5 },
+  it('Combine HSV converts to RGBA', () => {
+    const out = run('CombineColorHSV', {
+      inputs: { hue: 2 / 3, saturation: 1, value: 1, alpha: 0.5 },
     });
     const color = out.color as number[];
     expect(color[0]).toBeCloseTo(0, 6);

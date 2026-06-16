@@ -456,44 +456,47 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
     outputs: [{ name: 'geometry', type: 'Geometry' }],
     params: [],
   },
-  // Build a color from its channel components (issue #139). A `mode` picks the
-  // input color space; HSL/HSV are converted so the output is always RGBA.
-  // Every channel is normalized to [0, 1]; hue (HSL/HSV) is in turns. The socket
-  // identifiers stay red/green/blue (Blender's convention) — in HSL mode they
-  // are read as hue/saturation/lightness, and in HSV as hue/saturation/value.
+  // Build an RGBA color from channel components (issue #139), one node per color
+  // space. Every channel is normalized to [0, 1]; hue (HSL/HSV) is in turns.
+  // HSL/HSV are converted so the output is always RGBA.
   {
-    type: 'CombineColor',
-    label: 'Combine Color',
+    type: 'CombineColorRGB',
+    label: 'Combine RGB',
     category: 'Input',
     inputs: [
-      {
-        name: 'red',
-        type: 'Float',
-        default: 0,
-        min: 0,
-        max: 1,
-        description: 'Red, or hue (in turns) in HSL/HSV mode.',
-      },
-      {
-        name: 'green',
-        type: 'Float',
-        default: 0,
-        min: 0,
-        max: 1,
-        description: 'Green, or saturation in HSL/HSV mode.',
-      },
-      {
-        name: 'blue',
-        type: 'Float',
-        default: 0,
-        min: 0,
-        max: 1,
-        description: 'Blue, or lightness (HSL) / value (HSV) in those modes.',
-      },
+      { name: 'red', type: 'Float', default: 0, min: 0, max: 1 },
+      { name: 'green', type: 'Float', default: 0, min: 0, max: 1 },
+      { name: 'blue', type: 'Float', default: 0, min: 0, max: 1 },
       { name: 'alpha', type: 'Float', default: 1, min: 0, max: 1, description: 'Opacity.' },
     ],
     outputs: [{ name: 'color', type: 'Color' }],
-    params: [{ name: 'mode', type: 'String', default: 'RGB', options: ['RGB', 'HSL', 'HSV'] }],
+    params: [],
+  },
+  {
+    type: 'CombineColorHSL',
+    label: 'Combine HSL',
+    category: 'Input',
+    inputs: [
+      { name: 'hue', type: 'Float', default: 0, min: 0, max: 1, description: 'Hue, in turns.' },
+      { name: 'saturation', type: 'Float', default: 0, min: 0, max: 1 },
+      { name: 'lightness', type: 'Float', default: 0, min: 0, max: 1 },
+      { name: 'alpha', type: 'Float', default: 1, min: 0, max: 1, description: 'Opacity.' },
+    ],
+    outputs: [{ name: 'color', type: 'Color' }],
+    params: [],
+  },
+  {
+    type: 'CombineColorHSV',
+    label: 'Combine HSV',
+    category: 'Input',
+    inputs: [
+      { name: 'hue', type: 'Float', default: 0, min: 0, max: 1, description: 'Hue, in turns.' },
+      { name: 'saturation', type: 'Float', default: 0, min: 0, max: 1 },
+      { name: 'value', type: 'Float', default: 0, min: 0, max: 1 },
+      { name: 'alpha', type: 'Float', default: 1, min: 0, max: 1, description: 'Opacity.' },
+    ],
+    outputs: [{ name: 'color', type: 'Color' }],
+    params: [],
   },
   {
     type: 'InstanceOnPoints',

@@ -209,9 +209,8 @@ describe('conformance: compiled output equals interpreter output', () => {
       nodes: [
         {
           id: 'col',
-          type: 'CombineColor',
-          params: { mode: 'HSV' },
-          inputDefaults: { red: 2 / 3, green: 1, blue: 1, alpha: 0.5 },
+          type: 'CombineColorHSV',
+          inputDefaults: { hue: 2 / 3, saturation: 1, value: 1, alpha: 0.5 },
         },
         { id: 'pc', type: 'PointCircle', params: { count: 4 } },
         { id: 'sc', type: 'ColorGeometry' },
