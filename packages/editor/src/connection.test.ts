@@ -11,8 +11,9 @@ const registry = createBasicRegistry();
 const nodes = graphToFlowNodes(
   createGraph({
     nodes: [
-      { id: 'pa', type: 'PointCircle' }, // out: geometry (Geometry), points (Vector field)
+      { id: 'pa', type: 'PointCircle' }, // out: geometry (Geometry), points (Vector field); in: radius (Float)
       { id: 'cf', type: 'ConstFloat' }, // out: value (Float)
+      { id: 'ci', type: 'ConstInteger' }, // out: value (Integer)
       { id: 't', type: 'Translate' }, // in: geometry (Geometry), offset (Vector)
       { id: 'm', type: 'MergeGeometry' }, // in: geometry (Geometry, field)
       { id: 'out', type: 'OutputGeometry' }, // in: geometry (Geometry)
@@ -33,8 +34,9 @@ describe('checkConnection — accepted', () => {
     expect(checkConnection(conn('pa', 'geometry', 't', 'geometry'), nodes).ok).toBe(true);
   });
 
-  it('allows implicit conversions (Float → Vector)', () => {
-    expect(checkConnection(conn('cf', 'value', 't', 'offset'), nodes).ok).toBe(true);
+  it('allows numeric-widening implicit conversions (Integer → Float)', () => {
+    // ci.value (Integer) → pa.radius (Float): a shape-preserving widening.
+    expect(checkConnection(conn('ci', 'value', 'pa', 'radius'), nodes).ok).toBe(true);
   });
 });
 
@@ -50,6 +52,14 @@ describe('checkConnection — rejected', () => {
     const res = checkConnection(conn('pa', 'points', 't', 'offset'), nodes);
     expect(res.ok).toBe(false);
     expect(res.reason).toMatch(/field/);
+  });
+
+  it('rejects a scalar feeding a Vector — no implicit broadcast', () => {
+    // cf.value (Float) → t.offset (Vector): the reshaping broadcast isn't allowed.
+    const res = checkConnection(conn('cf', 'value', 't', 'offset'), nodes);
+    expect(res.ok).toBe(false);
+    expect(res.reason).toContain('Float');
+    expect(res.reason).toContain('Vector');
   });
 
   it('rejects self-connections', () => {

@@ -65,23 +65,6 @@ describe('validateGraph — valid graphs', () => {
     });
     expect(validateGraph(graph, registry())).toEqual({ valid: true, issues: [] });
   });
-
-  it('accepts links that rely on an implicit conversion (Float → Vector)', () => {
-    const graph = createGraph({
-      nodes: [
-        { id: 'n', type: 'Number' },
-        { id: 't', type: 'Translate' },
-        { id: 'c', type: 'Circle' },
-        { id: 'out', type: 'OutputGeometry' },
-      ],
-      links: [
-        { from: ['c', 'curve'], to: ['t', 'geometry'] },
-        { from: ['n', 'value'], to: ['t', 'offset'] }, // Float → Vector
-        { from: ['t', 'geometry'], to: ['out', 'geometry'] },
-      ],
-    });
-    expect(validateGraph(graph, registry()).valid).toBe(true);
-  });
 });
 
 describe('validateGraph — single-output rule', () => {
@@ -168,6 +151,23 @@ describe('validateGraph — type compatibility', () => {
       ],
       links: [
         { from: ['c', 'curve'], to: ['t', 'offset'] }, // Geometry → Vector
+        { from: ['t', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    });
+    expect(codes(graph)).toContain('type-mismatch');
+  });
+
+  it('flags a scalar feeding a Vector — the broadcast is no longer implicit', () => {
+    const graph = createGraph({
+      nodes: [
+        { id: 'n', type: 'Number' }, // Float output
+        { id: 't', type: 'Translate' },
+        { id: 'c', type: 'Circle' },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [
+        { from: ['c', 'curve'], to: ['t', 'geometry'] },
+        { from: ['n', 'value'], to: ['t', 'offset'] }, // Float → Vector
         { from: ['t', 'geometry'], to: ['out', 'geometry'] },
       ],
     });

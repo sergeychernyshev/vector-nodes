@@ -16,10 +16,10 @@ describe('canConvertImplicitly', () => {
     expect(canConvertImplicitly('Integer', 'Float')).toBe(true);
   });
 
-  it('allows scalar → Vector and scalar → Color broadcasts', () => {
+  it('rejects scalar → Vector and scalar → Color (reshaping broadcasts, not applied at runtime)', () => {
     for (const scalar of ['Float', 'Integer', 'Boolean'] as const) {
-      expect(canConvertImplicitly(scalar, 'Vector')).toBe(true);
-      expect(canConvertImplicitly(scalar, 'Color')).toBe(true);
+      expect(canConvertImplicitly(scalar, 'Vector')).toBe(false);
+      expect(canConvertImplicitly(scalar, 'Color')).toBe(false);
     }
   });
 
@@ -48,13 +48,14 @@ describe('canConvertImplicitly', () => {
 
 describe('implicitConversionTargets', () => {
   it('lists targets excluding the identity', () => {
-    expect(implicitConversionTargets('Float')).toEqual(['Vector', 'Color']);
+    expect(implicitConversionTargets('Boolean')).toEqual(['Integer', 'Float']);
+    expect(implicitConversionTargets('Float')).toEqual([]);
     expect(implicitConversionTargets('Geometry')).toEqual([]);
   });
 
   it('returns a fresh array that cannot mutate the table', () => {
-    const targets = implicitConversionTargets('Float');
+    const targets = implicitConversionTargets('Boolean');
     targets.push('Matrix');
-    expect(implicitConversionTargets('Float')).toEqual(['Vector', 'Color']);
+    expect(implicitConversionTargets('Boolean')).toEqual(['Integer', 'Float']);
   });
 });

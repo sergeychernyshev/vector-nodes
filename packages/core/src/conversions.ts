@@ -4,26 +4,27 @@ import type { SocketType } from './socket-types.js';
  * Allowed implicit conversions between socket types.
  *
  * Per the README, implicit conversions "mirror Blender where unambiguous";
- * everything else requires an explicit conversion node. We seed the table with
- * the conversions that have a single, well-defined meaning:
+ * everything else requires an explicit conversion node. We seed the table only
+ * with conversions that are both unambiguous *and* shape-preserving:
  *
- * - **Numeric widening** (lossless): `Boolean → Integer → Float`.
- * - **Scalar → Vector broadcast**: a scalar `f` fills all components, `(f, f, f)`.
- * - **Scalar → Color broadcast**: a scalar `f` becomes grayscale `(f, f, f, 1)`.
+ * - **Numeric widening** (lossless, no reshaping): `Boolean → Integer → Float`.
  *
- * Deliberately excluded (ambiguous or lossy — require an explicit node):
- * narrowing (`Float → Integer` rounding, `Float → Boolean` thresholding),
- * `Vector → Float` (which component / average?), `Vector ↔ Color`, and anything
- * involving `String`, `Geometry`, or `Matrix`.
+ * Deliberately excluded (ambiguous, lossy, or reshaping — require an explicit
+ * node): narrowing (`Float → Integer` rounding, `Float → Boolean` thresholding),
+ * `Vector → Float` (which component / average?), `Vector ↔ Color`, anything
+ * involving `String`, `Geometry`, or `Matrix`, and the **scalar → Vector / Color
+ * broadcasts** (`f → (f, f, f)` / `(f, f, f, 1)`) — those reshape a scalar into a
+ * tuple, which isn't applied at runtime, so a `Vector`/`Color` value must come
+ * from an explicit `Vector`/`Combine Color` node.
  *
  * The map is keyed by source type; the value lists the target types reachable
  * without an explicit conversion node. The identity conversion (`T → T`) is
  * always allowed and is not listed here.
  */
 const IMPLICIT_CONVERSIONS: Record<SocketType, readonly SocketType[]> = {
-  Boolean: ['Integer', 'Float', 'Vector', 'Color'],
-  Integer: ['Float', 'Vector', 'Color'],
-  Float: ['Vector', 'Color'],
+  Boolean: ['Integer', 'Float'],
+  Integer: ['Float'],
+  Float: [],
   Vector: [],
   Color: [],
   String: [],
