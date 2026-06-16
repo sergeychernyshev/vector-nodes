@@ -258,7 +258,9 @@ export function PreviewPane({
             (mode === '3d' ? (
               <ThreeView geometry={result.geometry} />
             ) : (
-              <SvgView geometry={result.geometry} />
+              // Docked on top the strip is short and wide, so drop the margin to
+              // let the geometry fill it edge-to-edge (issue #154).
+              <SvgView geometry={result.geometry} padding={onTop ? 0.02 : 0.1} />
             ))}
           <PreviewSummary result={result} />
         </div>
