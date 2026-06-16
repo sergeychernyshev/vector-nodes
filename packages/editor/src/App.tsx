@@ -31,7 +31,7 @@ import { checkConnection, edgesWithoutInput, type ConnectionLike } from './conne
 import { ConnectMenu } from './ConnectMenu';
 import { constantSeedValue } from './constant-seed';
 import { captureViewport, downloadDataUrl, exportImageSize, IMAGE_PADDING } from './export-image';
-import { cloneFlowNode, rewireForAltDrag } from './duplicate';
+import { cloneFlowNode, rewireCloneWithConnections, rewireForAltDrag } from './duplicate';
 import { downloadText, maxAutoId } from './graph-io';
 import {
   downstreamNodeIds,
@@ -179,7 +179,7 @@ export function App() {
   const pendingShift = useRef<{ newNodeId: string; downstreamIds: Set<string> } | null>(null);
   const idCounter = useRef(maxAutoId(initialNodes));
   const toolbarRef = useRef<ToolbarHandle>(null);
-  const { screenToFlowPosition, getNode } = useReactFlow<VNodeFlowNode>();
+  const { screenToFlowPosition } = useReactFlow<VNodeFlowNode>();
 
   // Registry = base node definitions + a definition per meta-node, so instances
   // render with their interface sockets and links type-check.
@@ -319,10 +319,13 @@ export function App() {
     (connection: Connection) => {
       takeSnapshot();
       // Array inputs accept any number of connections (issue #99); a scalar input
-      // replaces its existing link (issue #41) before the new one is added.
-      const targetSocket = getNode(connection.target ?? '')?.data.inputs.find(
-        (s) => s.name === connection.targetHandle,
-      );
+      // replaces its existing link (issue #41) before the new one is added. Read
+      // the target socket from our own node state (the same source isValidConnection
+      // uses), not React Flow's store — the store can lag, and a missed `isArray`
+      // there would wrongly drop the input's other links (issue #146).
+      const targetSocket = nodesRef.current
+        .find((n) => n.id === connection.target)
+        ?.data.inputs.find((s) => s.name === connection.targetHandle);
       setEdges((eds) =>
         addEdge(
           connection,
@@ -333,7 +336,7 @@ export function App() {
       );
       clearError();
     },
-    [setEdges, clearError, takeSnapshot, getNode],
+    [setEdges, clearError, takeSnapshot],
   );
 
   const editApi = useMemo<NodeEditApi>(
@@ -586,8 +589,12 @@ export function App() {
 
   // Alt+drag duplicates the node (issue #98): a clone is left at the origin with
   // the original's full wiring, while the dragged node is pulled away as a copy
-  // carrying duplicates of its input connections (no outputs). Built only from
-  // the drag argument + functional updaters, so the handler stays stable.
+  // carrying duplicates of its input connections (no outputs). Alt+Shift+drag
+  // instead wires the dragged copy in parallel too — same inputs, and outputs
+  // into targets that can take another connection (array inputs); an output into
+  // a single-value input stays on the node left at the origin so the copy
+  // doesn't steal the one slot. Built from the drag argument + functional
+  // updaters (and stable refs), so the handler stays referentially stable.
   const onNodeDragStart = useCallback(
     (event: MouseEvent | TouchEvent, node: VNodeFlowNode) => {
       takeSnapshot();
@@ -595,7 +602,18 @@ export function App() {
       const cloneId = `n${(idCounter.current += 1)}`;
       const clone = cloneFlowNode(node, cloneId);
       setNodes((nds) => [...nds, clone]);
-      setEdges((eds) => rewireForAltDrag(eds, node.id, cloneId, (e) => `${e.id}__${cloneId}`));
+      const edgeId = (e: Edge) => `${e.id}__${cloneId}`;
+      if (event.shiftKey) {
+        const canDuplicateOutput = (e: Edge) =>
+          nodesRef.current
+            .find((n) => n.id === e.target)
+            ?.data.inputs.find((s) => s.name === e.targetHandle)?.isArray ?? false;
+        setEdges((eds) =>
+          rewireCloneWithConnections(eds, node.id, cloneId, edgeId, canDuplicateOutput),
+        );
+      } else {
+        setEdges((eds) => rewireForAltDrag(eds, node.id, cloneId, edgeId));
+      }
     },
     [takeSnapshot, setNodes, setEdges],
   );
@@ -704,8 +722,10 @@ export function App() {
       if (handleType === 'target') {
         // Dragged off an input: new node's output → the dragged input. Array
         // inputs accept many connections (issue #99); a scalar input replaces.
+        // Resolve the target node from our own state, not React Flow's store,
+        // which can lag and report a stale `isArray` (issue #146).
         const { outputHandle } = suggestion as SourceSuggestion;
-        const targetNode = getNode(nodeId);
+        const targetNode = nodesRef.current.find((n) => n.id === nodeId);
         const inputSocket = targetNode?.data.inputs.find((s) => s.name === handleId);
         // When the chosen source is a constant whose output type matches the
         // input exactly, seed it with the value the input held so converting an
@@ -735,7 +755,7 @@ export function App() {
       }
       clearError();
     },
-    [connectMenu, createNodeAt, setEdges, setNodes, clearError, getNode, registry, library],
+    [connectMenu, createNodeAt, setEdges, setNodes, clearError, registry, library],
   );
 
   // Deleting a node that bridged two compatible sockets heals the gap with a
@@ -747,11 +767,20 @@ export function App() {
       const bridges = planReconnects(edgesRef.current, nodesRef.current, deletedIds);
       if (bridges.length === 0) return;
       setEdges((eds) => {
-        // Drop edges touching the removed nodes, then add the bridges (each
-        // replacing any existing link into its destination input).
+        // Drop edges touching the removed nodes, then add the bridges. A bridge
+        // into a single-value input replaces any existing link there (issue #41);
+        // an array input keeps its other links and collects the bridge (issue
+        // #146) rather than having them all wiped.
         let next = eds.filter((e) => !deletedIds.has(e.source) && !deletedIds.has(e.target));
         for (const b of bridges) {
-          next = addEdge(b, edgesWithoutInput(next, b.target, b.targetHandle));
+          const isArrayInput =
+            nodesRef.current
+              .find((n) => n.id === b.target)
+              ?.data.inputs.find((s) => s.name === b.targetHandle)?.isArray ?? false;
+          next = addEdge(
+            b,
+            isArrayInput ? next : edgesWithoutInput(next, b.target, b.targetHandle),
+          );
         }
         return next;
       });

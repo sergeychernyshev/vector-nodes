@@ -438,13 +438,18 @@ export function generate(graph: Graph, registry: NodeRegistry): GeneratedModule 
     for (const socket of def.inputs) {
       const override = node.inputDefaults?.[socket.name];
       if (socket.isArray) {
-        // Array inputs collect every connection into an array expression (issue
-        // #99); a single field source passes through as the whole array.
+        // Array inputs collect every connection into an array expression (issues
+        // #99, #146): a field (array) source is spread in so the result is a flat
+        // collection; a lone array source passes through as the whole array.
         const links = flat.links.filter((l) => l.to[0] === id && l.to[1] === socket.name);
-        if (links.length > 0) {
-          const exprs = links.map((l) => `${emitNode(l.from[0])}.${l.from[1]}`);
-          inputs[socket.name] =
-            links.length === 1 && sourceIsArray(links[0]!) ? exprs[0]! : `[${exprs.join(', ')}]`;
+        if (links.length === 1 && sourceIsArray(links[0]!)) {
+          inputs[socket.name] = `${emitNode(links[0]!.from[0])}.${links[0]!.from[1]}`;
+        } else if (links.length > 0) {
+          const exprs = links.map((l) => {
+            const ref = `${emitNode(l.from[0])}.${l.from[1]}`;
+            return sourceIsArray(l) ? `...${ref}` : ref;
+          });
+          inputs[socket.name] = `[${exprs.join(', ')}]`;
         } else if (override !== undefined) inputs[socket.name] = lit(override);
         else if (node.params?.[socket.name] !== undefined)
           inputs[socket.name] = lit(node.params[socket.name]);

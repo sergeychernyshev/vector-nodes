@@ -223,6 +223,27 @@ describe('conformance: compiled output equals interpreter output', () => {
     expect(Math.hypot(result.points[0]![0], result.points[0]![1])).toBeCloseTo(3, 9);
   });
 
+  it('merges multiple field sources flat into an array input (issue #146)', () => {
+    const graph = createGraph({
+      nodes: [
+        { id: 'g', type: 'PointGrid', params: { countX: 2, countY: 2 } }, // 4 points
+        { id: 'c', type: 'PointCircle', params: { radius: 1, count: 3 } }, // 3 points
+        { id: 'p', type: 'Point', inputDefaults: { x: 9, y: 9, z: 0 } }, // single value
+        { id: 'pl', type: 'Polyline', params: { closed: false } },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [
+        { from: ['g', 'points'], to: ['pl', 'points'] },
+        { from: ['c', 'points'], to: ['pl', 'points'] },
+        { from: ['p', 'point'], to: ['pl', 'points'] },
+        { from: ['pl', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    });
+    const result = runCompiled(graph, []) as { curves: { points: unknown[] }[] };
+    expect(result).toEqual(interpret(graph));
+    expect(result.curves[0]!.points).toHaveLength(8); // 4 + 3 + 1, flat
+  });
+
   it('per-instance inputDefaults on an unconnected input', () => {
     const graph = createGraph({
       nodes: [

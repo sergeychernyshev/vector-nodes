@@ -468,3 +468,52 @@ describe('array inputs collect connections (issue #99)', () => {
     expect(out.curves[0]!.points).toHaveLength(4); // 2×2 grid, passed through
   });
 });
+
+describe('array inputs merge field sources flat (issue #146)', () => {
+  it('flattens multiple field sources into one collective array', () => {
+    // Two point fields wired into Polyline.points are merged, not nested: the
+    // polyline gets every point from both, in link order.
+    const graph = createGraph({
+      nodes: [
+        { id: 'g', type: 'PointGrid', params: { countX: 2, countY: 2 } }, // 4 points
+        { id: 'c', type: 'PointCircle', params: { radius: 1, count: 3 } }, // 3 points
+        { id: 'pl', type: 'Polyline', params: { closed: false } },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [
+        { from: ['g', 'points'], to: ['pl', 'points'] },
+        { from: ['c', 'points'], to: ['pl', 'points'] },
+        { from: ['pl', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    });
+    const out = evaluateGraph(graph, createBasicRegistry(), BASIC_OPERATORS).output
+      .geometry as Geometry;
+    const points = out.curves[0]!.points;
+    expect(points).toHaveLength(7); // 4 + 3, flat
+    // Every element is a Vector (a 3-number tuple), never a nested array.
+    expect(points.every((p) => p.length === 3 && p.every((n) => typeof n === 'number'))).toBe(true);
+  });
+
+  it('mixes a single value and a field source into one array', () => {
+    // A single Vector plus a point field feed Polyline.points: the lone vector
+    // contributes one element, the field is spread in after it.
+    const graph = createGraph({
+      nodes: [
+        { id: 'p', type: 'Point', inputDefaults: { x: 9, y: 9, z: 0 } }, // single vector
+        { id: 'c', type: 'PointCircle', params: { radius: 1, count: 4 } }, // 4 points
+        { id: 'pl', type: 'Polyline', params: { closed: false } },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [
+        { from: ['p', 'point'], to: ['pl', 'points'] },
+        { from: ['c', 'points'], to: ['pl', 'points'] },
+        { from: ['pl', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    });
+    const out = evaluateGraph(graph, createBasicRegistry(), BASIC_OPERATORS).output
+      .geometry as Geometry;
+    const points = out.curves[0]!.points;
+    expect(points).toHaveLength(5); // 1 + 4
+    expect(points[0]).toEqual([9, 9, 0]); // the single value leads
+  });
+});

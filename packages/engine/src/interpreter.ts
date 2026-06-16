@@ -81,13 +81,22 @@ export function evaluateGraph(
     const inputs: Record<string, unknown> = {};
     for (const socket of def.inputs) {
       if (socket.isArray) {
-        // Array inputs collect every connection (issue #99): each scalar source
-        // contributes one element, in link order. A single field (array) source
-        // passes through as the whole array (e.g. a wired point field).
+        // Array inputs collect every connection (issues #99, #146): each scalar
+        // source contributes one element and each field (array) source is merged
+        // in, flattened, so the input is a flat collection of item-typed values,
+        // in link order. A lone array source passes straight through (identity
+        // preserved — e.g. a single wired point field).
         const links = graph.links.filter((l) => l.to[0] === node.id && l.to[1] === socket.name);
-        if (links.length > 0) {
-          const values = links.map((l) => evaluateNode(l.from[0])[l.from[1]]);
-          inputs[socket.name] = links.length === 1 && sourceIsArray(links[0]!) ? values[0] : values;
+        if (links.length === 1 && sourceIsArray(links[0]!)) {
+          inputs[socket.name] = evaluateNode(links[0]!.from[0])[links[0]!.from[1]];
+        } else if (links.length > 0) {
+          const collected: unknown[] = [];
+          for (const l of links) {
+            const value = evaluateNode(l.from[0])[l.from[1]];
+            if (sourceIsArray(l)) collected.push(...(value as unknown[]));
+            else collected.push(value);
+          }
+          inputs[socket.name] = collected;
         } else if (node.inputDefaults?.[socket.name] !== undefined) {
           inputs[socket.name] = node.inputDefaults[socket.name];
         } else if (node.params?.[socket.name] !== undefined) {
