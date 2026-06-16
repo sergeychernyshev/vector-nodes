@@ -124,7 +124,10 @@ Conventions carried over from Blender:
   parameters of any types (several `Geometry` inputs, several scalars, etc.).
 - **Time** — animation clock emitting `seconds`, `milliseconds`, and an fps-scaled `frame` index.
   Driven by the engine's `time` parameter; a network that uses it gains a leading `time: number`
-  argument in the compiled function, which the caller advances each frame.
+  argument in the compiled function, which the caller advances each frame. In the editor, a global
+  play/pause transport (also on each Time node) drives the live preview in real time; all Time
+  nodes share one clock that ticks at the least-common-multiple of their `fps`, so every node's
+  frame boundary lands on a tick.
 
 ### Points & vectors (the spec's basics)
 

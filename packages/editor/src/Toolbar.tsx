@@ -15,6 +15,14 @@ export interface ToolbarProps {
   canRedo?: boolean;
   /** Swap the node-list and preview sidebars (issue #62). */
   onSwapSidebars?: () => void;
+  /** Show the animation transport — only when the network has Time nodes (issue #138). */
+  showTransport?: boolean;
+  /** Whether the animation clock is currently playing. */
+  playing?: boolean;
+  /** Start/stop the shared animation clock. */
+  onTogglePlay?: () => void;
+  /** Reset the animation clock to zero. */
+  onResetClock?: () => void;
   /** Generate code for the current network (issue #67). */
   onGenerate?: () => void;
   /** Currently selected code-generation language. */
@@ -33,6 +41,10 @@ export interface ToolbarHandle {
 export const Toolbar = forwardRef<ToolbarHandle, ToolbarProps>(function Toolbar(
   {
     nodeCount,
+    showTransport,
+    playing,
+    onTogglePlay,
+    onResetClock,
     onSave,
     onOpen,
     onReset,
@@ -65,6 +77,27 @@ export const Toolbar = forwardRef<ToolbarHandle, ToolbarProps>(function Toolbar(
     >
       <strong>Vector Nodes</strong>
       <span data-testid="node-count">{nodeCount} nodes</span>
+      {showTransport && (
+        <span className="toolbar__transport" style={{ display: 'flex', gap: 4 }}>
+          <button
+            type="button"
+            onClick={onTogglePlay}
+            aria-pressed={playing}
+            aria-label={playing ? 'Pause animation' : 'Play animation'}
+            title={playing ? 'Pause animation' : 'Play animation'}
+          >
+            {playing ? '⏸' : '▶'}
+          </button>
+          <button
+            type="button"
+            onClick={onResetClock}
+            aria-label="Reset animation time"
+            title="Reset animation time"
+          >
+            ⟲
+          </button>
+        </span>
+      )}
       <span style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
         <button type="button" onClick={onUndo} disabled={!canUndo} title="Undo (Ctrl/Cmd+Z)">
           Undo

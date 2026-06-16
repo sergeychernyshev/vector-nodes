@@ -12,12 +12,19 @@ import type { PreviewRequest, PreviewResponse } from './preview-protocol';
  * Falls back to synchronous evaluation when Workers are unavailable (e.g. the
  * jsdom test environment).
  */
-export function usePreview(graph: Graph, previewIds: string[] = []): PreviewResult {
+export function usePreview(
+  graph: Graph,
+  previewIds: string[] = [],
+  parameters: Record<string, unknown> = {},
+): PreviewResult {
   const [result, setResult] = useState<PreviewResult>({});
   const workerRef = useRef<Worker | null>(null);
   const requestId = useRef(0);
   // A stable string key so the send effect tracks the id set, not the array ref.
   const previewKey = previewIds.join(',');
+  // Likewise, track parameter values (e.g. the animation clock's `time`) by
+  // content so a new clock tick re-sends the graph for evaluation (issue #138).
+  const parametersKey = JSON.stringify(parameters);
 
   // Spin up the worker once; tear it down on unmount.
   useEffect(() => {
@@ -41,13 +48,19 @@ export function usePreview(graph: Graph, previewIds: string[] = []): PreviewResu
   useEffect(() => {
     const id = (requestId.current += 1);
     const ids = previewKey === '' ? [] : previewKey.split(',');
+    const params = JSON.parse(parametersKey) as Record<string, unknown>;
     const worker = workerRef.current;
     if (worker) {
-      worker.postMessage({ id, graph, previewIds: ids } satisfies PreviewRequest);
+      worker.postMessage({
+        id,
+        graph,
+        previewIds: ids,
+        parameters: params,
+      } satisfies PreviewRequest);
     } else {
-      setResult(evaluatePreview(graph, ids));
+      setResult(evaluatePreview(graph, ids, params));
     }
-  }, [graph, previewKey]);
+  }, [graph, previewKey, parametersKey]);
 
   return result;
 }
