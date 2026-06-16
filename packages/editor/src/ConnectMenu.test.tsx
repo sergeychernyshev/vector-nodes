@@ -39,6 +39,27 @@ describe('ConnectMenu', () => {
     expect(queryByText('Point Circle')).toBeNull();
   });
 
+  it('labels the menu for the target variant (issue #148)', () => {
+    const targets = [
+      { type: 'Translate', label: 'Translate', category: 'Geometry', inputHandle: 'geometry' },
+    ];
+    const onPick = vi.fn();
+    const { getByText, getByLabelText } = render(
+      <ConnectMenu
+        x={0}
+        y={0}
+        suggestions={targets}
+        onPick={onPick}
+        onClose={vi.fn()}
+        variant="target"
+      />,
+    );
+    // The search control is labelled for adding a *target* node.
+    expect(getByLabelText('Add target node')).not.toBeNull();
+    fireEvent.click(getByText('Translate'));
+    expect(onPick).toHaveBeenCalledWith(targets[0]); // carries the input handle
+  });
+
   it('shows an empty message and closes on backdrop click', () => {
     const onClose = vi.fn();
     const { container, getByText } = render(

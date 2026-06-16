@@ -10,6 +10,7 @@ import {
   shiftNodesRight,
   spliceEdge,
   suggestSourceNodes,
+  suggestTargetNodes,
 } from './inject';
 
 const registry = createBasicRegistry();
@@ -63,6 +64,37 @@ describe('suggestSourceNodes', () => {
     // field source (PointGrid.points) still passes through.
     expect(suggestions).toContain('Point');
     expect(suggestions).toContain('PointGrid');
+  });
+});
+
+describe('suggestTargetNodes (issue #148)', () => {
+  it('only includes nodes with an input that accepts the output', () => {
+    const geomOutput = socketsOf(registry.require('PointCircle')).outputs.find(
+      (s) => s.name === 'geometry',
+    )!;
+    const suggestions = suggestTargetNodes(registry, geomOutput);
+    expect(suggestions.length).toBeGreaterThan(0);
+    // Every suggestion exposes the named input and it accepts Geometry.
+    for (const s of suggestions) {
+      const input = socketsOf(registry.require(s.type)).inputs.find(
+        (i) => i.name === s.inputHandle,
+      );
+      expect(input?.type).toBe('Geometry');
+    }
+    // Translate (Geometry in) and OutputGeometry qualify; ConstFloat does not.
+    expect(suggestions.map((s) => s.type)).toContain('Translate');
+    expect(suggestions.map((s) => s.type)).toContain('OutputGeometry');
+    expect(suggestions.map((s) => s.type)).not.toContain('ConstFloat');
+  });
+
+  it('routes a scalar Float output into compatible inputs (incl. Vector via broadcast)', () => {
+    const floatOut = socketsOf(registry.require('ConstFloat')).outputs.find(
+      (s) => s.name === 'value',
+    )!;
+    const types = suggestTargetNodes(registry, floatOut).map((s) => s.type);
+    // PointCircle.radius (Float) and Translate.offset (Vector, Float→Vector) accept it.
+    expect(types).toContain('PointCircle');
+    expect(types).toContain('Translate');
   });
 });
 

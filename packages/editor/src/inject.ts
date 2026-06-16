@@ -60,6 +60,36 @@ export function suggestSourceNodes(registry: NodeRegistry, input: FlowSocket): S
   );
 }
 
+/** A palette entry that can consume a particular output, with the input to use. */
+export interface TargetSuggestion extends PaletteItem {
+  /** Input handle on this node that the dragged output feeds. */
+  inputHandle: string;
+}
+
+/**
+ * Registry definitions that could consume `output` — i.e. have an input socket
+ * that accepts it — as palette entries carrying that input's handle. Mirrors
+ * {@link suggestSourceNodes} for a connection dragged off an *output* into empty
+ * space (issue #148). Sorted by category then label.
+ */
+export function suggestTargetNodes(registry: NodeRegistry, output: FlowSocket): TargetSuggestion[] {
+  const suggestions: TargetSuggestion[] = [];
+  for (const def of registry.list()) {
+    const match = socketsOf(def).inputs.find((s) => socketsCompatible(output, s));
+    if (match) {
+      suggestions.push({
+        type: def.type,
+        label: def.label ?? def.type,
+        category: def.category ?? 'Other',
+        inputHandle: match.name,
+      });
+    }
+  }
+  return suggestions.sort(
+    (a, b) => a.category.localeCompare(b.category) || a.label.localeCompare(b.label),
+  );
+}
+
 /**
  * Replace `edge` with two edges routed through the node `newNodeId`:
  * source → new node's `inputHandle`, and new node's `outputHandle` → destination.

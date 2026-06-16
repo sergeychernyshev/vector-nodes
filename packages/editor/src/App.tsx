@@ -38,7 +38,9 @@ import {
   shiftNodesRight,
   spliceEdge,
   suggestSourceNodes,
+  suggestTargetNodes,
   type SourceSuggestion,
+  type TargetSuggestion,
 } from './inject';
 import {
   augmentedRegistry,
@@ -148,7 +150,9 @@ export function App() {
     y: number;
     nodeId: string;
     handleId: string;
-    suggestions: SourceSuggestion[];
+    /** The dragged handle's side: `target` = off an input (issue #45), `source` = off an output (issue #148). */
+    handleType: 'source' | 'target';
+    suggestions: (SourceSuggestion | TargetSuggestion)[];
   } | null>(null);
   const connecting = useRef<OnConnectStartParams | null>(null);
   // Pointer-down state for tap-to-place: where it started and whether it began on
@@ -536,56 +540,82 @@ export function App() {
     [takeSnapshot, setNodes, setEdges],
   );
 
-  // Dropping a connection dragged off an input into empty space opens a node
-  // menu filtered to sources whose output matches that input (issue #45).
+  // Dropping a connection dragged into empty space opens a node menu filtered to
+  // the dragged handle: off an input, sources whose output matches it (issue
+  // #45); off an output, targets whose input accepts it (issue #148).
   const onConnectEnd = useCallback(
     (event: MouseEvent | TouchEvent) => {
       const info = connecting.current;
       connecting.current = null;
       clearError();
-      if (!info || info.handleType !== 'target' || !info.nodeId || !info.handleId) return;
+      if (!info || !info.nodeId || !info.handleId) return;
       const targetEl = event.target as Element | null;
       if (!targetEl?.classList?.contains('react-flow__pane')) return;
       const node = nodesRef.current.find((n) => n.id === info.nodeId);
-      const input = node?.data.inputs.find((s) => s.name === info.handleId);
-      if (!input) return;
+      if (!node) return;
       const point = 'changedTouches' in event ? event.changedTouches[0] : (event as MouseEvent);
       if (!point) return;
-      setConnectMenu({
-        x: point.clientX,
-        y: point.clientY,
-        nodeId: info.nodeId,
-        handleId: info.handleId,
-        suggestions: suggestSourceNodes(registryRef.current, input),
-      });
+
+      if (info.handleType === 'target') {
+        const input = node.data.inputs.find((s) => s.name === info.handleId);
+        if (!input) return;
+        setConnectMenu({
+          x: point.clientX,
+          y: point.clientY,
+          nodeId: info.nodeId,
+          handleId: info.handleId,
+          handleType: 'target',
+          suggestions: suggestSourceNodes(registryRef.current, input),
+        });
+      } else if (info.handleType === 'source') {
+        const output = node.data.outputs.find((s) => s.name === info.handleId);
+        if (!output) return;
+        setConnectMenu({
+          x: point.clientX,
+          y: point.clientY,
+          nodeId: info.nodeId,
+          handleId: info.handleId,
+          handleType: 'source',
+          suggestions: suggestTargetNodes(registryRef.current, output),
+        });
+      }
     },
     [clearError],
   );
 
-  // Choosing a source from the connect menu creates it and wires its output to
-  // the dragged input.
-  const onPickSource = useCallback(
-    (suggestion: SourceSuggestion) => {
+  // Choosing a node from the connect menu creates it and wires it to the dragged
+  // handle — its output into the dragged input (issue #45), or the dragged output
+  // into its input (issue #148), depending on which side was dragged.
+  const onPickNode = useCallback(
+    (suggestion: SourceSuggestion | TargetSuggestion) => {
       if (!connectMenu) return;
-      const { x, y, nodeId, handleId } = connectMenu;
+      const { x, y, nodeId, handleId, handleType } = connectMenu;
       setConnectMenu(null);
       const id = createNodeAt(suggestion.type, x, y);
       if (!id) return;
-      // Array inputs accept many connections (issue #99), so add to them rather
-      // than replacing their existing links the way a scalar input does.
-      const isArrayInput =
-        getNode(nodeId)?.data.inputs.find((s) => s.name === handleId)?.isArray ?? false;
-      setEdges((eds) =>
-        addEdge(
-          {
-            source: id,
-            sourceHandle: suggestion.outputHandle,
-            target: nodeId,
-            targetHandle: handleId,
-          },
-          isArrayInput ? eds : edgesWithoutInput(eds, nodeId, handleId),
-        ),
-      );
+      if (handleType === 'target') {
+        // Dragged off an input: new node's output → the dragged input. Array
+        // inputs accept many connections (issue #99); a scalar input replaces.
+        const { outputHandle } = suggestion as SourceSuggestion;
+        const isArrayInput =
+          getNode(nodeId)?.data.inputs.find((s) => s.name === handleId)?.isArray ?? false;
+        setEdges((eds) =>
+          addEdge(
+            { source: id, sourceHandle: outputHandle, target: nodeId, targetHandle: handleId },
+            isArrayInput ? eds : edgesWithoutInput(eds, nodeId, handleId),
+          ),
+        );
+      } else {
+        // Dragged off an output: the dragged output → new node's input. The fresh
+        // node's input is empty, so nothing needs replacing.
+        const { inputHandle } = suggestion as TargetSuggestion;
+        setEdges((eds) =>
+          addEdge(
+            { source: nodeId, sourceHandle: handleId, target: id, targetHandle: inputHandle },
+            eds,
+          ),
+        );
+      }
       clearError();
     },
     [connectMenu, createNodeAt, setEdges, clearError, getNode],
@@ -813,8 +843,9 @@ export function App() {
               x={connectMenu.x}
               y={connectMenu.y}
               suggestions={connectMenu.suggestions}
-              onPick={onPickSource}
+              onPick={onPickNode}
               onClose={() => setConnectMenu(null)}
+              variant={connectMenu.handleType === 'source' ? 'target' : 'source'}
             />
           )}
           {errorMessage && (

@@ -1,29 +1,40 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { filterPalette } from './flow';
-import type { SourceSuggestion } from './inject';
+import { filterPalette, type PaletteItem } from './flow';
 
-export interface ConnectMenuProps {
+export interface ConnectMenuProps<T extends PaletteItem> {
   /** Screen position to anchor the menu at (the drop point). */
   x: number;
   y: number;
-  /** Nodes whose output can feed the dragged input. */
-  suggestions: SourceSuggestion[];
-  onPick: (suggestion: SourceSuggestion) => void;
+  /** Nodes compatible with the dragged handle. */
+  suggestions: T[];
+  onPick: (suggestion: T) => void;
   onClose: () => void;
+  /**
+   * Which side was dragged: `source` adds a node that *feeds* the dragged input
+   * (issue #45); `target` adds a node that *consumes* the dragged output (issue
+   * #148). Tunes the menu's labels.
+   */
+  variant?: 'source' | 'target';
 }
 
 /**
- * Floating node picker shown when a connection is dragged off an input into
- * empty space (issue #45). It lists only nodes whose output matches the dragged
- * input; choosing one creates that node and wires it to the input.
+ * Floating node picker shown when a connection is dragged into empty space. From
+ * an input it lists nodes whose output matches (issue #45); from an output it
+ * lists nodes whose input matches (issue #148). Choosing one creates that node
+ * and wires it to the dragged handle.
  */
-export function ConnectMenu({ x, y, suggestions, onPick, onClose }: ConnectMenuProps) {
+export function ConnectMenu<T extends PaletteItem>({
+  x,
+  y,
+  suggestions,
+  onPick,
+  onClose,
+  variant = 'source',
+}: ConnectMenuProps<T>) {
   const [query, setQuery] = useState('');
-  const filtered = useMemo(
-    () => filterPalette(suggestions, query) as SourceSuggestion[],
-    [suggestions, query],
-  );
+  const filtered = useMemo(() => filterPalette(suggestions, query) as T[], [suggestions, query]);
+  const label = variant === 'target' ? 'Add target node' : 'Add source node';
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -40,13 +51,13 @@ export function ConnectMenu({ x, y, suggestions, onPick, onClose }: ConnectMenuP
         className="connect-menu"
         style={{ left: x, top: y }}
         role="menu"
-        aria-label="Add a source node"
+        aria-label={`Add a ${variant} node`}
       >
         <input
           className="connect-menu__search"
           type="search"
-          placeholder="Add source node…"
-          aria-label="Add source node"
+          placeholder={`${label}…`}
+          aria-label={label}
           autoFocus
           value={query}
           onChange={(e) => setQuery(e.target.value)}
