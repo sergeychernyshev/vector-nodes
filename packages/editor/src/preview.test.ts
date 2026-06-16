@@ -110,6 +110,30 @@ describe('evaluatePreview', () => {
     });
     expect(evaluatePreview(graph).nodeGeometries).toEqual({});
   });
+
+  it('resolves connected input values for preview (input field acts as a preview)', () => {
+    const graph = createGraph({
+      nodes: [
+        { id: 'r', type: 'ConstFloat', params: { value: 5 } },
+        { id: 'off', type: 'ConstVector', params: { value: [1, 2, 3] } },
+        { id: 'pc', type: 'PointCircle', params: { count: 4 } },
+        { id: 't', type: 'Translate' },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [
+        { from: ['r', 'value'], to: ['pc', 'radius'] },
+        { from: ['pc', 'geometry'], to: ['t', 'geometry'] },
+        { from: ['off', 'value'], to: ['t', 'offset'] },
+        { from: ['t', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    });
+    const inputs = evaluatePreview(graph).nodeInputs!;
+    // The radius input on PointCircle previews the constant feeding it.
+    expect(inputs.pc!.radius).toBe(5);
+    // A vector connection previews its [x, y, z]; geometry links are not displayable.
+    expect(inputs.t!.offset).toEqual([1, 2, 3]);
+    expect(inputs.t!.geometry).toBeUndefined();
+  });
 });
 
 describe('summarizeGeometry', () => {

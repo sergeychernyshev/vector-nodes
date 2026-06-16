@@ -223,8 +223,13 @@ export function App() {
   }, []);
 
   const previewApi = useMemo<NodePreviewApi>(
-    () => ({ geometries: preview.nodeGeometries ?? {}, open: openPreviews, toggle: togglePreview }),
-    [preview.nodeGeometries, openPreviews, togglePreview],
+    () => ({
+      geometries: preview.nodeGeometries ?? {},
+      inputs: preview.nodeInputs ?? {},
+      open: openPreviews,
+      toggle: togglePreview,
+    }),
+    [preview.nodeGeometries, preview.nodeInputs, openPreviews, togglePreview],
   );
 
   const items = useMemo(() => {
