@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { graphToFlowNodes, socketsOf } from './flow';
 import {
   downstreamNodeIds,
+  healEdgesAfterDelete,
   planInjection,
   planReconnects,
   shiftNodesRight,
@@ -222,5 +223,44 @@ describe('planReconnects', () => {
   it('ignores links to or from other deleted nodes (no chain healing)', () => {
     // Deleting both pa and t: the pa→t link is internal, so nothing bridges to out.
     expect(planReconnects(chain, nodes, new Set(['pa', 't']))).toEqual([]);
+  });
+});
+
+describe('healEdgesAfterDelete (issue #165)', () => {
+  // pa.geometry → t.geometry → out.geometry; deleting t bridges pa → out.
+  const nodes = graphToFlowNodes(
+    createGraph({
+      nodes: [
+        { id: 'pa', type: 'PointCircle' },
+        { id: 't', type: 'Translate' },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+    }),
+    registry,
+  );
+  const chain: Edge[] = [
+    { id: 'e0', source: 'pa', sourceHandle: 'geometry', target: 't', targetHandle: 'geometry' },
+    { id: 'e1', source: 't', sourceHandle: 'geometry', target: 'out', targetHandle: 'geometry' },
+  ];
+
+  it('drops a deleted node’s edges and bridges the gap it left', () => {
+    const healed = healEdgesAfterDelete(chain, nodes, new Set(['t']));
+    // Both original edges touched t and are gone; one bridge pa → out remains.
+    expect(healed).toEqual([
+      expect.objectContaining({
+        source: 'pa',
+        sourceHandle: 'geometry',
+        target: 'out',
+        targetHandle: 'geometry',
+      }),
+    ]);
+  });
+
+  it('removes edges with no bridge available', () => {
+    // Deleting the leaf source pa: its only edge goes and nothing replaces it.
+    const healed = healEdgesAfterDelete(chain, nodes, new Set(['pa']));
+    expect(healed).toEqual([
+      expect.objectContaining({ source: 't', target: 'out', targetHandle: 'geometry' }),
+    ]);
   });
 });

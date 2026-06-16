@@ -1,7 +1,7 @@
 import type { NodeDefinition, NodeRegistry } from '@vector-nodes/core';
 import { addEdge, type Edge } from '@xyflow/react';
 
-import { socketsCompatible } from './connection';
+import { edgesWithoutInput, socketsCompatible } from './connection';
 import { socketsOf, type FlowSocket, type PaletteItem, type VNodeFlowNode } from './flow';
 
 /** How a node splices into a connection: which of its handles join each end. */
@@ -206,4 +206,28 @@ export function planReconnects(
     }
   }
   return bridges;
+}
+
+/**
+ * Edges after the nodes in `deletedIds` are removed: links touching a deleted
+ * node are dropped, then any bridges from {@link planReconnects} are added to
+ * heal the gaps they left. A bridge into a single-value input replaces whatever
+ * was there (issue #41); a bridge into an array input is collected alongside the
+ * input's surviving links (issue #146). Shared by the keyboard-delete handler
+ * and the trashcan button (issue #165) so both heal connections identically.
+ */
+export function healEdgesAfterDelete(
+  edges: Edge[],
+  nodes: VNodeFlowNode[],
+  deletedIds: Set<string>,
+): Edge[] {
+  const bridges = planReconnects(edges, nodes, deletedIds);
+  let next = edges.filter((e) => !deletedIds.has(e.source) && !deletedIds.has(e.target));
+  for (const b of bridges) {
+    const isArrayInput =
+      nodes.find((n) => n.id === b.target)?.data.inputs.find((s) => s.name === b.targetHandle)
+        ?.isArray ?? false;
+    next = addEdge(b, isArrayInput ? next : edgesWithoutInput(next, b.target, b.targetHandle));
+  }
+  return next;
 }

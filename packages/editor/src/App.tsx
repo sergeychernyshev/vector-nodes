@@ -35,6 +35,7 @@ import { cloneFlowNode, rewireCloneWithConnections, rewireForAltDrag } from './d
 import { downloadText, maxAutoId } from './graph-io';
 import {
   downstreamNodeIds,
+  healEdgesAfterDelete,
   planInjection,
   planReconnects,
   shiftNodesRight,
@@ -218,6 +219,10 @@ export function App() {
   edgesRef.current = edges;
   const registryRef = useRef(registry);
   registryRef.current = registry;
+  // Kept in sync so the trashcan's delete handler (issue #165) can read the
+  // current selection without being re-created on every selection change.
+  const selectedIdsRef = useRef(selectedIds);
+  selectedIdsRef.current = selectedIds;
 
   // Autosave to localStorage on every change.
   useEffect(() => {
@@ -790,28 +795,28 @@ export function App() {
       takeSnapshot();
       const deletedIds = new Set(deleted.map((n) => n.id));
       const bridges = planReconnects(edgesRef.current, nodesRef.current, deletedIds);
+      // React Flow removes the edges touching deleted nodes itself; we only need
+      // to step in to heal bridged gaps (issues #41/#43/#146). Skip when there's
+      // nothing to bridge so we don't churn the edge state needlessly.
       if (bridges.length === 0) return;
-      setEdges((eds) => {
-        // Drop edges touching the removed nodes, then add the bridges. A bridge
-        // into a single-value input replaces any existing link there (issue #41);
-        // an array input keeps its other links and collects the bridge (issue
-        // #146) rather than having them all wiped.
-        let next = eds.filter((e) => !deletedIds.has(e.source) && !deletedIds.has(e.target));
-        for (const b of bridges) {
-          const isArrayInput =
-            nodesRef.current
-              .find((n) => n.id === b.target)
-              ?.data.inputs.find((s) => s.name === b.targetHandle)?.isArray ?? false;
-          next = addEdge(
-            b,
-            isArrayInput ? next : edgesWithoutInput(next, b.target, b.targetHandle),
-          );
-        }
-        return next;
-      });
+      setEdges(() => healEdgesAfterDelete(edgesRef.current, nodesRef.current, deletedIds));
     },
     [setEdges, takeSnapshot],
   );
+
+  // Delete the current selection — the trashcan button's action (issue #165).
+  // Touch users have no Delete/Backspace key, so this mirrors React Flow's
+  // keyboard delete: it removes the selected nodes and heals any bridged edges.
+  // Unlike onNodesDelete (where React Flow drops the nodes and edges itself), we
+  // own the whole change here, so we filter the nodes and edges directly.
+  const deleteSelected = useCallback(() => {
+    if (selectedIdsRef.current.length === 0) return;
+    takeSnapshot();
+    const deletedIds = new Set(selectedIdsRef.current);
+    setEdges(healEdgesAfterDelete(edgesRef.current, nodesRef.current, deletedIds));
+    setNodes((nds) => nds.filter((n) => !deletedIds.has(n.id)));
+    setSelectedIds([]);
+  }, [setEdges, setNodes, takeSnapshot]);
 
   // Group: a selection may collapse if it has no Output Geometry node.
   const canGroup =
@@ -1004,6 +1009,19 @@ export function App() {
                       {/* Image/export glyph; React Flow sizes the svg to the control button. */}
                       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                         <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Zm0 16H5l4-5 2.5 3L15 12l4 7Z" />
+                      </svg>
+                    </ControlButton>
+                    {/* Delete the selection — a touch-reachable stand-in for the
+                        Delete/Backspace key, which touch devices lack (issue #165). */}
+                    <ControlButton
+                      onClick={deleteSelected}
+                      disabled={selectedIds.length === 0}
+                      title="Delete selected nodes"
+                      aria-label="Delete selected nodes"
+                    >
+                      {/* Trashcan glyph; React Flow sizes the svg to the control button. */}
+                      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-3 6h12l-1 11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 9Zm4 2v8h2v-8h-2Zm4 0v8h2v-8h-2Z" />
                       </svg>
                     </ControlButton>
                   </Controls>
