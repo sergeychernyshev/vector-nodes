@@ -43,10 +43,13 @@ describe('rewireForAltDrag (issue #98)', () => {
   ];
   const result = rewireForAltDrag(edges, 'A', 'B', (e) => `${e.id}__B`);
 
-  it("moves the dragged node's outputs to the clone", () => {
-    const out = result.find((e) => e.id === 'out')!;
+  it("moves the dragged node's outputs to the clone, re-id'd to free the original id", () => {
+    const out = result.find((e) => e.id === 'out__B')!;
     expect(out.source).toBe('B');
     expect(out.target).toBe('dst');
+    // The original output-edge id is freed so reconnecting the dragged node to
+    // the same target later isn't dropped as a duplicate (issue #98 follow-up).
+    expect(result.find((e) => e.id === 'out')).toBeUndefined();
   });
 
   it("duplicates the dragged node's inputs into the clone, keeping the original", () => {

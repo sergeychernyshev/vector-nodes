@@ -34,8 +34,10 @@ export function cloneFlowNode(node: VNodeFlowNode, id: string): VNodeFlowNode {
  *
  * The dragged node thus keeps only its inputs — a copy wired to the same
  * sources, with no outputs — while the clone left at the origin is unchanged
- * from how the node was before the drag. `edgeId` mints a unique id per
- * duplicated input edge.
+ * from how the node was before the drag. `edgeId` mints a unique id per moved or
+ * duplicated edge; re-id'ing the moved output edges frees their original id so
+ * reconnecting the dragged node to the same target afterward isn't dropped as a
+ * duplicate (an output edge's id is derived from its old source).
  */
 export function rewireForAltDrag(
   edges: Edge[],
@@ -45,7 +47,7 @@ export function rewireForAltDrag(
 ): Edge[] {
   const next: Edge[] = [];
   for (const edge of edges) {
-    next.push(edge.source === draggedId ? { ...edge, source: cloneId } : edge);
+    next.push(edge.source === draggedId ? { ...edge, id: edgeId(edge), source: cloneId } : edge);
     if (edge.target === draggedId) {
       next.push({ ...edge, id: edgeId(edge), target: cloneId });
     }
