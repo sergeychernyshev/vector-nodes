@@ -4,6 +4,7 @@ import {
   arcPoints,
   circlePoints,
   cubicBezier,
+  fillSpiralCurve,
   filletCurve,
   fromList,
   gridPoints,
@@ -272,6 +273,95 @@ describe('spiralPoints', () => {
 
   it('stays flat when height is 0', () => {
     for (const p of spiralPoints(2, 0.5, 1, 0, 16)) expect(p[2]).toBe(0);
+  });
+});
+
+describe('fillSpiralCurve', () => {
+  /** Total length of an open polyline. */
+  const polylineLength = (pts: readonly [number, number, number][]) =>
+    pts.reduce((sum, p, i) => (i === 0 ? 0 : sum + Math.hypot(...sub(p, pts[i - 1]!))), 0);
+
+  const sub = (a: readonly number[], b: readonly number[]) =>
+    [a[0]! - b[0]!, a[1]! - b[1]!, a[2]! - b[2]!] as [number, number, number];
+
+  // A square container 4 wide, centered on the origin: corner radius ≈ 2.83.
+  const container = { points: rectanglePoints(4, 4), curves: [], meshes: [] };
+
+  it('starts at the center, winds CCW from the start angle, and is open', () => {
+    const curve = fillSpiralCurve(container, [0, 0, 0], 0, 30, 32);
+    expect(curve.closed).toBe(false);
+    expect(curve.points[0]).toEqual([0, 0, 0]);
+    // Polar angle is startAngle + θ, so the first step leaves the center just
+    // counter-clockwise of the start angle (0) — first quadrant.
+    const heading = Math.atan2(curve.points[1]![1], curve.points[1]![0]);
+    expect(heading).toBeGreaterThan(0);
+    expect(heading).toBeLessThan(Math.PI / 2);
+  });
+
+  it('honors a non-zero start point and start angle', () => {
+    const curve = fillSpiralCurve(container, [1, 2, 0], Math.PI / 2, 30, 32);
+    expect(curve.points[0]).toEqual([1, 2, 0]);
+    const second = curve.points[1]!;
+    // Heads upward (+y) from the start point, winding CCW past angle π/2.
+    expect(second[1]).toBeGreaterThan(2);
+    const heading = Math.atan2(second[1] - 2, second[0] - 1);
+    expect(heading).toBeGreaterThan(Math.PI / 2);
+    expect(heading).toBeLessThan(Math.PI);
+  });
+
+  it('matches the requested total arc length', () => {
+    const curve = fillSpiralCurve(container, [0, 0, 0], 0, 40, 256);
+    expect(polylineLength(curve.points)).toBeCloseTo(40, 0);
+  });
+
+  it('grows to fill the container (outermost point reaches the far corner)', () => {
+    const curve = fillSpiralCurve(container, [0, 0, 0], 0, 60, 256);
+    const cornerRadius = Math.hypot(2, 2);
+    const maxR = Math.max(...curve.points.map((p) => Math.hypot(p[0], p[1])));
+    expect(maxR).toBeCloseTo(cornerRadius, 1);
+  });
+
+  it('packs more turns as the length grows', () => {
+    const turns = (length: number) => {
+      const pts = fillSpiralCurve(container, [0, 0, 0], 0, length, 256).points;
+      // Count direction sign changes in x as a proxy for half-turns.
+      let crossings = 0;
+      for (let i = 2; i < pts.length; i++) {
+        if (Math.sign(pts[i]![0]) !== Math.sign(pts[i - 1]![0])) crossings++;
+      }
+      return crossings;
+    };
+    expect(turns(80)).toBeGreaterThan(turns(20));
+  });
+
+  it('draws a straight radial spoke when the length is too short to fill', () => {
+    // Corner radius ≈ 2.83; length 1 cannot reach the edge.
+    const curve = fillSpiralCurve(container, [0, 0, 0], 0, 1, 32);
+    expect(curve.points).toHaveLength(2);
+    expect(curve.points[0]).toEqual([0, 0, 0]);
+    expect(polylineLength(curve.points)).toBeCloseTo(1, 9);
+  });
+
+  it('runs center-out when fromCenter is true', () => {
+    const curve = fillSpiralCurve(container, [0, 0, 0], 0, 40, 48, true);
+    expect(curve.points[0]).toEqual([0, 0, 0]);
+    // The far end sits out at the container edge.
+    expect(Math.hypot(...curve.points.at(-1)!)).toBeGreaterThan(2);
+  });
+
+  it('runs end-in when fromCenter is false (ends at the center)', () => {
+    const outward = fillSpiralCurve(container, [0, 0, 0], 0, 40, 48, true).points;
+    const inward = fillSpiralCurve(container, [0, 0, 0], 0, 40, 48, false).points;
+    // Same curve, reversed: starts at the outer edge and ends at the center.
+    expect(inward).toEqual([...outward].reverse());
+    expect(inward.at(-1)).toEqual([0, 0, 0]);
+    expect(Math.hypot(inward[0]![0], inward[0]![1])).toBeGreaterThan(2);
+  });
+
+  it('degenerates to the center for an empty container or non-positive length', () => {
+    const empty = { points: [], curves: [], meshes: [] };
+    expect(fillSpiralCurve(empty, [3, 1, 0], 0, 10, 32).points).toEqual([[3, 1, 0]]);
+    expect(fillSpiralCurve(container, [0, 0, 0], 0, 0, 32).points).toEqual([[0, 0, 0]]);
   });
 });
 

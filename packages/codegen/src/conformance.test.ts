@@ -361,6 +361,27 @@ describe('conformance: Phase 7 nodes', () => {
     expect(runCompiled(g, [])).toEqual(interpret(g));
   });
 
+  it('SpiralFill grows to fill a container', () => {
+    const g = geoGraph(
+      [
+        { id: 'box', type: 'RectangleCurve', params: { width: 4, height: 4 } },
+        {
+          id: 'sp',
+          type: 'SpiralFill',
+          inputDefaults: { start: [0, 0, 0], angle: 0, length: 40, resolution: 48 },
+        },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      [
+        { from: ['box', 'geometry'], to: ['sp', 'container'] },
+        { from: ['sp', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    );
+    const result = runCompiled(g, []) as { curves: { points: unknown[] }[] };
+    expect(result).toEqual(interpret(g));
+    expect(result.curves[0]!.points.length).toBeGreaterThan(2);
+  });
+
   it('CircleCurve', () => {
     const g = geoGraph(
       [

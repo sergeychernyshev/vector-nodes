@@ -274,6 +274,93 @@ export function spiralPoints(
   return out;
 }
 
+/**
+ * The sweep angle `θ` (radians) of an Archimedean spiral `r = (radius/θ)·t` that
+ * reaches `radius` with total arc length `arcLength`. Arc length is monotonic in
+ * `θ` from `radius` (a straight spoke, `θ → 0`) upward, so this requires
+ * `arcLength > radius` and solves by bisection.
+ */
+function spiralAngleForLength(radius: number, arcLength: number): number {
+  // L(θ) = (radius/2)·(√(1+θ²) + asinh(θ)/θ): the curve length when the pitch is
+  // fit so radius is reached at θ. L(0⁺) = radius and L increases without bound.
+  const lengthAt = (theta: number) =>
+    (radius / 2) * (Math.sqrt(1 + theta * theta) + Math.asinh(theta) / theta);
+  let lo = 1e-6;
+  let hi = 1;
+  while (lengthAt(hi) < arcLength) hi *= 2;
+  for (let i = 0; i < 80; i++) {
+    const mid = (lo + hi) / 2;
+    if (lengthAt(mid) < arcLength) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+/** The farthest distance from `from` to any point referenced by `geo` (0 if none). */
+function maxRadiusFrom(geo: Geometry, from: Vector): number {
+  let max = 0;
+  for (const p of allPoints(geo)) {
+    const d = distance(from, p);
+    if (d > max) max = d;
+  }
+  return max;
+}
+
+/**
+ * An open Archimedean spiral that fills a container. The spiral is anchored at
+ * `center`, begins at polar angle `startAngle`, and winds counter-clockwise
+ * outward. Its coil spacing (pitch) is fit automatically so the outermost coil
+ * reaches the farthest point of `container` from `center` — so the spiral spans
+ * (fills) the container — while the curve's total arc length equals `arcLength`.
+ * A longer `arcLength` packs more, tighter coils into the same region; a shorter
+ * one draws fewer, looser coils. `resolution` is the number of sampled points
+ * per full turn (`< 1` treated as 1).
+ *
+ * `fromCenter` sets the curve's direction: `true` (the default sense) runs from
+ * `center` outward to the container edge; `false` reverses the points so the
+ * curve runs from the outer edge inward, ending at `center`.
+ *
+ * Degenerate cases return a short open curve: an empty or zero-extent container,
+ * or `arcLength <= 0`, yields just `center`; an `arcLength` too small to reach
+ * the container edge (`<= radius`) yields a straight radial spoke of that length.
+ */
+export function fillSpiralCurve(
+  container: Geometry,
+  center: Vector,
+  startAngle: number,
+  arcLength: number,
+  resolution: number,
+  fromCenter = true,
+): Curve {
+  const radius = maxRadiusFrom(container, center);
+  const points: Point[] = [[center[0], center[1], center[2]]];
+  if (radius > 0 && arcLength > 0) {
+    if (arcLength <= radius) {
+      // Too short to spiral out to the edge: a straight radial spoke at startAngle.
+      points.push([
+        center[0] + arcLength * Math.cos(startAngle),
+        center[1] + arcLength * Math.sin(startAngle),
+        center[2],
+      ]);
+    } else {
+      const thetaMax = spiralAngleForLength(radius, arcLength);
+      const b = radius / thetaMax;
+      const res = resolution < 1 ? 1 : Math.floor(resolution);
+      const turns = thetaMax / (2 * Math.PI);
+      const count = Math.max(2, Math.ceil(res * turns) + 1);
+      points.length = 0;
+      for (let i = 0; i < count; i++) {
+        const theta = (thetaMax * i) / (count - 1);
+        const r = b * theta;
+        const ang = startAngle + theta;
+        points.push([center[0] + r * Math.cos(ang), center[1] + r * Math.sin(ang), center[2]]);
+      }
+    }
+  }
+  // `fromCenter === false` runs the curve from the outer edge inward to center.
+  return { points: fromCenter ? points : points.reverse(), closed: false };
+}
+
 /** The four corners of a `width × height` rectangle centered on the origin. */
 export function rectanglePoints(width: number, height: number): Point[] {
   const w = width / 2;

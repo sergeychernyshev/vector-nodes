@@ -1,9 +1,11 @@
 /**
- * The eight socket types of the Vector Nodes type system.
+ * The socket types of the Vector Nodes type system.
  *
  * A single internal `Vector` type represents both points and directions (2D is a
- * `Vector` with `z = 0`); there is no separate `Point` type. See the README's
- * "type system" section for the full rationale.
+ * `Vector` with `z = 0`); there is no separate `Point` type. `Angle` is a scalar
+ * measured in **radians** at runtime (the editor scrubs it in degrees); plain
+ * numbers convert to it implicitly. See the README's "type system" section for
+ * the full rationale.
  */
 export const SOCKET_TYPES = [
   'Float',
@@ -14,6 +16,7 @@ export const SOCKET_TYPES = [
   'String',
   'Geometry',
   'Matrix',
+  'Angle',
 ] as const;
 
 /** Union of every valid socket type. */

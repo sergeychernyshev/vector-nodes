@@ -16,6 +16,7 @@ import {
   divideAxes,
   dot,
   fillCurves,
+  fillSpiralCurve,
   filletCurve,
   fromList,
   gridMesh,
@@ -246,6 +247,21 @@ const rectangleCurveNode: NodeEvaluator = ({ inputs }) => ({
   ),
 });
 
+// A spiral whose pitch is fit to fill the container geometry, given a start
+// point, start angle, and total arc length.
+const spiralFillNode: NodeEvaluator = ({ inputs }) => ({
+  geometry: curveGeometry(
+    fillSpiralCurve(
+      inputs.container as Geometry,
+      inputs.start as Vector,
+      inputs.angle as number,
+      inputs.length as number,
+      inputs.resolution as number,
+      inputs.fromCenter as boolean,
+    ),
+  ),
+});
+
 // Curve sampling ops (issue #115): per-curve rewrites; points/meshes pass through.
 const resampleCurveNode: NodeEvaluator = ({ inputs }) => ({
   geometry: mapCurves(inputs.geometry as Geometry, (c) => resampleCurve(c, inputs.count as number)),
@@ -468,6 +484,7 @@ export const BASIC_OPERATORS: OperatorTable = {
   StarCurve: starCurveNode,
   ArcCurve: arcCurveNode,
   SpiralCurve: spiralCurveNode,
+  SpiralFill: spiralFillNode,
   RectangleCurve: rectangleCurveNode,
   QuadraticBezier: quadraticBezierNode,
   ResampleCurve: resampleCurveNode,

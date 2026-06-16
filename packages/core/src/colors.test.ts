@@ -14,6 +14,7 @@ describe('SOCKET_COLORS', () => {
       String: '#70B3FF',
       Geometry: '#00D6A3',
       Matrix: '#ED9E5C',
+      Angle: '#C77DBB',
     });
   });
 

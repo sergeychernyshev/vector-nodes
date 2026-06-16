@@ -279,6 +279,29 @@ describe('curve primitives (issue #114)', () => {
     expect(curve.points.at(-1)![2]).toBeCloseTo(3, 9);
   });
 
+  it('SpiralFill winds an open curve from the start point to fill the container', () => {
+    const container: Geometry = {
+      points: [
+        [-2, -2, 0],
+        [2, -2, 0],
+        [2, 2, 0],
+        [-2, 2, 0],
+      ],
+      curves: [],
+      meshes: [],
+    };
+    const curve = curveOf(
+      run('SpiralFill', {
+        inputs: { container, start: [0, 0, 0], angle: 0, length: 40, resolution: 48 },
+      }),
+    );
+    expect(curve.closed).toBe(false);
+    expect(curve.points[0]).toEqual([0, 0, 0]);
+    // The outermost coil reaches the far corner (radius ≈ 2.83).
+    const maxR = Math.max(...curve.points.map((p) => Math.hypot(p[0], p[1])));
+    expect(maxR).toBeCloseTo(Math.hypot(2, 2), 1);
+  });
+
   it('RectangleCurve builds a closed quad', () => {
     const curve = curveOf(run('RectangleCurve', { inputs: { width: 2, height: 1 } }));
     expect(curve.closed).toBe(true);

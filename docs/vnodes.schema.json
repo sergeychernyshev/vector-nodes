@@ -51,7 +51,17 @@
   "$defs": {
     "socketType": {
       "type": "string",
-      "enum": ["Float", "Integer", "Boolean", "Vector", "Color", "String", "Geometry", "Matrix"],
+      "enum": [
+        "Float",
+        "Integer",
+        "Boolean",
+        "Vector",
+        "Color",
+        "String",
+        "Geometry",
+        "Matrix",
+        "Angle"
+      ],
       "description": "Socket data type. Drives color-coding and link type-checking."
     },
     "parameter": {
