@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react';
 
-import { filterPalette, type PaletteItem } from './flow';
+import { filterPalette, type FlowNodeData, type PaletteItem } from './flow';
 import { SidebarIcon } from './SidebarIcon';
+import { NodeIcon } from './VNode';
 
 export interface PaletteProps {
   items: PaletteItem[];
   onAdd: (type: string) => void;
+  /** Default node data per type, for the per-entry icon (issue #142). */
+  nodeData?: ReadonlyMap<string, FlowNodeData>;
   /** Node types that cannot currently be added (rendered disabled). */
   disabledTypes?: ReadonlySet<string>;
   /** Node type currently armed for placement (rendered highlighted). */
@@ -22,6 +25,7 @@ export interface PaletteProps {
 export function Palette({
   items,
   onAdd,
+  nodeData,
   disabledTypes,
   armedType,
   collapsed,
@@ -77,6 +81,7 @@ export function Palette({
         {filtered.map((item) => {
           const disabled = disabledTypes?.has(item.type) ?? false;
           const armed = item.type === armedType;
+          const data = nodeData?.get(item.type);
           return (
             <li key={item.type}>
               <button
@@ -86,6 +91,7 @@ export function Palette({
                 onClick={() => onAdd(item.type)}
                 disabled={disabled}
               >
+                {data && <NodeIcon data={data} />}
                 <span className="palette__item-label">{item.label}</span>
                 <span className="palette__item-category">{item.category}</span>
               </button>

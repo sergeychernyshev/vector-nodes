@@ -7,6 +7,10 @@ export interface SvgViewProps {
   geometry: Geometry;
   /** Fraction of the extent left as a margin around the geometry (default 0.1). */
   padding?: number;
+  /** Override color for every element, ignoring per-kind/per-element colors (e.g. a monochrome icon). */
+  tint?: string;
+  /** Multiplier on stroke width and point size, to read at small sizes (default 1). */
+  weight?: number;
 }
 
 const COLORS = {
@@ -54,18 +58,21 @@ function pointsAttr(points: readonly Point2[]): string {
  * mesh faces, curve outlines, and points. The Y axis is flipped so positive Y
  * points up, matching the 3D view's drawing plane.
  */
-export function SvgView({ geometry, padding = 0.1 }: SvgViewProps) {
+export function SvgView({ geometry, padding = 0.1, tint, weight = 1 }: SvgViewProps) {
   const scene = useMemo(() => buildSvgScene(geometry), [geometry]);
   const bounds = padBounds(scene.bounds, padding);
   const width = bounds.maxX - bounds.minX;
   const height = bounds.maxY - bounds.minY;
   const extent = Math.max(width, height) || 1;
-  const strokeWidth = extent * 0.006;
-  const pointRadius = extent * 0.012;
+  const strokeWidth = extent * 0.006 * weight;
+  const pointRadius = extent * 0.012 * weight;
   // Flip Y for display (SVG y grows downward; we want y-up).
   const flip = `scale(1,-1) translate(0,${-(bounds.minY + bounds.maxY)})`;
-  // Per-element colors (issues #80, #85), falling back to the per-kind defaults.
-  const groups = pointGroups(scene.points, scene.pointColors);
+  // Per-element colors (issues #80, #85), falling back to the per-kind defaults —
+  // unless `tint` overrides everything to a single color (a monochrome icon).
+  const groups = tint
+    ? [{ color: tint, points: scene.points }]
+    : pointGroups(scene.points, scene.pointColors);
 
   return (
     <svg
@@ -76,7 +83,7 @@ export function SvgView({ geometry, padding = 0.1 }: SvgViewProps) {
     >
       <g transform={flip}>
         {scene.polygons.map((polygon, i) => {
-          const color = colorCss(polygon.color, COLORS.mesh);
+          const color = tint ?? colorCss(polygon.color, COLORS.mesh);
           return (
             <polygon
               key={`m${i}`}
@@ -89,7 +96,7 @@ export function SvgView({ geometry, padding = 0.1 }: SvgViewProps) {
           );
         })}
         {scene.curves.map((curve, i) => {
-          const color = colorCss(curve.color, COLORS.curve);
+          const color = tint ?? colorCss(curve.color, COLORS.curve);
           return curve.closed ? (
             <polygon
               key={`c${i}`}

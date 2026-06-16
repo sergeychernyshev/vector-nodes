@@ -92,4 +92,62 @@ describe('SvgView', () => {
     // Bounds 0..10 padded by 10% of extent (1) → -1..11 → 12 wide/tall.
     expect(getByTestId('preview-svg').getAttribute('viewBox')).toBe('-1 -1 12 12');
   });
+
+  it('tints every element a single color, ignoring per-element colors (issue #142)', () => {
+    const { container } = render(
+      <SvgView
+        tint="#fff"
+        geometry={geometry({
+          points: [[0, 0, 0]],
+          curves: [
+            {
+              points: [
+                [0, 0, 0],
+                [1, 0, 0],
+              ],
+              closed: false,
+              color: [1, 0, 0, 1],
+            },
+          ],
+          meshes: [
+            {
+              positions: [
+                [0, 0, 0],
+                [1, 0, 0],
+                [0, 1, 0],
+              ],
+              faces: [[0, 1, 2]],
+            },
+          ],
+        })}
+      />,
+    );
+    expect(container.querySelector('path.svg-points')?.getAttribute('stroke')).toBe('#fff');
+    // The curve's own red color is overridden by the tint.
+    expect(container.querySelector('polyline')?.getAttribute('stroke')).toBe('#fff');
+    expect(container.querySelector('polygon')?.getAttribute('fill')).toBe('#fff');
+  });
+
+  it('scales stroke width and point size by weight (issue #142)', () => {
+    const geo = geometry({
+      points: [[0, 0, 0]],
+      curves: [
+        {
+          points: [
+            [0, 0, 0],
+            [10, 0, 0],
+          ],
+          closed: false,
+        },
+      ],
+    });
+    const strokeOf = (weight: number) => {
+      const { container } = render(<SvgView geometry={geo} weight={weight} />);
+      const w = Number(container.querySelector('polyline')!.getAttribute('stroke-width'));
+      cleanup();
+      return w;
+    };
+    // weight 4 → 4× the default stroke width.
+    expect(strokeOf(4)).toBeCloseTo(strokeOf(1) * 4, 6);
+  });
 });

@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
+import { createBasicRegistry } from '@vector-nodes/core';
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { Palette } from './Palette';
-import type { PaletteItem } from './flow';
+import { createFlowNode, type FlowNodeData, type PaletteItem } from './flow';
 
 afterEach(cleanup);
 
@@ -67,5 +68,21 @@ describe('Palette', () => {
     );
     fireEvent.click(getByLabelText('Hide node list'));
     expect(onToggle).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders a node icon per item when node data is supplied (issue #142)', () => {
+    const registry = createBasicRegistry();
+    const nodeData = new Map<string, FlowNodeData>([
+      ['PointCircle', createFlowNode(registry.require('PointCircle'), { x: 0, y: 0 }, 'p').data],
+      ['VectorMath', createFlowNode(registry.require('VectorMath'), { x: 0, y: 0 }, 'v').data],
+    ]);
+    const { getByText } = render(<Palette items={items} onAdd={vi.fn()} nodeData={nodeData} />);
+    // The geometry node shows a 2D render icon; the non-geometry node a badge.
+    expect(
+      getByText('Point Circle').closest('button')!.querySelector('.vnode__icon--geo'),
+    ).not.toBeNull();
+    expect(
+      getByText('Vector Math').closest('button')!.querySelector('.vnode__icon'),
+    ).not.toBeNull();
   });
 });

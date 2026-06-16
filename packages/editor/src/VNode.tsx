@@ -1,5 +1,5 @@
 import { Handle, Position, useNodeConnections, useViewport, type NodeProps } from '@xyflow/react';
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 
 import {
   socketClassName,
@@ -8,6 +8,7 @@ import {
   type FlowSocket,
   type VNodeFlowNode,
 } from './flow';
+import { colorToCss, nodeDefaultGeometry, nodeIcon } from './node-icon';
 import { useNodePreview } from './NodePreviewContext';
 import {
   InputDefaultField,
@@ -16,6 +17,32 @@ import {
   ParamControls,
 } from './ParamControls';
 import { SvgView } from './SvgView';
+
+/**
+ * Square icon shown to the left of a node's title (issue #142): for nodes that
+ * produce geometry, a 2D render of their output with default values; otherwise a
+ * value swatch/number or the label's initial.
+ */
+export function NodeIcon({ data }: { data: FlowNodeData }) {
+  const geometry = useMemo(() => nodeDefaultGeometry(data), [data]);
+  if (geometry) {
+    return (
+      <span className="vnode__icon vnode__icon--geo" aria-hidden="true">
+        <SvgView geometry={geometry} tint="#fff" weight={8} padding={0.12} />
+      </span>
+    );
+  }
+  const icon = nodeIcon(data);
+  return (
+    <span className="vnode__icon" aria-hidden="true">
+      {icon.kind === 'color' ? (
+        <span className="vnode__icon-swatch" style={{ background: colorToCss(icon.rgba) }} />
+      ) : (
+        <span className="vnode__icon-text">{icon.text}</span>
+      )}
+    </span>
+  );
+}
 
 /** A node is previewable (issue #79) when it emits a Geometry output. */
 export function isPreviewable(data: FlowNodeData): boolean {
@@ -106,6 +133,7 @@ function NodeCard({ id, data, selected, ghost, connectedInputs }: NodeCardProps)
       )}
       <div className={classes.join(' ')}>
         <div className="vnode__header">
+          <NodeIcon data={data} />
           <span className="vnode__title">{data.label}</span>
           {previewable && (
             <button
