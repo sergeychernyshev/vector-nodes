@@ -26,6 +26,7 @@ import {
 } from '@xyflow/react';
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 
+import { autoConnectCandidate } from './auto-connect';
 import { checkConnection, edgesWithoutInput, type ConnectionLike } from './connection';
 import { ConnectMenu } from './ConnectMenu';
 import { constantSeedValue } from './constant-seed';
@@ -151,6 +152,11 @@ export function App() {
   // the node is dropped on the next canvas click. `ghost` is its screen position.
   const [pending, setPending] = useState<string | null>(null);
   const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
+  // Live auto-connect preview while a node is dragged next to a compatible
+  // neighbor (issue #137): an overlay edge shown during the drag and committed
+  // when the node is dropped.
+  const [autoEdge, setAutoEdge] = useState<Edge | null>(null);
+  const pendingAutoConnect = useRef<Connection | null>(null);
   // A connection dragged off an input and dropped on empty space (issue #45):
   // open a node menu filtered to compatible sources, then wire the chosen node.
   const [connectMenu, setConnectMenu] = useState<{
@@ -179,6 +185,9 @@ export function App() {
 
   // The current network as a core graph (meta-nodes included), recomputed on change.
   const graph = useMemo(() => currentGraph(nodes, edges, metaNodes), [nodes, edges, metaNodes]);
+
+  // Edges shown on the canvas, plus the transient auto-connect preview (issue #137).
+  const displayEdges = useMemo(() => (autoEdge ? [...edges, autoEdge] : edges), [edges, autoEdge]);
 
   // Undo/redo over snapshots of the editor state. Handlers call takeSnapshot()
   // before a mutating action; undo/redo restore a snapshot wholesale.
@@ -553,6 +562,54 @@ export function App() {
     [takeSnapshot, setNodes, setEdges],
   );
 
+  // While a node is dragged, preview a connection to a compatible adjacent
+  // neighbor (issue #137). The candidate is held in a ref and overlaid as a
+  // dashed edge; it isn't committed to state until the drag ends. Stable handler:
+  // reads node state through refs and only updates when the candidate changes.
+  const onNodeDrag = useCallback((_: MouseEvent | TouchEvent, node: VNodeFlowNode) => {
+    const conn = autoConnectCandidate(node, nodesRef.current, edgesRef.current);
+    pendingAutoConnect.current = conn;
+    setAutoEdge((prev) => {
+      if (!conn) return prev === null ? prev : null;
+      if (
+        prev &&
+        prev.source === conn.source &&
+        prev.sourceHandle === conn.sourceHandle &&
+        prev.target === conn.target &&
+        prev.targetHandle === conn.targetHandle
+      ) {
+        return prev;
+      }
+      return {
+        id: '__auto-connect',
+        source: conn.source!,
+        sourceHandle: conn.sourceHandle,
+        target: conn.target!,
+        targetHandle: conn.targetHandle,
+        className: 'auto-connect-edge',
+        animated: true,
+        selectable: false,
+        deletable: false,
+      };
+    });
+  }, []);
+
+  // On drop, commit the previewed auto-connection (issue #137). The drag's own
+  // start snapshot already covers this gesture, so no extra snapshot is taken.
+  const onNodeDragStop = useCallback(() => {
+    const conn = pendingAutoConnect.current;
+    pendingAutoConnect.current = null;
+    setAutoEdge(null);
+    if (!conn) return;
+    const input = nodesRef.current
+      .find((n) => n.id === conn.target)
+      ?.data.inputs.find((s) => s.name === conn.targetHandle);
+    setEdges((eds) =>
+      addEdge(conn, input?.isArray ? eds : edgesWithoutInput(eds, conn.target, conn.targetHandle)),
+    );
+    clearError();
+  }, [setEdges, clearError]);
+
   // Dropping a connection dragged into empty space opens a node menu filtered to
   // the dragged handle: off an input, sources whose output matches it (issue
   // #45); off an output, targets whose input accepts it (issue #148).
@@ -814,12 +871,14 @@ export function App() {
             >
               <ReactFlow
                 nodes={nodes}
-                edges={edges}
+                edges={displayEdges}
                 nodeTypes={nodeTypes}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onNodesDelete={onNodesDelete}
                 onNodeDragStart={onNodeDragStart}
+                onNodeDrag={onNodeDrag}
+                onNodeDragStop={onNodeDragStop}
                 onSelectionDragStart={onDragStart}
                 onConnect={onConnect}
                 onConnectStart={onConnectStart}
