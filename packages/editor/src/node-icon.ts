@@ -1,6 +1,32 @@
-import type { Color } from '@vector-nodes/runtime';
+import { createGraph } from '@vector-nodes/core';
+import type { Color, Geometry } from '@vector-nodes/runtime';
 
 import type { FlowNodeData } from './flow';
+import { evaluatePreview } from './preview';
+
+/**
+ * The geometry a geometry-producing node yields from its current (default)
+ * params/inputs, for the 2D render shown as its icon (issue #142). Builds a
+ * one-node graph and evaluates it. Returns `null` for nodes that emit no
+ * geometry, when evaluation fails (e.g. an input with no default), or when the
+ * result is empty — callers fall back to the value/label badge.
+ */
+export function nodeDefaultGeometry(data: FlowNodeData): Geometry | null {
+  const geomOut = data.outputs.find((s) => s.type === 'Geometry' && !s.isArray);
+  if (!geomOut) return null;
+  const graph = createGraph({
+    nodes: [
+      { id: 'g', type: data.nodeType, params: data.params, inputDefaults: data.inputDefaults },
+      { id: 'out', type: 'OutputGeometry' },
+    ],
+    links: [{ from: ['g', geomOut.name], to: ['out', 'geometry'] }],
+  });
+  const geo = evaluatePreview(graph).geometry;
+  if (!geo || (geo.points.length === 0 && geo.curves.length === 0 && geo.meshes.length === 0)) {
+    return null;
+  }
+  return geo;
+}
 
 /**
  * A compact icon shown in a square frame to the left of a node's title (issue

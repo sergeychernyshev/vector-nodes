@@ -1,5 +1,5 @@
 import { Handle, Position, useNodeConnections, useViewport, type NodeProps } from '@xyflow/react';
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 
 import {
   socketClassName,
@@ -8,7 +8,7 @@ import {
   type FlowSocket,
   type VNodeFlowNode,
 } from './flow';
-import { colorToCss, nodeIcon } from './node-icon';
+import { colorToCss, nodeDefaultGeometry, nodeIcon } from './node-icon';
 import { useNodePreview } from './NodePreviewContext';
 import {
   InputDefaultField,
@@ -18,8 +18,20 @@ import {
 } from './ParamControls';
 import { SvgView } from './SvgView';
 
-/** Square value-icon shown to the left of a node's title (issue #142). */
+/**
+ * Square icon shown to the left of a node's title (issue #142): for nodes that
+ * produce geometry, a 2D render of their output with default values; otherwise a
+ * value swatch/number or the label's initial.
+ */
 function NodeIcon({ data }: { data: FlowNodeData }) {
+  const geometry = useMemo(() => nodeDefaultGeometry(data), [data]);
+  if (geometry) {
+    return (
+      <span className="vnode__icon vnode__icon--geo" aria-hidden="true">
+        <SvgView geometry={geometry} />
+      </span>
+    );
+  }
   const icon = nodeIcon(data);
   return (
     <span className="vnode__icon" aria-hidden="true">

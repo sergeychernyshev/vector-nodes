@@ -2,7 +2,7 @@ import { createBasicRegistry } from '@vector-nodes/core';
 import { describe, expect, it } from 'vitest';
 
 import { createFlowNode } from './flow';
-import { colorToCss, nodeIcon } from './node-icon';
+import { colorToCss, nodeDefaultGeometry, nodeIcon } from './node-icon';
 
 const registry = createBasicRegistry();
 const dataFor = (type: string, params?: Record<string, unknown>) => {
@@ -40,6 +40,23 @@ describe('nodeIcon (issue #142)', () => {
   it('falls back to the label initial for nodes without a value', () => {
     // PointCircle has no `value` param → its label initial.
     expect(nodeIcon(dataFor('PointCircle'))).toEqual({ kind: 'text', text: 'P' });
+  });
+});
+
+describe('nodeDefaultGeometry (issue #142)', () => {
+  it('evaluates a geometry node from its defaults for the icon render', () => {
+    const geo = nodeDefaultGeometry(dataFor('PointCircle', { radius: 1, count: 6 }));
+    expect(geo?.points).toHaveLength(6);
+  });
+
+  it('returns null for nodes that produce no geometry', () => {
+    expect(nodeDefaultGeometry(dataFor('ConstFloat', { value: 3 }))).toBeNull();
+    expect(nodeDefaultGeometry(dataFor('MathFloat'))).toBeNull();
+  });
+
+  it('returns null when a geometry node cannot evaluate from defaults', () => {
+    // Translate has no default geometry input, so evaluating it standalone fails.
+    expect(nodeDefaultGeometry(dataFor('Translate'))).toBeNull();
   });
 });
 

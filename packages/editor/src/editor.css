@@ -116,6 +116,12 @@ body {
 .vnode__icon-text {
   font-weight: 600;
 }
+/* Geometry nodes render their default output as the icon (issue #142); the SVG
+   fills the square frame (it positions itself absolutely). */
+.vnode__icon--geo {
+  position: relative;
+  background: #1e1e1e;
+}
 
 /* Per-node preview box and its show/hide toggle (issue #79). */
 .vnode__preview-toggle {
