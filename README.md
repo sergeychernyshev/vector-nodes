@@ -169,9 +169,16 @@ Conventions carried over from Blender:
 - **Distribute Points** — on a curve or surface
 - **Capture / Store Attribute**, **Named Attribute**
 
+### Math & Trig
+
+- One node per operation: **Add**, **Subtract**, **Multiply**, **Divide**, **Modulo**, **Minimum**, **Maximum**, **Power** (`base`/`exponent`)
+- Trig (single `angle`): **Sine**, **Cosine**, **Tangent**, **Arctangent2** (`y`/`x`)
+- **Square Root**, **Absolute**, **Floor**, **Ceiling**, **Round**, **Natural Log**, **Exponential**, **Sign**, and the **Pi** constant
+- Each node's preview shows its MathML formula and result, e.g. `sine(2.5) = 0.5985`
+
 ### Utility & control flow
 
-- **Math** (scalar), **Map Range**, **Clamp**, **Mix / Lerp**
+- **Map Range**, **Clamp**, **Mix / Lerp**
 - **Compare**, **Switch** (boolean-selected output), **Index**, **Count**
 - **Random Value** (seeded)
 - **For-Each / Repeat** zone (bounded iteration) — stretch goal

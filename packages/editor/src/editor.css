@@ -173,6 +173,17 @@ body {
 .vnode__preview-empty {
   opacity: 0.6;
 }
+/* Math & Trig formula preview (issue #163): a centered MathML equation. */
+.vnode__formula {
+  font-size: 16px;
+  color: #f0f0f0;
+  padding: 0 8px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.vnode__formula mo {
+  margin: 0 0.15em;
+}
 .vnode__body {
   display: flex;
   justify-content: space-between;

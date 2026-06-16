@@ -1,11 +1,13 @@
 import {
   createBasicRegistry,
   createGraph,
+  isMathOpType,
   isMetaNodeType,
   metaNodeName,
   metaNodeType,
   OUTPUT_NODE_TYPE,
   parseVnodes,
+  PI_NODE_TYPE,
   serializeVnodes,
 } from '@vector-nodes/core';
 import {
@@ -510,8 +512,13 @@ export function App() {
       const id = `n${(idCounter.current += 1)}`;
       setNodes((nds) => [...nds, createFlowNode(def, position, id)]);
       // Open the per-node preview by default for geometry-producing nodes (issue
-      // #141), so a freshly placed node shows its output without a manual toggle.
-      if (def.outputs.some((s) => s.type === 'Geometry' && !s.isArray)) {
+      // #141) and Math & Trig nodes (issue #163), so a freshly placed node shows
+      // its output (geometry or formula) without a manual toggle.
+      const previewsByDefault =
+        def.outputs.some((s) => s.type === 'Geometry' && !s.isArray) ||
+        isMathOpType(def.type) ||
+        def.type === PI_NODE_TYPE;
+      if (previewsByDefault) {
         setOpenPreviews((prev) => {
           const next = new Set(prev).add(id);
           saveString('vn:preview-nodes', [...next].join(','));

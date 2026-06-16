@@ -10,6 +10,7 @@ import {
   type VNodeFlowNode,
 } from './flow';
 import { colorToCss, nodeDefaultGeometry, nodeIcon } from './node-icon';
+import { isFormulaPreviewable, MathFormula } from './math-formula';
 import { useClock } from './ClockContext';
 import { useNodePreview } from './NodePreviewContext';
 import {
@@ -114,7 +115,10 @@ function NodeCard({ id, data, selected, ghost, ghostGeometry, connectedInputs }:
   // Per-node preview state (issue #79). The live node reads the shared preview
   // state; the ghost shows the geometry passed in while it's dragged (issue #141).
   const preview = useNodePreview();
-  const previewable = isPreviewable(data);
+  // A node previews either its geometry output (issue #79) or, for Math & Trig
+  // nodes, a MathML formula of its operation and result (issue #163).
+  const formulaPreviewable = !ghost && isFormulaPreviewable(data);
+  const previewable = isPreviewable(data) || formulaPreviewable;
   const previewOpen = ghost ? ghostGeometry !== undefined : previewable && preview.open.has(id);
   const previewGeometry = ghost ? ghostGeometry : preview.geometries[id];
 
@@ -134,7 +138,9 @@ function NodeCard({ id, data, selected, ghost, ghostGeometry, connectedInputs }:
           header (issue #79). */}
       {previewOpen && (
         <div className="vnode__preview nodrag nowheel">
-          {previewGeometry ? (
+          {formulaPreviewable ? (
+            <MathFormula data={data} connectedInputs={preview.inputs[id]} />
+          ) : previewGeometry ? (
             <SvgView geometry={previewGeometry} />
           ) : (
             <span className="vnode__preview-empty">No preview</span>

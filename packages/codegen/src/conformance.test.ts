@@ -158,7 +158,7 @@ describe('conformance: compiled output equals interpreter output', () => {
       nodes: [
         { id: 'one', type: 'ConstFloat', params: { value: 1 } },
         // sine(1) ≈ 0.841 becomes the circle radius.
-        { id: 'sin', type: 'MathFloat', params: { operation: 'sine' } },
+        { id: 'sin', type: 'MathSine' },
         { id: 'pc', type: 'PointCircle', params: { count: 6 } },
         { id: 'x', type: 'ConstVector', params: { value: [1, 0, 0] } },
         { id: 'axis', type: 'ConstVector', params: { value: [0, 0, 1] } },
@@ -169,7 +169,7 @@ describe('conformance: compiled output equals interpreter output', () => {
         { id: 'out', type: 'OutputGeometry' },
       ],
       links: [
-        { from: ['one', 'value'], to: ['sin', 'a'] },
+        { from: ['one', 'value'], to: ['sin', 'angle'] },
         { from: ['sin', 'value'], to: ['pc', 'radius'] },
         { from: ['pc', 'geometry'], to: ['t', 'geometry'] },
         { from: ['x', 'value'], to: ['rot', 'a'] },
@@ -177,6 +177,32 @@ describe('conformance: compiled output equals interpreter output', () => {
         { from: ['quarter', 'value'], to: ['rot', 'scale'] },
         { from: ['rot', 'vector'], to: ['t', 'offset'] },
         { from: ['t', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    });
+    expect(runCompiled(graph, [])).toEqual(interpret(graph));
+  });
+
+  it('split Math & Trig nodes and Pi drive geometry, compiled == interpreted (issue #163)', () => {
+    const graph = createGraph({
+      nodes: [
+        { id: 'pi', type: 'Pi' },
+        { id: 'two', type: 'ConstFloat', params: { value: 2 } },
+        // pi / 2 feeds a sine; pow(value, 2) of that scales the radius — exercises
+        // a unary, a binary infix, and a binary-function (named base/exponent) op.
+        { id: 'half', type: 'MathDivide' },
+        { id: 'sin', type: 'MathSine' },
+        { id: 'sq', type: 'MathPower' },
+        { id: 'pc', type: 'PointCircle', params: { count: 5 } },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [
+        { from: ['pi', 'value'], to: ['half', 'a'] },
+        { from: ['two', 'value'], to: ['half', 'b'] },
+        { from: ['half', 'value'], to: ['sin', 'angle'] },
+        { from: ['sin', 'value'], to: ['sq', 'base'] },
+        { from: ['two', 'value'], to: ['sq', 'exponent'] },
+        { from: ['sq', 'value'], to: ['pc', 'radius'] },
+        { from: ['pc', 'geometry'], to: ['out', 'geometry'] },
       ],
     });
     expect(runCompiled(graph, [])).toEqual(interpret(graph));
@@ -487,8 +513,8 @@ describe('conformance: Phase 7 nodes', () => {
 
   it.each([
     [
-      'MathFloat',
-      { id: 'u', type: 'MathFloat', params: { operation: 'multiply' } },
+      'MathMultiply',
+      { id: 'u', type: 'MathMultiply' },
       [
         ['a', 'a'],
         ['b', 'b'],

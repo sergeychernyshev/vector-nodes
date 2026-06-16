@@ -1,4 +1,4 @@
-import { createGraph } from '@vector-nodes/core';
+import { createGraph, MATH_OP_BY_TYPE, PI_NODE_TYPE } from '@vector-nodes/core';
 import type { Color, Geometry } from '@vector-nodes/runtime';
 
 import type { FlowNodeData } from './flow';
@@ -46,6 +46,19 @@ function formatNumber(value: unknown): string {
 
 /** The icon for a node: its default value rendered small, or its label's initial. */
 export function nodeIcon(data: FlowNodeData): NodeIcon {
+  // Math & Trig nodes (issue #163): the π glyph for the constant, and the
+  // operator/function symbol for each operation.
+  if (data.nodeType === PI_NODE_TYPE) return { kind: 'text', text: 'π' };
+  const mathOp = MATH_OP_BY_TYPE.get(data.nodeType);
+  if (mathOp) {
+    const text =
+      mathOp.notation.kind === 'infix'
+        ? mathOp.notation.symbol
+        : mathOp.notation.kind === 'power'
+          ? 'xⁿ'
+          : mathOp.notation.name;
+    return { kind: 'text', text };
+  }
   // Constant-style nodes carry their value in a `value` param; use its declared
   // type to render the most representative badge.
   const valueDef = data.paramDefs.find((p) => p.name === 'value');

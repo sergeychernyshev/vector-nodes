@@ -51,7 +51,7 @@ describe('nodeDefaultGeometry (issue #142)', () => {
 
   it('returns null for nodes that produce no geometry', () => {
     expect(nodeDefaultGeometry(dataFor('ConstFloat', { value: 3 }))).toBeNull();
-    expect(nodeDefaultGeometry(dataFor('MathFloat'))).toBeNull();
+    expect(nodeDefaultGeometry(dataFor('MathSine'))).toBeNull();
   });
 
   it('returns null when a geometry node cannot evaluate from defaults', () => {

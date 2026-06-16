@@ -1,4 +1,4 @@
-import { PARAMETER_NODE_TYPES } from '@vector-nodes/core';
+import { MATH_OPS, PARAMETER_NODE_TYPES, PI_NODE_TYPE } from '@vector-nodes/core';
 import {
   add,
   arcPoints,
@@ -311,54 +311,18 @@ const instanceOnPointsNode: NodeEvaluator = ({ inputs }) => ({
   geometry: instanceOnPoints(inputs.geometry as Geometry, inputs.points as Vector[]),
 });
 
-const mathFloat: NodeEvaluator = ({ inputs, params }) => {
-  const a = inputs.a as number;
-  const b = inputs.b as number;
-  switch (params.operation as string) {
-    case 'add':
-      return { value: a + b };
-    case 'subtract':
-      return { value: a - b };
-    case 'multiply':
-      return { value: a * b };
-    case 'divide':
-      return { value: a / b };
-    case 'min':
-      return { value: Math.min(a, b) };
-    case 'max':
-      return { value: Math.max(a, b) };
-    case 'power':
-      return { value: Math.pow(a, b) };
-    case 'sine':
-      return { value: Math.sin(a) };
-    case 'cosine':
-      return { value: Math.cos(a) };
-    case 'tangent':
-      return { value: Math.tan(a) };
-    case 'atan2':
-      return { value: Math.atan2(a, b) };
-    case 'sqrt':
-      return { value: Math.sqrt(a) };
-    case 'abs':
-      return { value: Math.abs(a) };
-    case 'floor':
-      return { value: Math.floor(a) };
-    case 'ceil':
-      return { value: Math.ceil(a) };
-    case 'round':
-      return { value: Math.round(a) };
-    case 'modulo':
-      return { value: a % b };
-    case 'log':
-      return { value: Math.log(a) };
-    case 'exp':
-      return { value: Math.exp(a) };
-    case 'sign':
-      return { value: Math.sign(a) };
-    default:
-      throw new Error(`Unknown MathFloat operation "${params.operation}".`);
-  }
-};
+// One evaluator per split math/trig op (issue #163), reading the op's named
+// inputs in order and delegating the arithmetic to the shared MATH_OPS spec.
+const mathOperators: OperatorTable = Object.fromEntries(
+  MATH_OPS.map((op) => [
+    op.type,
+    ({ inputs }) => ({
+      value: op.evaluate(op.inputs.map((input) => inputs[input.name] as number)),
+    }),
+  ]),
+);
+
+const pi: NodeEvaluator = () => ({ value: Math.PI });
 
 // Seeded, composable randomness (issue #119): each output kind draws its own
 // stream from the same seed, so wiring one output doesn't reshuffle another.
@@ -480,7 +444,8 @@ export const BASIC_OPERATORS: OperatorTable = {
   ColorGeometry: colorGeometryNode,
   BoundingBox: boundingBoxNode,
   InstanceOnPoints: instanceOnPointsNode,
-  MathFloat: mathFloat,
+  ...mathOperators,
+  [PI_NODE_TYPE]: pi,
   RandomValue: randomValue,
   MapRange: mapRangeNode,
   Clamp: clampNode,
