@@ -31,13 +31,16 @@ function isGeometry(value: unknown): value is Geometry {
  * Evaluate a graph for the preview pane: returns the output geometry, or an
  * error message when the graph is invalid (e.g. mid-edit) or evaluation throws.
  *
- * `previewIds` requests per-node geometry for those nodes (issue #79); the
- * geometry of each requested node that was actually evaluated (i.e. reachable
- * from the output) is returned in `nodeGeometries`.
+ * `previewIds` requests per-node geometry for those nodes (issue #79). Each
+ * requested node is evaluated even when it is not reachable from the output
+ * (issue #140), so a node being built in isolation still previews; the geometry
+ * of every requested node that produced one is returned in `nodeGeometries`.
  */
 export function evaluatePreview(graph: Graph, previewIds: readonly string[] = []): PreviewResult {
   try {
-    const result = evaluateGraph(graph, registry, BASIC_OPERATORS);
+    // Pass the open preview ids as extra evaluation roots so a node previews
+    // even when it isn't (yet) wired to the output (issue #140).
+    const result = evaluateGraph(graph, registry, BASIC_OPERATORS, {}, previewIds);
     const geometry = (result.output.geometry as Geometry | undefined) ?? emptyGeometry();
     const nodeGeometries: Record<string, Geometry> = {};
     for (const id of previewIds) {

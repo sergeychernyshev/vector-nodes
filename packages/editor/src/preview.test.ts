@@ -66,6 +66,40 @@ describe('evaluatePreview', () => {
     expect(Object.keys(result.nodeGeometries ?? {})).toEqual(['pa']);
   });
 
+  it('previews a node that is not connected to the output (issue #140)', () => {
+    const graph = createGraph({
+      nodes: [
+        { id: 'pa', type: 'PointCircle', params: { radius: 1, count: 8 } },
+        // `loose` feeds nothing — it is not on the path to the output.
+        { id: 'loose', type: 'PointGrid', params: { countX: 2, countY: 3 } },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [{ from: ['pa', 'geometry'], to: ['out', 'geometry'] }],
+    });
+    const result = evaluatePreview(graph, ['loose']);
+    expect(result.error).toBeUndefined();
+    expect(result.nodeGeometries!.loose!.points).toHaveLength(6);
+    // The output still resolves from the connected branch.
+    expect(result.geometry!.points).toHaveLength(8);
+  });
+
+  it('skips a disconnected preview node with unmet inputs without failing (issue #140)', () => {
+    const graph = createGraph({
+      nodes: [
+        { id: 'pa', type: 'PointCircle', params: { radius: 1, count: 4 } },
+        // `t` has no geometry input wired and no default → evaluating it throws.
+        { id: 't', type: 'Translate', inputDefaults: { offset: [1, 0, 0] } },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [{ from: ['pa', 'geometry'], to: ['out', 'geometry'] }],
+    });
+    const result = evaluatePreview(graph, ['pa', 't']);
+    expect(result.error).toBeUndefined();
+    // `pa` still previews; `t` is silently skipped, and the output is unaffected.
+    expect(Object.keys(result.nodeGeometries ?? {})).toEqual(['pa']);
+    expect(result.geometry!.points).toHaveLength(4);
+  });
+
   it('defaults to no per-node geometry when none are requested', () => {
     const graph = createGraph({
       nodes: [
