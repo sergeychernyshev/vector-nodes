@@ -50,6 +50,7 @@ export function evaluateGraph(
   registry: NodeRegistry,
   operators: OperatorTable,
   parameters: Record<string, unknown> = {},
+  previewRoots: readonly string[] = [],
 ): EvaluationResult {
   // Inline any meta-node instances so evaluation matches the expanded network
   // and the base registry/operators suffice (no per-meta-node operator needed).
@@ -145,6 +146,21 @@ export function evaluateGraph(
   // and evaluates the whole upstream subtree.
   const outputDef = registry.require(outputNode.type);
   const output = resolveInputs(outputNode, outputDef);
+
+  // Best-effort: also evaluate nodes whose per-node preview is open even when
+  // they're not reachable from the output (issue #140) — a node being built up
+  // in isolation should still preview. A standalone node with unmet inputs may
+  // throw; that node's preview is skipped without failing the whole run. Reset
+  // the cycle-guard after a failure since a thrown evaluation unwinds without
+  // clearing the ids it marked as visiting.
+  for (const id of previewRoots) {
+    if (!nodeById.has(id) || nodeOutputs.has(id)) continue;
+    try {
+      evaluateNode(id);
+    } catch {
+      visiting.clear();
+    }
+  }
 
   return { output, nodeOutputs };
 }
