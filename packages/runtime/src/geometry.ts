@@ -316,6 +316,10 @@ function maxRadiusFrom(geo: Geometry, from: Vector): number {
  * one draws fewer, looser coils. `resolution` is the number of sampled points
  * per full turn (`< 1` treated as 1).
  *
+ * `fromCenter` sets the curve's direction: `true` (the default sense) runs from
+ * `center` outward to the container edge; `false` reverses the points so the
+ * curve runs from the outer edge inward, ending at `center`.
+ *
  * Degenerate cases return a short open curve: an empty or zero-extent container,
  * or `arcLength <= 0`, yields just `center`; an `arcLength` too small to reach
  * the container edge (`<= radius`) yields a straight radial spoke of that length.
@@ -326,38 +330,35 @@ export function fillSpiralCurve(
   startAngle: number,
   arcLength: number,
   resolution: number,
+  fromCenter = true,
 ): Curve {
   const radius = maxRadiusFrom(container, center);
-  if (radius <= 0 || arcLength <= 0) {
-    return { points: [[center[0], center[1], center[2]]], closed: false };
+  const points: Point[] = [[center[0], center[1], center[2]]];
+  if (radius > 0 && arcLength > 0) {
+    if (arcLength <= radius) {
+      // Too short to spiral out to the edge: a straight radial spoke at startAngle.
+      points.push([
+        center[0] + arcLength * Math.cos(startAngle),
+        center[1] + arcLength * Math.sin(startAngle),
+        center[2],
+      ]);
+    } else {
+      const thetaMax = spiralAngleForLength(radius, arcLength);
+      const b = radius / thetaMax;
+      const res = resolution < 1 ? 1 : Math.floor(resolution);
+      const turns = thetaMax / (2 * Math.PI);
+      const count = Math.max(2, Math.ceil(res * turns) + 1);
+      points.length = 0;
+      for (let i = 0; i < count; i++) {
+        const theta = (thetaMax * i) / (count - 1);
+        const r = b * theta;
+        const ang = startAngle + theta;
+        points.push([center[0] + r * Math.cos(ang), center[1] + r * Math.sin(ang), center[2]]);
+      }
+    }
   }
-  if (arcLength <= radius) {
-    // Too short to spiral out to the edge: a straight radial spoke at startAngle.
-    return {
-      points: [
-        [center[0], center[1], center[2]],
-        [
-          center[0] + arcLength * Math.cos(startAngle),
-          center[1] + arcLength * Math.sin(startAngle),
-          center[2],
-        ],
-      ],
-      closed: false,
-    };
-  }
-  const thetaMax = spiralAngleForLength(radius, arcLength);
-  const b = radius / thetaMax;
-  const res = resolution < 1 ? 1 : Math.floor(resolution);
-  const turns = thetaMax / (2 * Math.PI);
-  const count = Math.max(2, Math.ceil(res * turns) + 1);
-  const points: Point[] = [];
-  for (let i = 0; i < count; i++) {
-    const theta = (thetaMax * i) / (count - 1);
-    const r = b * theta;
-    const ang = startAngle + theta;
-    points.push([center[0] + r * Math.cos(ang), center[1] + r * Math.sin(ang), center[2]]);
-  }
-  return { points, closed: false };
+  // `fromCenter === false` runs the curve from the outer edge inward to center.
+  return { points: fromCenter ? points : points.reverse(), closed: false };
 }
 
 /** The four corners of a `width × height` rectangle centered on the origin. */

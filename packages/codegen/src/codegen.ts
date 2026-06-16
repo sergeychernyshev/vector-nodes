@@ -269,7 +269,7 @@ const EMITTERS: Record<string, Emitter> = {
   }),
   // A spiral fit to fill a container (start point, angle, total arc length).
   SpiralFill: ({ inputs }) => ({
-    expr: `{ geometry: curveGeometry(fillSpiralCurve(${inputs.container}, ${inputs.start}, ${inputs.angle}, ${inputs.length}, ${inputs.resolution})) }`,
+    expr: `{ geometry: curveGeometry(fillSpiralCurve(${inputs.container}, ${inputs.start}, ${inputs.angle}, ${inputs.length}, ${inputs.resolution}, ${inputs.fromCenter})) }`,
     uses: ['curveGeometry', 'fillSpiralCurve'],
   }),
   RectangleCurve: ({ inputs }) => ({

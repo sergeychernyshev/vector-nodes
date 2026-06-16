@@ -257,6 +257,7 @@ const spiralFillNode: NodeEvaluator = ({ inputs }) => ({
       inputs.angle as number,
       inputs.length as number,
       inputs.resolution as number,
+      inputs.fromCenter as boolean,
     ),
   ),
 });

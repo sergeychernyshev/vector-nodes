@@ -342,6 +342,22 @@ describe('fillSpiralCurve', () => {
     expect(polylineLength(curve.points)).toBeCloseTo(1, 9);
   });
 
+  it('runs center-out when fromCenter is true', () => {
+    const curve = fillSpiralCurve(container, [0, 0, 0], 0, 40, 48, true);
+    expect(curve.points[0]).toEqual([0, 0, 0]);
+    // The far end sits out at the container edge.
+    expect(Math.hypot(...curve.points.at(-1)!)).toBeGreaterThan(2);
+  });
+
+  it('runs end-in when fromCenter is false (ends at the center)', () => {
+    const outward = fillSpiralCurve(container, [0, 0, 0], 0, 40, 48, true).points;
+    const inward = fillSpiralCurve(container, [0, 0, 0], 0, 40, 48, false).points;
+    // Same curve, reversed: starts at the outer edge and ends at the center.
+    expect(inward).toEqual([...outward].reverse());
+    expect(inward.at(-1)).toEqual([0, 0, 0]);
+    expect(Math.hypot(inward[0]![0], inward[0]![1])).toBeGreaterThan(2);
+  });
+
   it('degenerates to the center for an empty container or non-positive length', () => {
     const empty = { points: [], curves: [], meshes: [] };
     expect(fillSpiralCurve(empty, [3, 1, 0], 0, 10, 32).points).toEqual([[3, 1, 0]]);
