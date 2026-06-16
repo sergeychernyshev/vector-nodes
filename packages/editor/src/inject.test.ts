@@ -87,14 +87,15 @@ describe('suggestTargetNodes (issue #148)', () => {
     expect(suggestions.map((s) => s.type)).not.toContain('ConstFloat');
   });
 
-  it('routes a scalar Float output into compatible inputs (incl. Vector via broadcast)', () => {
+  it('routes a scalar Float output into Float inputs, not Vector ones', () => {
     const floatOut = socketsOf(registry.require('ConstFloat')).outputs.find(
       (s) => s.name === 'value',
     )!;
     const types = suggestTargetNodes(registry, floatOut).map((s) => s.type);
-    // PointCircle.radius (Float) and Translate.offset (Vector, Float→Vector) accept it.
+    // PointCircle.radius (Float) accepts it; Translate.offset (Vector) does not —
+    // the scalar→Vector broadcast is no longer an implicit conversion.
     expect(types).toContain('PointCircle');
-    expect(types).toContain('Translate');
+    expect(types).not.toContain('Translate');
   });
 });
 

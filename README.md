@@ -106,8 +106,10 @@ Conventions carried over from Blender:
   position, exactly like Blender.
 - **Fields**: any socket can carry an array (a "field" in Blender terms). Array sockets are drawn
   with a distinct ring/badge so single-value vs. array is obvious.
-- **Implicit conversions** mirror Blender where unambiguous (e.g. `Float → Vector` broadcasts to
-  `(f, f, f)`, `Integer → Float`). Everything else requires an explicit conversion node.
+- **Implicit conversions** are limited to lossless, shape-preserving numeric widening
+  (`Boolean → Integer → Float`). Everything else requires an explicit conversion node — including
+  the scalar→`Vector`/`Color` broadcasts (use a `Vector` or `Combine Color` node), since reshaping
+  a scalar into a tuple isn't applied at evaluation time.
 
 ---
 
