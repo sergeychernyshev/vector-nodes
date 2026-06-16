@@ -294,6 +294,14 @@ body {
   outline-offset: 1px;
 }
 
+/* Live auto-connect preview edge while dragging a node next to a compatible
+   neighbor (issue #137): a dashed accent stroke until the drop commits it. */
+.auto-connect-edge .react-flow__edge-path {
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+}
+
 /* Connection error toast — floats over the canvas without shifting layout */
 .connection-toast {
   position: absolute;
