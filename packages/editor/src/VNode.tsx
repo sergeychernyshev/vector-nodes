@@ -1,3 +1,4 @@
+import type { Geometry } from '@vector-nodes/runtime';
 import { Handle, Position, useNodeConnections, useViewport, type NodeProps } from '@xyflow/react';
 import { useMemo, type ReactNode } from 'react';
 
@@ -89,6 +90,8 @@ interface NodeCardProps {
   selected?: boolean;
   /** When true, render as a non-interactive preview with static socket dots. */
   ghost?: boolean;
+  /** Geometry to show in the ghost's preview box while dragging onto the canvas (issue #141). */
+  ghostGeometry?: Geometry;
   /** Names of input sockets that currently have a link feeding them. */
   connectedInputs: Set<string | null | undefined>;
 }
@@ -98,7 +101,7 @@ interface NodeCardProps {
  * the placement ghost ({@link GhostNode}). The ghost variant draws static socket
  * dots instead of connectable handles.
  */
-function NodeCard({ id, data, selected, ghost, connectedInputs }: NodeCardProps) {
+function NodeCard({ id, data, selected, ghost, ghostGeometry, connectedInputs }: NodeCardProps) {
   // Params that share a name with an output socket are edited inline on that
   // socket's row (e.g. constant nodes); the rest render in the block below.
   const outputNames = new Set(data.outputs.map((s) => s.name));
@@ -107,11 +110,12 @@ function NodeCard({ id, data, selected, ghost, connectedInputs }: NodeCardProps)
   );
   const blockParams = data.paramDefs.filter((p) => !inlineParams.has(p.name));
 
-  // Per-node preview state (issue #79). The ghost copy never previews.
+  // Per-node preview state (issue #79). The live node reads the shared preview
+  // state; the ghost shows the geometry passed in while it's dragged (issue #141).
   const preview = useNodePreview();
-  const previewable = !ghost && isPreviewable(data);
-  const previewOpen = previewable && preview.open.has(id);
-  const previewGeometry = preview.geometries[id];
+  const previewable = isPreviewable(data);
+  const previewOpen = ghost ? ghostGeometry !== undefined : previewable && preview.open.has(id);
+  const previewGeometry = ghost ? ghostGeometry : preview.geometries[id];
 
   const classes = ['vnode'];
   if (selected) classes.push('vnode--selected');
@@ -135,7 +139,7 @@ function NodeCard({ id, data, selected, ghost, connectedInputs }: NodeCardProps)
         <div className="vnode__header">
           <NodeIcon data={data} />
           <span className="vnode__title">{data.label}</span>
-          {previewable && (
+          {!ghost && previewable && (
             <button
               type="button"
               className="vnode__preview-toggle nodrag"
@@ -220,17 +224,29 @@ export function VNode({ id, data, selected }: NodeProps<VNodeFlowNode>) {
  * A non-interactive copy of a node, rendered semi-transparent under the cursor
  * while a palette node is armed for placement (issue #44).
  */
-export function GhostNode({ data }: { data: FlowNodeData }) {
-  return <NodeCard id="ghost" data={data} ghost connectedInputs={new Set()} />;
+export function GhostNode({ data, geometry }: { data: FlowNodeData; geometry?: Geometry }) {
+  return (
+    <NodeCard id="ghost" data={data} ghost ghostGeometry={geometry} connectedInputs={new Set()} />
+  );
 }
 
 /**
  * The placement ghost positioned at the cursor and scaled by the canvas zoom, so
  * it's the same size it will be once dropped onto the canvas. Reads the live
  * viewport, so only this overlay re-renders on pan/zoom (and only while a node is
- * armed for placement).
+ * armed for placement). `geometry` shows a live preview of the armed node (issue #141).
  */
-export function PlacementGhost({ data, x, y }: { data: FlowNodeData; x: number; y: number }) {
+export function PlacementGhost({
+  data,
+  geometry,
+  x,
+  y,
+}: {
+  data: FlowNodeData;
+  geometry?: Geometry;
+  x: number;
+  y: number;
+}) {
   const { zoom } = useViewport();
   return (
     <div
@@ -243,7 +259,7 @@ export function PlacementGhost({ data, x, y }: { data: FlowNodeData; x: number; 
       }}
       aria-hidden="true"
     >
-      <GhostNode data={data} />
+      <GhostNode data={data} geometry={geometry} />
     </div>
   );
 }
