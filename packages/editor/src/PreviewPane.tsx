@@ -12,6 +12,7 @@ import { ThreeView } from './ThreeView';
 
 const WIDTH_STORAGE_KEY = 'vn:preview-width';
 const HEIGHT_STORAGE_KEY = 'vn:preview-height';
+const MODE_STORAGE_KEY = 'vn:preview-mode';
 
 /**
  * Tracks the portrait-orientation media query: that's when the preview docks
@@ -39,6 +40,15 @@ function loadPreviewWidth(): number {
     return Number.isFinite(value) ? value : DEFAULT_PREVIEW_WIDTH;
   } catch {
     return DEFAULT_PREVIEW_WIDTH;
+  }
+}
+
+function loadPreviewMode(): PreviewMode {
+  try {
+    const raw = window.localStorage.getItem(MODE_STORAGE_KEY);
+    return raw === '2d' ? '2d' : '3d';
+  } catch {
+    return '3d';
   }
 }
 
@@ -73,7 +83,7 @@ export function PreviewPane({
   side = 'right',
   onResizeHeight,
 }: PreviewPaneProps) {
-  const [mode, setMode] = useState<PreviewMode>('3d');
+  const [mode, setMode] = useState<PreviewMode>(loadPreviewMode);
   const [width, setWidth] = useState(loadPreviewWidth);
   const dragging = useRef<false | 'width' | 'height'>(false);
   const paneRef = useRef<HTMLElement>(null);
@@ -197,7 +207,14 @@ export function PreviewPane({
             type="button"
             className="preview__toggle-btn"
             aria-pressed={mode === '3d'}
-            onClick={() => setMode('3d')}
+            onClick={() => {
+              setMode('3d');
+              try {
+                window.localStorage.setItem(MODE_STORAGE_KEY, '3d');
+              } catch {
+                // Ignore storage failures.
+              }
+            }}
           >
             3D
           </button>
@@ -205,7 +222,14 @@ export function PreviewPane({
             type="button"
             className="preview__toggle-btn"
             aria-pressed={mode === '2d'}
-            onClick={() => setMode('2d')}
+            onClick={() => {
+              setMode('2d');
+              try {
+                window.localStorage.setItem(MODE_STORAGE_KEY, '2d');
+              } catch {
+                // Ignore storage failures.
+              }
+            }}
           >
             2D
           </button>
