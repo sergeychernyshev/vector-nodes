@@ -267,6 +267,11 @@ const EMITTERS: Record<string, Emitter> = {
     expr: `{ geometry: curveGeometry(polyline(spiralPoints(${inputs.turns}, ${inputs.startRadius}, ${inputs.endRadius}, ${inputs.height}, ${inputs.segments}))) }`,
     uses: ['curveGeometry', 'polyline', 'spiralPoints'],
   }),
+  // A spiral fit to fill a container (start point, angle, total arc length).
+  SpiralFill: ({ inputs }) => ({
+    expr: `{ geometry: curveGeometry(fillSpiralCurve(${inputs.container}, ${inputs.start}, ${inputs.angle}, ${inputs.length}, ${inputs.resolution})) }`,
+    uses: ['curveGeometry', 'fillSpiralCurve'],
+  }),
   RectangleCurve: ({ inputs }) => ({
     expr: `{ geometry: curveGeometry(polyline(rectanglePoints(${inputs.width}, ${inputs.height}), true)) }`,
     uses: ['curveGeometry', 'polyline', 'rectanglePoints'],
