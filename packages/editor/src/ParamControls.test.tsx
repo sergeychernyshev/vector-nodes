@@ -237,4 +237,26 @@ describe('InputDefaultField', () => {
     inputs.forEach((input) => expect((input as HTMLInputElement).disabled).toBe(true));
     expect(container.querySelector('.vnode__input-default--connected')).not.toBeNull();
   });
+
+  it('renders a degrees angle scrubber for an Angle input and stores radians', () => {
+    const angle: FlowSocket = { name: 'angle', type: 'Angle', isArray: false };
+    const { setInputDefault, getByLabelText, container } = renderInputDefault(angle, 0, false);
+    const slider = container.querySelector('input[type="range"]') as HTMLInputElement;
+    expect(slider).not.toBeNull();
+    // The slider scrubs −180°…180°.
+    expect(Number(slider.min)).toBe(-180);
+    expect(Number(slider.max)).toBe(180);
+    // Dragging to 90° stores π/2 radians.
+    fireEvent.change(slider, { target: { value: '90' } });
+    expect(setInputDefault).toHaveBeenCalledWith('n1', 'angle', Math.PI / 2);
+    // The number box also takes degrees and converts to radians.
+    fireEvent.change(getByLabelText('angle (degrees)'), { target: { value: '-180' } });
+    expect(setInputDefault).toHaveBeenLastCalledWith('n1', 'angle', -Math.PI);
+  });
+
+  it('shows an Angle input value in degrees', () => {
+    const angle: FlowSocket = { name: 'angle', type: 'Angle', isArray: false };
+    const { getByLabelText } = renderInputDefault(angle, Math.PI / 2, false);
+    expect((getByLabelText('angle (degrees)') as HTMLInputElement).value).toBe('90');
+  });
 });

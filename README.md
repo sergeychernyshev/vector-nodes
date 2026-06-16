@@ -98,6 +98,7 @@ be customized, but ship with these Blender-matching defaults:
 | `String`   | Text (labels, attribute names)     | Light blue    | `#70B3FF` |
 | `Geometry` | Points / curves / meshes bundle    | Teal          | `#00D6A3` |
 | `Matrix`   | 4×4 transform                      | Orange        | `#ED9E5C` |
+| `Angle`    | Scalar angle in **radians**        | Pink          | `#C77DBB` |
 
 Conventions carried over from Blender:
 
@@ -107,9 +108,11 @@ Conventions carried over from Blender:
 - **Fields**: any socket can carry an array (a "field" in Blender terms). Array sockets are drawn
   with a distinct ring/badge so single-value vs. array is obvious.
 - **Implicit conversions** are limited to lossless, shape-preserving numeric widening
-  (`Boolean → Integer → Float`). Everything else requires an explicit conversion node — including
-  the scalar→`Vector`/`Color` broadcasts (use a `Vector` or `Combine Color` node), since reshaping
-  a scalar into a tuple isn't applied at evaluation time.
+  (`Boolean → Integer → Float`). `Angle` is a scalar in radians at runtime, so any number flows
+  into an `Angle` input (`… → Float → Angle`) and an `Angle` flows back to a `Float` — all
+  identity at runtime, hence lossless. Everything else requires an explicit conversion node —
+  including the scalar→`Vector`/`Color` broadcasts (use a `Vector` or `Combine Color` node), since
+  reshaping a scalar into a tuple isn't applied at evaluation time.
 
 ---
 

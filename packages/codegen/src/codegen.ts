@@ -62,6 +62,7 @@ export function tsTypeOf(type: SocketType): string {
   switch (type) {
     case 'Float':
     case 'Integer':
+    case 'Angle':
       return 'number';
     case 'Boolean':
       return 'boolean';

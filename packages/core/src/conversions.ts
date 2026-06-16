@@ -8,6 +8,9 @@ import type { SocketType } from './socket-types.js';
  * with conversions that are both unambiguous *and* shape-preserving:
  *
  * - **Numeric widening** (lossless, no reshaping): `Boolean → Integer → Float`.
+ * - **Angle** is a scalar (radians) at runtime, so any number flows into an
+ *   `Angle` input (`Boolean → Integer → Float → Angle`) and an `Angle` flows back
+ *   out to a `Float` — all identity at runtime, hence lossless.
  *
  * Deliberately excluded (ambiguous, lossy, or reshaping — require an explicit
  * node): narrowing (`Float → Integer` rounding, `Float → Boolean` thresholding),
@@ -22,14 +25,15 @@ import type { SocketType } from './socket-types.js';
  * always allowed and is not listed here.
  */
 const IMPLICIT_CONVERSIONS: Record<SocketType, readonly SocketType[]> = {
-  Boolean: ['Integer', 'Float'],
-  Integer: ['Float'],
-  Float: [],
+  Boolean: ['Integer', 'Float', 'Angle'],
+  Integer: ['Float', 'Angle'],
+  Float: ['Angle'],
   Vector: [],
   Color: [],
   String: [],
   Geometry: [],
   Matrix: [],
+  Angle: ['Float'],
 };
 
 /**

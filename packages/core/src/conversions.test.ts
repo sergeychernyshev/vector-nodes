@@ -16,6 +16,15 @@ describe('canConvertImplicitly', () => {
     expect(canConvertImplicitly('Integer', 'Float')).toBe(true);
   });
 
+  it('lets any number flow into an Angle, and an Angle back to a Float', () => {
+    expect(canConvertImplicitly('Float', 'Angle')).toBe(true);
+    expect(canConvertImplicitly('Integer', 'Angle')).toBe(true);
+    expect(canConvertImplicitly('Boolean', 'Angle')).toBe(true);
+    expect(canConvertImplicitly('Angle', 'Float')).toBe(true);
+    // Angle → Integer would be lossy, so it is not implicit.
+    expect(canConvertImplicitly('Angle', 'Integer')).toBe(false);
+  });
+
   it('rejects scalar → Vector and scalar → Color (reshaping broadcasts, not applied at runtime)', () => {
     for (const scalar of ['Float', 'Integer', 'Boolean'] as const) {
       expect(canConvertImplicitly(scalar, 'Vector')).toBe(false);
@@ -48,14 +57,15 @@ describe('canConvertImplicitly', () => {
 
 describe('implicitConversionTargets', () => {
   it('lists targets excluding the identity', () => {
-    expect(implicitConversionTargets('Boolean')).toEqual(['Integer', 'Float']);
-    expect(implicitConversionTargets('Float')).toEqual([]);
+    expect(implicitConversionTargets('Boolean')).toEqual(['Integer', 'Float', 'Angle']);
+    expect(implicitConversionTargets('Float')).toEqual(['Angle']);
+    expect(implicitConversionTargets('Angle')).toEqual(['Float']);
     expect(implicitConversionTargets('Geometry')).toEqual([]);
   });
 
   it('returns a fresh array that cannot mutate the table', () => {
     const targets = implicitConversionTargets('Boolean');
     targets.push('Matrix');
-    expect(implicitConversionTargets('Boolean')).toEqual(['Integer', 'Float']);
+    expect(implicitConversionTargets('Boolean')).toEqual(['Integer', 'Float', 'Angle']);
   });
 });

@@ -17,6 +17,7 @@ export const SOCKET_COLORS: Record<SocketType, string> = {
   String: '#70B3FF', // Light blue
   Geometry: '#00D6A3', // Teal
   Matrix: '#ED9E5C', // Orange
+  Angle: '#C77DBB', // Pink — a numeric scalar in radians, distinct from Float
 };
 
 /** Look up the canonical Blender color for a socket type. */

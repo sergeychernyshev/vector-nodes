@@ -355,6 +355,7 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
   // coils. `resolution` is the number of sampled points per full turn.
   // `fromCenter` flips the curve's direction: unchecked (the default) runs from
   // the outer edge inward, ending at `start`; checked runs from `start` outward.
+  // `angle` is an Angle (radians at runtime; the editor scrubs it in degrees).
   {
     type: 'SpiralFill',
     label: 'Spiral Fill',
@@ -362,7 +363,7 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
     inputs: [
       { name: 'container', type: 'Geometry' },
       { name: 'start', type: 'Vector', default: [0, 0, 0] },
-      { name: 'angle', type: 'Float', default: 0 },
+      { name: 'angle', type: 'Angle', default: 0 },
       { name: 'length', type: 'Float', default: 10, min: 0 },
       { name: 'fromCenter', type: 'Boolean', default: false },
       { name: 'resolution', type: 'Integer', default: 32, min: 1 },

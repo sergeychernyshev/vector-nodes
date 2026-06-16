@@ -31,6 +31,44 @@ function NumberControl({ param, value, onChange, disabled }: ControlProps) {
   );
 }
 
+const toDegrees = (radians: number) => (radians * 180) / Math.PI;
+const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+/** Round a degree value for display so radian round-trips don't show float noise. */
+const roundDegrees = (degrees: number) => Math.round(degrees * 1e6) / 1e6;
+
+/**
+ * Angle scrubber (the `Angle` socket type): a −180°…180° range slider paired
+ * with a degrees number box. The stored value is always **radians** (the
+ * runtime unit); both controls scrub/enter degrees and convert to radians.
+ */
+function AngleControl({ value, onChange, disabled }: ControlProps) {
+  const degrees = roundDegrees(toDegrees(asNumber(value)));
+  return (
+    <span className="vnode__angle">
+      <input
+        className="nodrag vnode__angle-slider"
+        type="range"
+        min={-180}
+        max={180}
+        step={1}
+        aria-label="angle"
+        disabled={disabled}
+        value={Math.max(-180, Math.min(180, degrees))}
+        onChange={(e) => onChange(toRadians(Number(e.target.value)))}
+      />
+      <input
+        className="nodrag vnode__input vnode__input--axis"
+        type="number"
+        step="any"
+        aria-label="angle (degrees)"
+        disabled={disabled}
+        value={degrees}
+        onChange={(e) => onChange(toRadians(Number(e.target.value)))}
+      />
+    </span>
+  );
+}
+
 function BooleanControl({ value, onChange, disabled }: ControlProps) {
   const checked = Boolean(value);
   // Label on the left, checkbox on the right; the label wraps the checkbox so
@@ -213,6 +251,8 @@ function ParamControl(props: ControlProps) {
     return <SelectControl {...props} />;
   }
   switch (props.param.type) {
+    case 'Angle':
+      return <AngleControl {...props} />;
     case 'Float':
     case 'Integer':
       return <NumberControl {...props} />;
@@ -230,7 +270,15 @@ function ParamControl(props: ControlProps) {
 }
 
 /** Input socket types that get an inline default editor (issue #23). */
-const EDITABLE_INPUT_TYPES = new Set(['Float', 'Integer', 'Boolean', 'String', 'Vector', 'Color']);
+const EDITABLE_INPUT_TYPES = new Set([
+  'Float',
+  'Integer',
+  'Boolean',
+  'String',
+  'Vector',
+  'Color',
+  'Angle',
+]);
 
 /** Whether an input socket should show an inline default editor. */
 export function isEditableInput(socket: FlowSocket): boolean {

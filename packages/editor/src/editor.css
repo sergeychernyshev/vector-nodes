@@ -306,6 +306,14 @@ body {
 .vnode__alpha {
   width: 60px;
 }
+.vnode__angle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.vnode__angle-slider {
+  width: 70px;
+}
 .vnode__bool {
   display: inline-flex;
   align-items: center;

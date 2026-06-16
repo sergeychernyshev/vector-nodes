@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { isSocketType, SOCKET_TYPES, socketTypeDescriptor } from './socket-types';
 
 describe('SOCKET_TYPES', () => {
-  it('contains the eight documented types', () => {
+  it('contains the documented types', () => {
     expect(SOCKET_TYPES).toEqual([
       'Float',
       'Integer',
@@ -13,6 +13,7 @@ describe('SOCKET_TYPES', () => {
       'String',
       'Geometry',
       'Matrix',
+      'Angle',
     ]);
   });
 });
