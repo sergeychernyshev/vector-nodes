@@ -28,6 +28,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 
 import { checkConnection, edgesWithoutInput, type ConnectionLike } from './connection';
 import { ConnectMenu } from './ConnectMenu';
+import { constantSeedValue } from './constant-seed';
 import { captureViewport, downloadDataUrl, exportImageSize, IMAGE_PADDING } from './export-image';
 import { cloneFlowNode, rewireForAltDrag } from './duplicate';
 import { downloadText, maxAutoId } from './graph-io';
@@ -602,12 +603,21 @@ export function App() {
         // Dragged off an input: new node's output → the dragged input. Array
         // inputs accept many connections (issue #99); a scalar input replaces.
         const { outputHandle } = suggestion as SourceSuggestion;
-        const isArrayInput =
-          getNode(nodeId)?.data.inputs.find((s) => s.name === handleId)?.isArray ?? false;
+        const targetNode = getNode(nodeId);
+        const inputSocket = targetNode?.data.inputs.find((s) => s.name === handleId);
+        // When the chosen source is a constant whose output type matches the
+        // input exactly, seed it with the value the input held so converting an
+        // inline value into a constant node preserves that value.
+        const def = resolveAddableDef(suggestion.type, registry, library).def;
+        const priorValue = targetNode?.data.inputDefaults[handleId] ?? inputSocket?.default;
+        const seed = constantSeedValue(def, outputHandle, inputSocket, priorValue);
+        if (seed !== undefined) {
+          setNodes((nds) => setNodeParam(nds, id, 'value', seed));
+        }
         setEdges((eds) =>
           addEdge(
             { source: id, sourceHandle: outputHandle, target: nodeId, targetHandle: handleId },
-            isArrayInput ? eds : edgesWithoutInput(eds, nodeId, handleId),
+            inputSocket?.isArray ? eds : edgesWithoutInput(eds, nodeId, handleId),
           ),
         );
       } else {
@@ -623,7 +633,7 @@ export function App() {
       }
       clearError();
     },
-    [connectMenu, createNodeAt, setEdges, clearError, getNode],
+    [connectMenu, createNodeAt, setEdges, setNodes, clearError, getNode, registry, library],
   );
 
   // Deleting a node that bridged two compatible sockets heals the gap with a
