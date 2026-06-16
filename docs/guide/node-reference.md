@@ -56,11 +56,40 @@ Plus a **Parameter** node per socket type (`ParameterFloat` … `ParameterGeomet
 
 ## Utility
 
-| Node                       | Inputs                                                                             | Outputs        | Params                                                   |
-| -------------------------- | ---------------------------------------------------------------------------------- | -------------- | -------------------------------------------------------- |
-| **Clamp** (`Clamp`)        | `value`: Float, `min`: Float, `max`: Float                                         | `value`: Float | —                                                        |
-| **Map Range** (`MapRange`) | `value`: Float, `fromMin`: Float, `fromMax`: Float, `toMin`: Float, `toMax`: Float | `value`: Float | —                                                        |
-| **Math** (`MathFloat`)     | `a`: Float, `b`: Float                                                             | `value`: Float | `operation` (add/subtract/multiply/divide/min/max/power) |
+| Node                       | Inputs                                                                             | Outputs        | Params |
+| -------------------------- | ---------------------------------------------------------------------------------- | -------------- | ------ |
+| **Clamp** (`Clamp`)        | `value`: Float, `min`: Float, `max`: Float                                         | `value`: Float | —      |
+| **Map Range** (`MapRange`) | `value`: Float, `fromMin`: Float, `fromMax`: Float, `toMin`: Float, `toMax`: Float | `value`: Float | —      |
+
+## Math & Trig
+
+One node per operation (the monolithic `Math` node was split in #163). Every node
+outputs a single `value`: Float, and opening its per-node preview shows the
+operation as a MathML formula with its current result, e.g. `sine(2.5) = 0.5985`.
+
+| Node                          | Inputs                           | Output         |
+| ----------------------------- | -------------------------------- | -------------- |
+| **Add** (`MathAdd`)           | `a`: Float, `b`: Float           | `value`: Float |
+| **Subtract** (`MathSubtract`) | `a`: Float, `b`: Float           | `value`: Float |
+| **Multiply** (`MathMultiply`) | `a`: Float, `b`: Float           | `value`: Float |
+| **Divide** (`MathDivide`)     | `a`: Float, `b`: Float           | `value`: Float |
+| **Modulo** (`MathModulo`)     | `a`: Float, `b`: Float           | `value`: Float |
+| **Minimum** (`MathMin`)       | `a`: Float, `b`: Float           | `value`: Float |
+| **Maximum** (`MathMax`)       | `a`: Float, `b`: Float           | `value`: Float |
+| **Power** (`MathPower`)       | `base`: Float, `exponent`: Float | `value`: Float |
+| **Arctangent2** (`MathAtan2`) | `y`: Float, `x`: Float           | `value`: Float |
+| **Sine** (`MathSine`)         | `angle`: Float                   | `value`: Float |
+| **Cosine** (`MathCosine`)     | `angle`: Float                   | `value`: Float |
+| **Tangent** (`MathTangent`)   | `angle`: Float                   | `value`: Float |
+| **Square Root** (`MathSqrt`)  | `value`: Float                   | `value`: Float |
+| **Absolute** (`MathAbsolute`) | `value`: Float                   | `value`: Float |
+| **Floor** (`MathFloor`)       | `value`: Float                   | `value`: Float |
+| **Ceiling** (`MathCeil`)      | `value`: Float                   | `value`: Float |
+| **Round** (`MathRound`)       | `value`: Float                   | `value`: Float |
+| **Natural Log** (`MathLog`)   | `value`: Float                   | `value`: Float |
+| **Exponential** (`MathExp`)   | `value`: Float                   | `value`: Float |
+| **Sign** (`MathSign`)         | `value`: Float                   | `value`: Float |
+| **Pi** (`Pi`)                 | —                                | `value`: Float |
 
 ## Vector
 

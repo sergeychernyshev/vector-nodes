@@ -1,3 +1,4 @@
+import { MATH_OPS, MATH_TRIG_CATEGORY, PI_NODE_TYPE } from './math-ops.js';
 import type { NodeDefinition, SocketDefinition } from './node-definition.js';
 import { NodeRegistry } from './registry.js';
 import { SOCKET_TYPES, type SocketType } from './socket-types.js';
@@ -75,6 +76,21 @@ const parameterDefs: NodeDefinition[] = SOCKET_TYPES.map((type) => ({
   inputs: [],
   outputs: [{ name: 'value', type }],
   params: [{ name: 'name', type: 'String', default: '' }],
+}));
+
+// One node per math/trig operation (issue #163), generated from the shared
+// MATH_OPS spec so the engine and codegen stay in lock-step with the node set.
+const mathTrigDefs: NodeDefinition[] = MATH_OPS.map((op) => ({
+  type: op.type,
+  label: op.label,
+  category: MATH_TRIG_CATEGORY,
+  inputs: op.inputs.map((input) => ({
+    name: input.name,
+    type: 'Float' as const,
+    default: input.default ?? 0,
+  })),
+  outputs: [{ name: 'value', type: 'Float' }],
+  params: [],
 }));
 
 /** Declarative definitions for the basic node set (Phase 2). */
@@ -485,46 +501,19 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
     params: [],
   },
 
-  // Utility (Phase 7)
+  // Math & Trig (issue #163): one node per operation, generated from MATH_OPS,
+  // plus the π constant.
+  ...mathTrigDefs,
   {
-    type: 'MathFloat',
-    label: 'Math',
-    category: 'Utility',
-    inputs: [
-      { name: 'a', type: 'Float', default: 0 },
-      { name: 'b', type: 'Float', default: 0 },
-    ],
+    type: PI_NODE_TYPE,
+    label: 'Pi',
+    category: MATH_TRIG_CATEGORY,
+    inputs: [],
     outputs: [{ name: 'value', type: 'Float' }],
-    params: [
-      {
-        name: 'operation',
-        type: 'String',
-        default: 'add',
-        options: [
-          'add',
-          'subtract',
-          'multiply',
-          'divide',
-          'min',
-          'max',
-          'power',
-          'sine',
-          'cosine',
-          'tangent',
-          'atan2',
-          'sqrt',
-          'abs',
-          'floor',
-          'ceil',
-          'round',
-          'modulo',
-          'log',
-          'exp',
-          'sign',
-        ],
-      },
-    ],
+    params: [],
   },
+
+  // Utility (Phase 7)
   // Seeded, composable randomness (issue #119). Scalar range; the vector
   // outputs draw each component from the same [min, max].
   {

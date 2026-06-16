@@ -102,26 +102,37 @@ describe('VectorMath', () => {
 });
 
 describe('expanded operations (issue #118)', () => {
-  it('MathFloat handles the unary and binary additions', () => {
-    const cases: [string, { a: number; b?: number }, number][] = [
-      ['sine', { a: Math.PI / 2 }, 1],
-      ['cosine', { a: 0 }, 1],
-      ['tangent', { a: 0 }, 0],
-      ['atan2', { a: 1, b: 1 }, Math.PI / 4],
-      ['sqrt', { a: 9 }, 3],
-      ['abs', { a: -4 }, 4],
-      ['floor', { a: 1.7 }, 1],
-      ['ceil', { a: 1.2 }, 2],
-      ['round', { a: 1.5 }, 2],
-      ['modulo', { a: 7, b: 3 }, 1],
-      ['log', { a: Math.E }, 1],
-      ['exp', { a: 0 }, 1],
-      ['sign', { a: -9 }, -1],
+  it('the split Math & Trig nodes evaluate with their named inputs (issue #163)', () => {
+    const cases: [string, Record<string, number>, number][] = [
+      ['MathAdd', { a: 2, b: 3 }, 5],
+      ['MathSubtract', { a: 2, b: 3 }, -1],
+      ['MathMultiply', { a: 2, b: 3 }, 6],
+      ['MathDivide', { a: 6, b: 3 }, 2],
+      ['MathModulo', { a: 7, b: 3 }, 1],
+      ['MathMin', { a: 2, b: 3 }, 2],
+      ['MathMax', { a: 2, b: 3 }, 3],
+      ['MathPower', { base: 2, exponent: 10 }, 1024],
+      ['MathAtan2', { y: 1, x: 1 }, Math.PI / 4],
+      ['MathSine', { angle: Math.PI / 2 }, 1],
+      ['MathCosine', { angle: 0 }, 1],
+      ['MathTangent', { angle: 0 }, 0],
+      ['MathSqrt', { value: 9 }, 3],
+      ['MathAbsolute', { value: -4 }, 4],
+      ['MathFloor', { value: 1.7 }, 1],
+      ['MathCeil', { value: 1.2 }, 2],
+      ['MathRound', { value: 1.5 }, 2],
+      ['MathLog', { value: Math.E }, 1],
+      ['MathExp', { value: 0 }, 1],
+      ['MathSign', { value: -9 }, -1],
     ];
-    for (const [operation, inputs, expected] of cases) {
-      const out = run('MathFloat', { inputs: { b: 0, ...inputs }, params: { operation } });
-      expect(out.value as number, operation).toBeCloseTo(expected, 9);
+    for (const [type, inputs, expected] of cases) {
+      const out = run(type, { inputs });
+      expect(out.value as number, type).toBeCloseTo(expected, 9);
     }
+  });
+
+  it('Pi emits the π constant (issue #163)', () => {
+    expect(run('Pi').value).toBe(Math.PI);
   });
 
   it('VectorMath handles the component-wise and geometric additions', () => {

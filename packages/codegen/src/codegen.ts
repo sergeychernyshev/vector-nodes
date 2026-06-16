@@ -3,6 +3,8 @@ import {
   flattenMetaNodes,
   getOutputNode,
   isParameterNodeType,
+  MATH_OPS,
+  PI_NODE_TYPE,
   resolveParamDefaults,
   type Graph,
   type GraphLink,
@@ -326,35 +328,18 @@ const EMITTERS: Record<string, Emitter> = {
     expr: `{ geometry: instanceOnPoints(${inputs.geometry}, ${inputs.points}) }`,
     uses: ['instanceOnPoints'],
   }),
-  MathFloat: ({ inputs, params }) => {
-    const a = inputs.a!;
-    const b = inputs.b!;
-    const exprs: Record<string, string> = {
-      add: `${a} + ${b}`,
-      subtract: `${a} - ${b}`,
-      multiply: `${a} * ${b}`,
-      divide: `${a} / ${b}`,
-      min: `Math.min(${a}, ${b})`,
-      max: `Math.max(${a}, ${b})`,
-      power: `Math.pow(${a}, ${b})`,
-      sine: `Math.sin(${a})`,
-      cosine: `Math.cos(${a})`,
-      tangent: `Math.tan(${a})`,
-      atan2: `Math.atan2(${a}, ${b})`,
-      sqrt: `Math.sqrt(${a})`,
-      abs: `Math.abs(${a})`,
-      floor: `Math.floor(${a})`,
-      ceil: `Math.ceil(${a})`,
-      round: `Math.round(${a})`,
-      modulo: `${a} % ${b}`,
-      log: `Math.log(${a})`,
-      exp: `Math.exp(${a})`,
-      sign: `Math.sign(${a})`,
-    };
-    const op = exprs[String(params.operation)];
-    if (!op) throw new Error(`codegen: unknown MathFloat operation "${String(params.operation)}".`);
-    return { expr: `{ value: ${op} }`, uses: [] };
-  },
+  // Math & Trig (issue #163): one emitter per op from the shared MATH_OPS spec,
+  // plus the π constant. They only reference `Math.*`, so they import no helpers.
+  ...Object.fromEntries(
+    MATH_OPS.map((op): [string, Emitter] => [
+      op.type,
+      ({ inputs }) => ({
+        expr: `{ value: ${op.expr(op.inputs.map((input) => inputs[input.name]!))} }`,
+        uses: [],
+      }),
+    ]),
+  ),
+  [PI_NODE_TYPE]: () => ({ expr: `{ value: Math.PI }`, uses: [] }),
   // Seeded randomness (issue #119): one stream per output kind, shared seed.
   RandomValue: ({ varName, inputs }) => {
     const vals = `${varName}_vals`;
