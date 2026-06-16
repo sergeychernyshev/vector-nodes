@@ -357,7 +357,7 @@ body {
 .preview--collapsed {
   width: auto;
   align-items: center;
-  padding-top: 8px;
+  padding: 8px;
 }
 .preview__collapse {
   border: 1px solid var(--border-strong);
@@ -367,6 +367,12 @@ body {
   cursor: pointer;
   line-height: 1;
   padding: 4px 8px;
+}
+/* Chevron glyph for the collapse/expand toggle (#154). */
+.preview__chevron {
+  display: inline-block;
+  font-size: 14px;
+  line-height: 1;
 }
 .preview__collapse:hover {
   background: var(--control-hover);
@@ -564,7 +570,7 @@ body {
 .palette--collapsed {
   width: auto;
   align-items: center;
-  padding-top: 8px;
+  padding: 8px;
 }
 .palette__header {
   display: flex;
@@ -758,7 +764,6 @@ body {
 }
 .app-main--preview-top .preview--collapsed {
   align-items: flex-start;
-  padding-left: 8px;
 }
 .app-main--preview-top .preview__resize {
   /* Horizontal drag-to-resize doesn't apply when stacked vertically. */

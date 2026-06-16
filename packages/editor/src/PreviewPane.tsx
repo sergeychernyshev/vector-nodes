@@ -96,7 +96,16 @@ export function PreviewPane({
   // explicitly (issue #154), falling back to the portrait query (issue #61).
   const autoPortrait = useIsPortrait();
   const onTop = dock != null ? dock === 'top' : autoPortrait;
-  const iconSide = onTop ? (collapsed ? 'bottom' : 'top') : side;
+  // Chevron for the collapse/expand toggle, pointing the way the panel moves:
+  // toward the edge it tucks into when expanded, back toward the canvas when
+  // collapsed.
+  const collapseChevron = onTop
+    ? collapsed
+      ? '⌄'
+      : '⌃'
+    : (side === 'right') === !collapsed
+      ? '›'
+      : '‹';
 
   // Drag the left border to resize; width is measured from the viewport's right
   // edge and persisted so it survives reloads.
@@ -165,7 +174,9 @@ export function PreviewPane({
           aria-expanded={false}
           title="Show preview"
         >
-          <SidebarIcon side={iconSide} />
+          <span className="preview__chevron" aria-hidden="true">
+            {collapseChevron}
+          </span>
         </button>
       </aside>
     );
@@ -200,7 +211,9 @@ export function PreviewPane({
               aria-expanded
               title="Hide preview"
             >
-              <SidebarIcon side={iconSide} />
+              <span className="preview__chevron" aria-hidden="true">
+                {collapseChevron}
+              </span>
             </button>
           )}
           {onToggleDock && (
