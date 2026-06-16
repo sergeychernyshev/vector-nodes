@@ -122,24 +122,33 @@ function NodeCard({ id, data, selected, ghost, connectedInputs }: NodeCardProps)
         </div>
         <div className="vnode__body">
           <div className="vnode__col">
-            {data.inputs.map((s) => (
-              <SocketRow
-                key={s.name}
-                socket={s}
-                side="input"
-                ghost={ghost}
-                control={
-                  isEditableInput(s) ? (
-                    <InputDefaultField
-                      nodeId={id}
-                      socket={s}
-                      value={data.inputDefaults[s.name] ?? s.default}
-                      connected={connectedInputs.has(s.name)}
-                    />
-                  ) : undefined
-                }
-              />
-            ))}
+            {data.inputs.map((s) => {
+              const connected = connectedInputs.has(s.name);
+              // A connected input's editor is disabled but previews the value its
+              // link delivers (the upstream output's value), falling back to the
+              // inline default until the preview resolves.
+              const liveValue = connected ? preview.inputs[id]?.[s.name] : undefined;
+              const value =
+                liveValue !== undefined ? liveValue : (data.inputDefaults[s.name] ?? s.default);
+              return (
+                <SocketRow
+                  key={s.name}
+                  socket={s}
+                  side="input"
+                  ghost={ghost}
+                  control={
+                    isEditableInput(s) ? (
+                      <InputDefaultField
+                        nodeId={id}
+                        socket={s}
+                        value={value}
+                        connected={connected}
+                      />
+                    ) : undefined
+                  }
+                />
+              );
+            })}
           </div>
           <div className="vnode__col vnode__col--outputs">
             {data.outputs.map((s) => {

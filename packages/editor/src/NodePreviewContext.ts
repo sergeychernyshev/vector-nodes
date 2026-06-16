@@ -10,6 +10,11 @@ import { createContext, useContext } from 'react';
 export interface NodePreviewApi {
   /** Geometry for open nodes, keyed by node id (absent until evaluated). */
   geometries: Record<string, Geometry>;
+  /**
+   * Values flowing into connected input sockets, keyed by node id then input
+   * name, so a node's disabled inline editor can preview its connection's value.
+   */
+  inputs: Record<string, Record<string, unknown>>;
   /** Node ids whose preview box is currently shown. */
   open: ReadonlySet<string>;
   /** Show/hide a node's preview box. */
@@ -18,6 +23,7 @@ export interface NodePreviewApi {
 
 const EMPTY: NodePreviewApi = {
   geometries: {},
+  inputs: {},
   open: new Set(),
   toggle: () => {},
 };

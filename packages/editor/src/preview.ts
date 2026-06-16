@@ -12,6 +12,12 @@ export interface PreviewResult {
    * (issue #79), keyed by node id. Only the requested, evaluated nodes appear.
    */
   nodeGeometries?: Record<string, Geometry>;
+  /**
+   * Resolved values flowing into connected input sockets, keyed by node id then
+   * input socket name. Lets a node's disabled inline editor preview the value its
+   * connection supplies. Only displayable scalars/vectors/colors are included.
+   */
+  nodeInputs?: Record<string, Record<string, unknown>>;
   /** Present when the graph is invalid or evaluation failed. */
   error?: string;
 }
@@ -44,10 +50,31 @@ export function evaluatePreview(graph: Graph, previewIds: readonly string[] = []
       const g = result.nodeOutputs.get(id)?.geometry;
       if (isGeometry(g)) nodeGeometries[id] = g;
     }
-    return { geometry, nodeGeometries };
+    // The value each link delivers to its destination input, so a connected
+    // node's disabled editor can preview it (the upstream output's value).
+    const nodeInputs: Record<string, Record<string, unknown>> = {};
+    for (const link of graph.links) {
+      const value = result.nodeOutputs.get(link.from[0])?.[link.from[1]];
+      if (!isDisplayableInput(value)) continue;
+      (nodeInputs[link.to[0]] ??= {})[link.to[1]] = value;
+    }
+    return { geometry, nodeGeometries, nodeInputs };
   } catch (err) {
     return { error: err instanceof Error ? err.message : String(err) };
   }
+}
+
+/** Whether a value can be shown in an inline editor (scalar, vector, or color). */
+function isDisplayableInput(value: unknown): boolean {
+  if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'string') {
+    return true;
+  }
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.length <= 4 &&
+    value.every((n) => typeof n === 'number')
+  );
 }
 
 /** Element counts of a geometry bundle, for a lightweight preview summary. */
