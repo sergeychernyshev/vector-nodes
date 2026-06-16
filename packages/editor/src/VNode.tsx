@@ -28,7 +28,7 @@ export function NodeIcon({ data }: { data: FlowNodeData }) {
   if (geometry) {
     return (
       <span className="vnode__icon vnode__icon--geo" aria-hidden="true">
-        <SvgView geometry={geometry} tint="#fff" weight={8} padding={0.06} />
+        <SvgView geometry={geometry} tint="#fff" weight={8} padding={0.12} />
       </span>
     );
   }
