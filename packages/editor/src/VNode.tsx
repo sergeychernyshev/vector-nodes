@@ -8,6 +8,7 @@ import {
   type FlowSocket,
   type VNodeFlowNode,
 } from './flow';
+import { colorToCss, nodeIcon } from './node-icon';
 import { useNodePreview } from './NodePreviewContext';
 import {
   InputDefaultField,
@@ -16,6 +17,20 @@ import {
   ParamControls,
 } from './ParamControls';
 import { SvgView } from './SvgView';
+
+/** Square value-icon shown to the left of a node's title (issue #142). */
+function NodeIcon({ data }: { data: FlowNodeData }) {
+  const icon = nodeIcon(data);
+  return (
+    <span className="vnode__icon" aria-hidden="true">
+      {icon.kind === 'color' ? (
+        <span className="vnode__icon-swatch" style={{ background: colorToCss(icon.rgba) }} />
+      ) : (
+        <span className="vnode__icon-text">{icon.text}</span>
+      )}
+    </span>
+  );
+}
 
 /** A node is previewable (issue #79) when it emits a Geometry output. */
 export function isPreviewable(data: FlowNodeData): boolean {
@@ -106,6 +121,7 @@ function NodeCard({ id, data, selected, ghost, connectedInputs }: NodeCardProps)
       )}
       <div className={classes.join(' ')}>
         <div className="vnode__header">
+          <NodeIcon data={data} />
           <span className="vnode__title">{data.label}</span>
           {previewable && (
             <button
