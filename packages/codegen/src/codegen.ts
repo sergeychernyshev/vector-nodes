@@ -305,6 +305,11 @@ const EMITTERS: Record<string, Emitter> = {
     expr: `{ geometry: colorGeometry(${inputs.geometry}, ${inputs.color}) }`,
     uses: ['colorGeometry'],
   }),
+  // Combine channels into an RGBA color (issue #139); mode picks the input space.
+  CombineColor: ({ inputs, params }) => ({
+    expr: `{ color: combineColor(${lit(String(params.mode ?? 'RGB'))}, ${inputs.red}, ${inputs.green}, ${inputs.blue}, ${inputs.alpha}) }`,
+    uses: ['combineColor'],
+  }),
 
   BoundingBox: ({ inputs }) => ({
     expr: `{ geometry: { points: boundingBox(${inputs.geometry}), curves: [], meshes: [] } }`,

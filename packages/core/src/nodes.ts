@@ -456,6 +456,45 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
     outputs: [{ name: 'geometry', type: 'Geometry' }],
     params: [],
   },
+  // Build a color from its channel components (issue #139). A `mode` picks the
+  // input color space; HSL/HSV are converted so the output is always RGBA.
+  // Every channel is normalized to [0, 1]; hue (HSL/HSV) is in turns. The socket
+  // identifiers stay red/green/blue (Blender's convention) — in HSL mode they
+  // are read as hue/saturation/lightness, and in HSV as hue/saturation/value.
+  {
+    type: 'CombineColor',
+    label: 'Combine Color',
+    category: 'Input',
+    inputs: [
+      {
+        name: 'red',
+        type: 'Float',
+        default: 0,
+        min: 0,
+        max: 1,
+        description: 'Red, or hue (in turns) in HSL/HSV mode.',
+      },
+      {
+        name: 'green',
+        type: 'Float',
+        default: 0,
+        min: 0,
+        max: 1,
+        description: 'Green, or saturation in HSL/HSV mode.',
+      },
+      {
+        name: 'blue',
+        type: 'Float',
+        default: 0,
+        min: 0,
+        max: 1,
+        description: 'Blue, or lightness (HSL) / value (HSV) in those modes.',
+      },
+      { name: 'alpha', type: 'Float', default: 1, min: 0, max: 1, description: 'Opacity.' },
+    ],
+    outputs: [{ name: 'color', type: 'Color' }],
+    params: [{ name: 'mode', type: 'String', default: 'RGB', options: ['RGB', 'HSL', 'HSV'] }],
+  },
   {
     type: 'InstanceOnPoints',
     label: 'Instance on Points',

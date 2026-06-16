@@ -204,6 +204,30 @@ describe('conformance: compiled output equals interpreter output', () => {
     expect(result.curves[0]!.points).toHaveLength(5);
   });
 
+  it('a combined HSV color drives Set Color (issue #139)', () => {
+    const graph = createGraph({
+      nodes: [
+        {
+          id: 'col',
+          type: 'CombineColor',
+          params: { mode: 'HSV' },
+          inputDefaults: { red: 2 / 3, green: 1, blue: 1, alpha: 0.5 },
+        },
+        { id: 'pc', type: 'PointCircle', params: { count: 4 } },
+        { id: 'sc', type: 'ColorGeometry' },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [
+        { from: ['col', 'color'], to: ['sc', 'color'] },
+        { from: ['pc', 'geometry'], to: ['sc', 'geometry'] },
+        { from: ['sc', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    });
+    const result = runCompiled(graph, []) as { pointColors: number[][] };
+    expect(result).toEqual(interpret(graph));
+    expect(result.pointColors[0]![3]).toBe(0.5);
+  });
+
   it('a config field wired from another node (issue #58)', () => {
     // PointCircle.radius is an input socket now: feed it from a ConstFloat.
     const graph = createGraph({
