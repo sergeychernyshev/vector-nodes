@@ -766,11 +766,20 @@ export function App() {
       const bridges = planReconnects(edgesRef.current, nodesRef.current, deletedIds);
       if (bridges.length === 0) return;
       setEdges((eds) => {
-        // Drop edges touching the removed nodes, then add the bridges (each
-        // replacing any existing link into its destination input).
+        // Drop edges touching the removed nodes, then add the bridges. A bridge
+        // into a single-value input replaces any existing link there (issue #41);
+        // an array input keeps its other links and collects the bridge (issue
+        // #146) rather than having them all wiped.
         let next = eds.filter((e) => !deletedIds.has(e.source) && !deletedIds.has(e.target));
         for (const b of bridges) {
-          next = addEdge(b, edgesWithoutInput(next, b.target, b.targetHandle));
+          const isArrayInput =
+            nodesRef.current
+              .find((n) => n.id === b.target)
+              ?.data.inputs.find((s) => s.name === b.targetHandle)?.isArray ?? false;
+          next = addEdge(
+            b,
+            isArrayInput ? next : edgesWithoutInput(next, b.target, b.targetHandle),
+          );
         }
         return next;
       });
