@@ -5,6 +5,8 @@ import { buildSvgScene, padBounds, pointsPathD, type Point2 } from './svg-scene'
 
 export interface SvgViewProps {
   geometry: Geometry;
+  /** Fraction of the extent left as a margin around the geometry (default 0.1). */
+  padding?: number;
 }
 
 const COLORS = {
@@ -52,9 +54,9 @@ function pointsAttr(points: readonly Point2[]): string {
  * mesh faces, curve outlines, and points. The Y axis is flipped so positive Y
  * points up, matching the 3D view's drawing plane.
  */
-export function SvgView({ geometry }: SvgViewProps) {
+export function SvgView({ geometry, padding = 0.1 }: SvgViewProps) {
   const scene = useMemo(() => buildSvgScene(geometry), [geometry]);
-  const bounds = padBounds(scene.bounds);
+  const bounds = padBounds(scene.bounds, padding);
   const width = bounds.maxX - bounds.minX;
   const height = bounds.maxY - bounds.minY;
   const extent = Math.max(width, height) || 1;

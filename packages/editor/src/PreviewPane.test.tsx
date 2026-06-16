@@ -97,6 +97,34 @@ describe('PreviewPane', () => {
     }
   });
 
+  it('toggles the dock from the preview header and labels it per state (issue #154)', () => {
+    const onToggleDock = vi.fn();
+    const { getByLabelText, queryByLabelText, rerender } = render(
+      <PreviewPane
+        result={{ geometry: sampleGeometry() }}
+        dock="side"
+        onToggleDock={onToggleDock}
+      />,
+    );
+    // Docked on the side → offers to dock on top.
+    fireEvent.click(getByLabelText('Dock preview on top'));
+    expect(onToggleDock).toHaveBeenCalledTimes(1);
+
+    // Docked on top → offers to dock on the side.
+    rerender(
+      <PreviewPane
+        result={{ geometry: sampleGeometry() }}
+        dock="top"
+        onToggleDock={onToggleDock}
+      />,
+    );
+    expect(getByLabelText('Dock preview on the side')).toBeTruthy();
+
+    // Hidden without a handler.
+    rerender(<PreviewPane result={{ geometry: sampleGeometry() }} dock="side" />);
+    expect(queryByLabelText('Dock preview on top')).toBeNull();
+  });
+
   it('omits the bottom resize handle without an onResizeHeight handler', () => {
     const { queryByLabelText } = render(<PreviewPane result={{ geometry: sampleGeometry() }} />);
     expect(queryByLabelText('Resize preview height')).toBeNull();

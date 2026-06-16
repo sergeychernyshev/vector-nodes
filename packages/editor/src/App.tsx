@@ -125,6 +125,13 @@ export function App() {
   const [previewCollapsed, setPreviewCollapsed] = useState(() => loadFlag('vn:preview-collapsed'));
   // Swap the two sidebars (palette ↔ preview), persisted (issue #62).
   const [sidebarsSwapped, setSidebarsSwapped] = useState(() => loadFlag('vn:sidebars-swapped'));
+  // Whether the preview docks beside the canvas or as a strip on top (issue #154).
+  // Persisted; defaults from the device orientation on first run.
+  const [previewDock, setPreviewDock] = useState<'side' | 'top'>(() => {
+    const saved = loadString('vn:preview-dock', '');
+    if (saved === 'side' || saved === 'top') return saved;
+    return window.matchMedia?.('(orientation: portrait)').matches ? 'top' : 'side';
+  });
   // Preview strip height when docked on top (portrait, issue #61): dragged via
   // its bottom border, persisted by PreviewPane. null = the CSS default (40vh).
   const [previewHeight, setPreviewHeight] = useState<number | null>(() => {
@@ -737,7 +744,13 @@ export function App() {
             }}
           />
           <div
-            className={sidebarsSwapped ? 'app-main app-main--swapped' : 'app-main'}
+            className={[
+              'app-main',
+              sidebarsSwapped && 'app-main--swapped',
+              previewDock === 'top' && 'app-main--preview-top',
+            ]
+              .filter(Boolean)
+              .join(' ')}
             // The dragged portrait strip height; the strip and the palette
             // drawer below both read this variable. Omitted while collapsed so
             // the stylesheet's thin-bar override wins over the inline value.
@@ -840,6 +853,14 @@ export function App() {
             <PreviewPane
               result={preview}
               side={sidebarsSwapped ? 'left' : 'right'}
+              dock={previewDock}
+              onToggleDock={() =>
+                setPreviewDock((d) => {
+                  const next = d === 'top' ? 'side' : 'top';
+                  saveString('vn:preview-dock', next);
+                  return next;
+                })
+              }
               onResizeHeight={setPreviewHeight}
               collapsed={previewCollapsed}
               onToggleCollapse={() =>

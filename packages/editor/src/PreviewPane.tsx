@@ -51,6 +51,13 @@ export interface PreviewPaneProps {
   /** Which side the pane is docked on; drives the resize handle (issue #62). */
   side?: 'left' | 'right';
   /**
+   * Whether the preview is docked beside the canvas or as a strip on top (issue
+   * #154). When omitted, falls back to the portrait media query (issue #61).
+   */
+  dock?: 'side' | 'top';
+  /** Toggle the dock between side and top (issue #154); omit to hide the button. */
+  onToggleDock?: () => void;
+  /**
    * Reports drags of the strip's bottom border when the preview is docked on
    * top (portrait); the owner applies the height (omit to disable).
    */
@@ -71,6 +78,8 @@ export function PreviewPane({
   collapsed,
   onToggleCollapse,
   side = 'right',
+  dock,
+  onToggleDock,
   onResizeHeight,
 }: PreviewPaneProps) {
   const [mode, setMode] = useState<PreviewMode>('3d');
@@ -82,10 +91,21 @@ export function PreviewPane({
   const sideRef = useRef(side);
   sideRef.current = side;
 
-  // Docked on top (portrait): the toggle points at the strip's edge — top
-  // while expanded, bottom (the canvas edge it collapsed to) when collapsed.
-  const isPortrait = useIsPortrait();
-  const iconSide = isPortrait ? (collapsed ? 'bottom' : 'top') : side;
+  // Docked on top: the toggle points at the strip's edge — top while expanded,
+  // bottom (the canvas edge it collapsed to) when collapsed. The dock is set
+  // explicitly (issue #154), falling back to the portrait query (issue #61).
+  const autoPortrait = useIsPortrait();
+  const onTop = dock != null ? dock === 'top' : autoPortrait;
+  // Chevron for the collapse/expand toggle, pointing the way the panel moves:
+  // toward the edge it tucks into when expanded, back toward the canvas when
+  // collapsed.
+  const collapseChevron = onTop
+    ? collapsed
+      ? '⌄'
+      : '⌃'
+    : (side === 'right') === !collapsed
+      ? '›'
+      : '‹';
 
   // Drag the left border to resize; width is measured from the viewport's right
   // edge and persisted so it survives reloads.
@@ -154,7 +174,9 @@ export function PreviewPane({
           aria-expanded={false}
           title="Show preview"
         >
-          <SidebarIcon side={iconSide} />
+          <span className="preview__chevron" aria-hidden="true">
+            {collapseChevron}
+          </span>
         </button>
       </aside>
     );
@@ -179,18 +201,33 @@ export function PreviewPane({
         />
       )}
       <div className="preview__header">
-        {onToggleCollapse && (
-          <button
-            type="button"
-            className="preview__collapse"
-            onClick={onToggleCollapse}
-            aria-label="Hide preview"
-            aria-expanded
-            title="Hide preview"
-          >
-            <SidebarIcon side={iconSide} />
-          </button>
-        )}
+        <span className="preview__header-controls">
+          {onToggleCollapse && (
+            <button
+              type="button"
+              className="preview__collapse"
+              onClick={onToggleCollapse}
+              aria-label="Hide preview"
+              aria-expanded
+              title="Hide preview"
+            >
+              <span className="preview__chevron" aria-hidden="true">
+                {collapseChevron}
+              </span>
+            </button>
+          )}
+          {onToggleDock && (
+            <button
+              type="button"
+              className="preview__collapse preview__dock"
+              onClick={onToggleDock}
+              aria-label={onTop ? 'Dock preview on the side' : 'Dock preview on top'}
+              title={onTop ? 'Dock preview on the side' : 'Dock preview on top'}
+            >
+              <SidebarIcon side={onTop ? side : 'top'} />
+            </button>
+          )}
+        </span>
         <span>Preview</span>
         <div className="preview__toggle" role="group" aria-label="Preview mode">
           <button
@@ -221,7 +258,9 @@ export function PreviewPane({
             (mode === '3d' ? (
               <ThreeView geometry={result.geometry} />
             ) : (
-              <SvgView geometry={result.geometry} />
+              // Docked on top the strip is short and wide, so drop the margin to
+              // let the geometry fill it edge-to-edge (issue #154).
+              <SvgView geometry={result.geometry} padding={onTop ? 0.02 : 0.1} />
             ))}
           <PreviewSummary result={result} />
         </div>
