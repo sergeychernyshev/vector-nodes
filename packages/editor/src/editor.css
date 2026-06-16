@@ -226,6 +226,16 @@ body {
 .vnode__input--axis {
   width: 44px;
 }
+/* Scrubber for a bounded float (e.g. color channels in [0, 1], issue #139): a
+   range slider beside the number so the value's range is obvious. */
+.vnode__range {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.vnode__slider {
+  width: 64px;
+}
 .vnode__vector {
   display: inline-flex;
   align-items: center;

@@ -14,6 +14,40 @@ interface ControlProps {
 
 function NumberControl({ param, value, onChange, disabled }: ControlProps) {
   const isInt = param.type === 'Integer';
+  const n = asNumber(value);
+  const commit = (raw: number) => onChange(isInt ? Math.round(raw) : raw);
+
+  // A bounded float (e.g. a color channel in [0, 1]) gets a scrubber slider next
+  // to the number so its range is visible at a glance (issue #139).
+  if (!isInt && param.min !== undefined && param.max !== undefined) {
+    const step = (param.max - param.min) / 100 || 'any';
+    return (
+      <span className="vnode__range">
+        <input
+          className="nodrag vnode__slider"
+          type="range"
+          min={param.min}
+          max={param.max}
+          step={step}
+          aria-label={`${param.name} slider`}
+          disabled={disabled}
+          value={n}
+          onChange={(e) => commit(Number(e.target.value))}
+        />
+        <input
+          className="nodrag vnode__input vnode__input--axis"
+          type="number"
+          step="any"
+          min={param.min}
+          max={param.max}
+          disabled={disabled}
+          value={n}
+          onChange={(e) => commit(Number(e.target.value))}
+        />
+      </span>
+    );
+  }
+
   return (
     <input
       className="nodrag vnode__input"
@@ -22,11 +56,8 @@ function NumberControl({ param, value, onChange, disabled }: ControlProps) {
       min={param.min}
       max={param.max}
       disabled={disabled}
-      value={asNumber(value)}
-      onChange={(e) => {
-        const n = Number(e.target.value);
-        onChange(isInt ? Math.round(n) : n);
-      }}
+      value={n}
+      onChange={(e) => commit(Number(e.target.value))}
     />
   );
 }

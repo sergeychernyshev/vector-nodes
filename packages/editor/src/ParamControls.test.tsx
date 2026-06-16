@@ -42,6 +42,29 @@ describe('ParamControls', () => {
     expect(setParam).toHaveBeenCalledWith('n1', 'radius', 2.5);
   });
 
+  it('renders a scrubber slider for a bounded float and edits via it (issue #139)', () => {
+    const { setParam, container, getByLabelText } = renderControls(
+      [{ name: 'red', type: 'Float', default: 0, min: 0, max: 1 }],
+      { red: 0.2 },
+    );
+    // Both a range slider (the scrubber) and a number input are shown.
+    const slider = getByLabelText('red slider') as HTMLInputElement;
+    expect(slider.type).toBe('range');
+    expect(slider.min).toBe('0');
+    expect(slider.max).toBe('1');
+    expect(container.querySelector('input[type="number"]')).not.toBeNull();
+    fireEvent.change(slider, { target: { value: '0.7' } });
+    expect(setParam).toHaveBeenCalledWith('n1', 'red', 0.7);
+  });
+
+  it('keeps a plain number input for an unbounded float', () => {
+    const { container } = renderControls([{ name: 'radius', type: 'Float', default: 1 }], {
+      radius: 1,
+    });
+    expect(container.querySelector('input[type="range"]')).toBeNull();
+    expect(container.querySelector('input[type="number"]')).not.toBeNull();
+  });
+
   it('rounds integer params', () => {
     const { setParam, container } = renderControls(
       [{ name: 'count', type: 'Integer', default: 4 }],
