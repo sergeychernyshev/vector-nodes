@@ -51,6 +51,11 @@ export interface PreviewPaneProps {
   /** Which side the pane is docked on; drives the resize handle (issue #62). */
   side?: 'left' | 'right';
   /**
+   * Whether the preview is docked beside the canvas or as a strip on top (issue
+   * #154). When omitted, falls back to the portrait media query (issue #61).
+   */
+  dock?: 'side' | 'top';
+  /**
    * Reports drags of the strip's bottom border when the preview is docked on
    * top (portrait); the owner applies the height (omit to disable).
    */
@@ -71,6 +76,7 @@ export function PreviewPane({
   collapsed,
   onToggleCollapse,
   side = 'right',
+  dock,
   onResizeHeight,
 }: PreviewPaneProps) {
   const [mode, setMode] = useState<PreviewMode>('3d');
@@ -82,10 +88,12 @@ export function PreviewPane({
   const sideRef = useRef(side);
   sideRef.current = side;
 
-  // Docked on top (portrait): the toggle points at the strip's edge — top
-  // while expanded, bottom (the canvas edge it collapsed to) when collapsed.
-  const isPortrait = useIsPortrait();
-  const iconSide = isPortrait ? (collapsed ? 'bottom' : 'top') : side;
+  // Docked on top: the toggle points at the strip's edge — top while expanded,
+  // bottom (the canvas edge it collapsed to) when collapsed. The dock is set
+  // explicitly (issue #154), falling back to the portrait query (issue #61).
+  const autoPortrait = useIsPortrait();
+  const onTop = dock != null ? dock === 'top' : autoPortrait;
+  const iconSide = onTop ? (collapsed ? 'bottom' : 'top') : side;
 
   // Drag the left border to resize; width is measured from the viewport's right
   // edge and persisted so it survives reloads.
