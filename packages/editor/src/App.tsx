@@ -691,14 +691,6 @@ export function App() {
                 return !s;
               })
             }
-            previewDock={previewDock}
-            onTogglePreviewDock={() =>
-              setPreviewDock((d) => {
-                const next = d === 'top' ? 'side' : 'top';
-                saveString('vn:preview-dock', next);
-                return next;
-              })
-            }
             onGenerate={onGenerate}
             codeLanguage={codeLanguage}
             onCodeLanguageChange={(lang) => {
@@ -817,6 +809,13 @@ export function App() {
               result={preview}
               side={sidebarsSwapped ? 'left' : 'right'}
               dock={previewDock}
+              onToggleDock={() =>
+                setPreviewDock((d) => {
+                  const next = d === 'top' ? 'side' : 'top';
+                  saveString('vn:preview-dock', next);
+                  return next;
+                })
+              }
               onResizeHeight={setPreviewHeight}
               collapsed={previewCollapsed}
               onToggleCollapse={() =>

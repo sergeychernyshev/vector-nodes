@@ -15,10 +15,6 @@ export interface ToolbarProps {
   canRedo?: boolean;
   /** Swap the node-list and preview sidebars (issue #62). */
   onSwapSidebars?: () => void;
-  /** Where the preview is docked (issue #154). */
-  previewDock?: 'side' | 'top';
-  /** Toggle the preview between docking on the side and on top (omit to hide). */
-  onTogglePreviewDock?: () => void;
   /** Generate code for the current network (issue #67). */
   onGenerate?: () => void;
   /** Currently selected code-generation language. */
@@ -47,8 +43,6 @@ export const Toolbar = forwardRef<ToolbarHandle, ToolbarProps>(function Toolbar(
     canUndo,
     canRedo,
     onSwapSidebars,
-    previewDock,
-    onTogglePreviewDock,
     onGenerate,
     codeLanguage,
     onCodeLanguageChange,
@@ -102,15 +96,6 @@ export const Toolbar = forwardRef<ToolbarHandle, ToolbarProps>(function Toolbar(
         {onSwapSidebars && (
           <button type="button" onClick={onSwapSidebars} title="Swap sidebars">
             Swap sides
-          </button>
-        )}
-        {onTogglePreviewDock && (
-          <button
-            type="button"
-            onClick={onTogglePreviewDock}
-            title={previewDock === 'top' ? 'Dock preview on the side' : 'Dock preview on top'}
-          >
-            {previewDock === 'top' ? 'Dock side' : 'Dock top'}
           </button>
         )}
         <button type="button" onClick={onReset}>

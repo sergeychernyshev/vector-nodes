@@ -89,25 +89,6 @@ describe('Toolbar', () => {
     expect(onGenerate).toHaveBeenCalledTimes(1);
   });
 
-  it('toggles the preview dock and labels the button per state (issue #154)', () => {
-    const onTogglePreviewDock = vi.fn();
-    const { getByText, queryByText, rerender } = render(
-      <Toolbar nodeCount={0} previewDock="side" onTogglePreviewDock={onTogglePreviewDock} />,
-    );
-    // Docked on the side → offers to dock on top.
-    fireEvent.click(getByText('Dock top'));
-    expect(onTogglePreviewDock).toHaveBeenCalledTimes(1);
-
-    // Docked on top → offers to dock on the side.
-    rerender(<Toolbar nodeCount={0} previewDock="top" onTogglePreviewDock={onTogglePreviewDock} />);
-    expect(getByText('Dock side')).toBeTruthy();
-
-    // Hidden without a handler.
-    rerender(<Toolbar nodeCount={0} />);
-    expect(queryByText('Dock top')).toBeNull();
-    expect(queryByText('Dock side')).toBeNull();
-  });
-
   it('openFileDialog handle clicks the hidden file input', () => {
     const ref = createRef<ToolbarHandle>();
     const { getByLabelText } = render(<Toolbar ref={ref} nodeCount={0} />);

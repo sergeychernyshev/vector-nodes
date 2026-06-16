@@ -393,6 +393,12 @@ body {
   font-weight: 600;
   border-bottom: 1px solid var(--border);
 }
+/* The collapse + dock buttons grouped on the left of the preview header (#154). */
+.preview__header-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
 .preview__toggle {
   display: inline-flex;
   border: 1px solid var(--border-strong);
@@ -469,6 +475,18 @@ body {
 }
 .preview__count-label {
   opacity: 0.7;
+}
+/* Docked on top (issue #154): the strip is short and wide, so stack the counts
+   down the right edge instead of across the bottom where they'd cover the view. */
+.app-main--preview-top .preview__summary {
+  left: auto;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 8px;
 }
 
 /* Subgraph (meta-node) editor modal */

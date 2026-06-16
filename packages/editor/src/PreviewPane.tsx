@@ -55,6 +55,8 @@ export interface PreviewPaneProps {
    * #154). When omitted, falls back to the portrait media query (issue #61).
    */
   dock?: 'side' | 'top';
+  /** Toggle the dock between side and top (issue #154); omit to hide the button. */
+  onToggleDock?: () => void;
   /**
    * Reports drags of the strip's bottom border when the preview is docked on
    * top (portrait); the owner applies the height (omit to disable).
@@ -77,6 +79,7 @@ export function PreviewPane({
   onToggleCollapse,
   side = 'right',
   dock,
+  onToggleDock,
   onResizeHeight,
 }: PreviewPaneProps) {
   const [mode, setMode] = useState<PreviewMode>('3d');
@@ -187,18 +190,31 @@ export function PreviewPane({
         />
       )}
       <div className="preview__header">
-        {onToggleCollapse && (
-          <button
-            type="button"
-            className="preview__collapse"
-            onClick={onToggleCollapse}
-            aria-label="Hide preview"
-            aria-expanded
-            title="Hide preview"
-          >
-            <SidebarIcon side={iconSide} />
-          </button>
-        )}
+        <span className="preview__header-controls">
+          {onToggleCollapse && (
+            <button
+              type="button"
+              className="preview__collapse"
+              onClick={onToggleCollapse}
+              aria-label="Hide preview"
+              aria-expanded
+              title="Hide preview"
+            >
+              <SidebarIcon side={iconSide} />
+            </button>
+          )}
+          {onToggleDock && (
+            <button
+              type="button"
+              className="preview__collapse preview__dock"
+              onClick={onToggleDock}
+              aria-label={onTop ? 'Dock preview on the side' : 'Dock preview on top'}
+              title={onTop ? 'Dock preview on the side' : 'Dock preview on top'}
+            >
+              <SidebarIcon side={onTop ? side : 'top'} />
+            </button>
+          )}
+        </span>
         <span>Preview</span>
         <div className="preview__toggle" role="group" aria-label="Preview mode">
           <button
