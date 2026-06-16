@@ -41,12 +41,20 @@ function isGeometry(value: unknown): value is Geometry {
  * requested node is evaluated even when it is not reachable from the output
  * (issue #140), so a node being built in isolation still previews; the geometry
  * of every requested node that produced one is returned in `nodeGeometries`.
+ *
+ * `parameters` are forwarded to the engine (e.g. the animation clock's `time`),
+ * so a Time node drives the preview live (issue #138).
  */
-export function evaluatePreview(graph: Graph, previewIds: readonly string[] = []): PreviewResult {
+export function evaluatePreview(
+  graph: Graph,
+  previewIds: readonly string[] = [],
+  parameters: Record<string, unknown> = {},
+): PreviewResult {
   try {
     // Pass the open preview ids as extra evaluation roots so a node previews
-    // even when it isn't (yet) wired to the output (issue #140).
-    const result = evaluateGraph(graph, registry, BASIC_OPERATORS, {}, previewIds);
+    // even when it isn't (yet) wired to the output (issue #140). `parameters`
+    // forwards the animation clock's `time` so a Time node previews live (#138).
+    const result = evaluateGraph(graph, registry, BASIC_OPERATORS, parameters, previewIds);
     const geometry = (result.output.geometry as Geometry | undefined) ?? emptyGeometry();
     const nodeGeometries: Record<string, Geometry> = {};
     for (const id of previewIds) {

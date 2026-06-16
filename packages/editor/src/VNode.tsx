@@ -10,6 +10,7 @@ import {
   type VNodeFlowNode,
 } from './flow';
 import { colorToCss, nodeDefaultGeometry, nodeIcon } from './node-icon';
+import { useClock } from './ClockContext';
 import { useNodePreview } from './NodePreviewContext';
 import {
   InputDefaultField,
@@ -117,6 +118,11 @@ function NodeCard({ id, data, selected, ghost, ghostGeometry, connectedInputs }:
   const previewOpen = ghost ? ghostGeometry !== undefined : previewable && preview.open.has(id);
   const previewGeometry = ghost ? ghostGeometry : preview.geometries[id];
 
+  // A Time node carries the shared animation transport on its card (issue #138):
+  // its play/pause button toggles the same clock as the global control.
+  const clock = useClock();
+  const isTime = !ghost && data.nodeType === 'Time';
+
   const classes = ['vnode'];
   if (selected) classes.push('vnode--selected');
   if (data.nodeType.startsWith('Meta:')) classes.push('vnode--meta');
@@ -139,6 +145,26 @@ function NodeCard({ id, data, selected, ghost, ghostGeometry, connectedInputs }:
         <div className="vnode__header">
           <NodeIcon data={data} />
           <span className="vnode__title">{data.label}</span>
+          {isTime && (
+            <span
+              className="vnode__transport nodrag"
+              style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 8 }}
+            >
+              <button
+                type="button"
+                className="vnode__preview-toggle nodrag"
+                aria-label={clock.playing ? 'Pause animation' : 'Play animation'}
+                aria-pressed={clock.playing}
+                title={clock.playing ? 'Pause animation' : 'Play animation'}
+                onClick={() => clock.toggle()}
+              >
+                {clock.playing ? '⏸' : '▶'}
+              </button>
+              <span className="vnode__time" title="Current time (seconds)">
+                {clock.time.toFixed(2)}s
+              </span>
+            </span>
+          )}
           {!ghost && previewable && (
             <button
               type="button"

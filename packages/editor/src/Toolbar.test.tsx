@@ -89,6 +89,32 @@ describe('Toolbar', () => {
     expect(onGenerate).toHaveBeenCalledTimes(1);
   });
 
+  it('shows the transport only with timers and toggles play/reset (issue #138)', () => {
+    const onTogglePlay = vi.fn();
+    const onResetClock = vi.fn();
+    const { queryByLabelText, getByLabelText, rerender } = render(<Toolbar nodeCount={0} />);
+    // Hidden when the network has no Time nodes.
+    expect(queryByLabelText('Play animation')).toBeNull();
+
+    rerender(
+      <Toolbar
+        nodeCount={0}
+        showTransport
+        playing={false}
+        onTogglePlay={onTogglePlay}
+        onResetClock={onResetClock}
+      />,
+    );
+    fireEvent.click(getByLabelText('Play animation'));
+    expect(onTogglePlay).toHaveBeenCalledTimes(1);
+    fireEvent.click(getByLabelText('Reset animation time'));
+    expect(onResetClock).toHaveBeenCalledTimes(1);
+
+    // While playing, the button flips to Pause.
+    rerender(<Toolbar nodeCount={0} showTransport playing onTogglePlay={onTogglePlay} />);
+    expect(getByLabelText('Pause animation')).toBeTruthy();
+  });
+
   it('openFileDialog handle clicks the hidden file input', () => {
     const ref = createRef<ToolbarHandle>();
     const { getByLabelText } = render(<Toolbar ref={ref} nodeCount={0} />);

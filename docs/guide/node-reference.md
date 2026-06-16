@@ -26,14 +26,15 @@ Plus a **Parameter** node per socket type (`ParameterFloat` … `ParameterGeomet
 
 ## Input
 
-| Node                                  | Inputs | Outputs          | Params  |
-| ------------------------------------- | ------ | ---------------- | ------- |
-| **Boolean Constant** (`ConstBoolean`) | —      | `value`: Boolean | `value` |
-| **Color Constant** (`ConstColor`)     | —      | `value`: Color   | `value` |
-| **Float Constant** (`ConstFloat`)     | —      | `value`: Float   | `value` |
-| **Integer Constant** (`ConstInteger`) | —      | `value`: Integer | `value` |
-| **String Constant** (`ConstString`)   | —      | `value`: String  | `value` |
-| **Vector Constant** (`ConstVector`)   | —      | `value`: Vector  | `value` |
+| Node                                  | Inputs | Outputs                                                   | Params  |
+| ------------------------------------- | ------ | --------------------------------------------------------- | ------- |
+| **Boolean Constant** (`ConstBoolean`) | —      | `value`: Boolean                                          | `value` |
+| **Color Constant** (`ConstColor`)     | —      | `value`: Color                                            | `value` |
+| **Float Constant** (`ConstFloat`)     | —      | `value`: Float                                            | `value` |
+| **Integer Constant** (`ConstInteger`) | —      | `value`: Integer                                          | `value` |
+| **String Constant** (`ConstString`)   | —      | `value`: String                                           | `value` |
+| **Time** (`Time`)                     | —      | `seconds`: Float, `milliseconds`: Float, `frame`: Integer | `fps`   |
+| **Vector Constant** (`ConstVector`)   | —      | `value`: Vector                                           | `value` |
 
 ## Mesh
 

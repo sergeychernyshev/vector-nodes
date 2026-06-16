@@ -107,6 +107,35 @@ describe('generate', () => {
     );
     expect(mod.params).toEqual([{ name: 'shift', tsType: '[number, number, number]' }]);
   });
+
+  it('injects a leading time argument when a Time node is present (issue #138)', () => {
+    const animated = createGraph({
+      metadata: { name: 'animated' },
+      parameters: [{ id: 'shift', type: 'Vector', default: [0, 0, 0] }],
+      nodes: [
+        { id: 'tm', type: 'Time', params: { fps: 30 } },
+        { id: 'pc', type: 'PointCircle' },
+        { id: 'p', type: 'ParameterVector', params: { name: 'shift' } },
+        { id: 't', type: 'Translate' },
+        { id: 'out', type: 'OutputGeometry' },
+      ],
+      links: [
+        { from: ['tm', 'seconds'], to: ['pc', 'radius'] },
+        { from: ['pc', 'geometry'], to: ['t', 'geometry'] },
+        { from: ['p', 'value'], to: ['t', 'offset'] },
+        { from: ['t', 'geometry'], to: ['out', 'geometry'] },
+      ],
+    });
+    const mod = generate(animated, registry);
+    // `time` leads the network's own parameters.
+    expect(mod.params).toEqual([
+      { name: 'time', tsType: 'number' },
+      { name: 'shift', tsType: '[number, number, number]' },
+    ]);
+    expect(mod.ts).toContain(
+      'export default function animated(time: number, shift: [number, number, number]): Geometry {',
+    );
+  });
 });
 
 describe('wrappers', () => {

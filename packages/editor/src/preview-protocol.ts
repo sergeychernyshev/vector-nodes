@@ -8,6 +8,11 @@ export interface PreviewRequest {
   graph: Graph;
   /** Node ids whose per-node preview is open and need their geometry (issue #79). */
   previewIds?: string[];
+  /**
+   * External evaluation parameters (e.g. the animation clock's `time` in
+   * seconds), forwarded to the engine so a Time node previews live (issue #138).
+   */
+  parameters?: Record<string, unknown>;
 }
 
 /** Message posted back from the preview worker: the result for request `id`. */
@@ -21,5 +26,8 @@ export interface PreviewResponse {
  * importable (and unit-testable) without a Worker/DOM context.
  */
 export function runPreviewRequest(request: PreviewRequest): PreviewResponse {
-  return { id: request.id, result: evaluatePreview(request.graph, request.previewIds) };
+  return {
+    id: request.id,
+    result: evaluatePreview(request.graph, request.previewIds, request.parameters),
+  };
 }
