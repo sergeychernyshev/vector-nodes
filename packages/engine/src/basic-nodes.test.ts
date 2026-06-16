@@ -170,6 +170,37 @@ describe('RandomValue (issue #119)', () => {
   });
 });
 
+describe('Combine color nodes (issue #139)', () => {
+  it('Combine RGB passes channels through with alpha', () => {
+    const out = run('CombineColorRGB', {
+      inputs: { red: 0.2, green: 0.4, blue: 0.6, alpha: 0.8 },
+    });
+    expect(out).toEqual({ color: [0.2, 0.4, 0.6, 0.8] });
+  });
+
+  it('Combine HSL converts to RGBA', () => {
+    const out = run('CombineColorHSL', {
+      inputs: { hue: 1 / 3, saturation: 1, lightness: 0.5, alpha: 1 },
+    });
+    const color = out.color as number[];
+    expect(color[0]).toBeCloseTo(0, 6);
+    expect(color[1]).toBeCloseTo(1, 6);
+    expect(color[2]).toBeCloseTo(0, 6);
+    expect(color[3]).toBe(1);
+  });
+
+  it('Combine HSV converts to RGBA', () => {
+    const out = run('CombineColorHSV', {
+      inputs: { hue: 2 / 3, saturation: 1, value: 1, alpha: 0.5 },
+    });
+    const color = out.color as number[];
+    expect(color[0]).toBeCloseTo(0, 6);
+    expect(color[1]).toBeCloseTo(0, 6);
+    expect(color[2]).toBeCloseTo(1, 6);
+    expect(color[3]).toBe(0.5);
+  });
+});
+
 describe('arrays and geometry sources', () => {
   it('VectorArray copies its values', () => {
     expect(run('VectorArray', { params: { values: [[1, 2, 3]] } })).toEqual({

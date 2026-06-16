@@ -8,4 +8,5 @@ export * from './types.js';
 export * from './vector.js';
 export * from './geometry.js';
 export * from './scalar.js';
+export * from './color.js';
 export * from './mesh.js';

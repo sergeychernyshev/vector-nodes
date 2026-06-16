@@ -8,6 +8,7 @@ import {
   circlePoints,
   clamp,
   colorGeometry,
+  combineColor,
   coneMesh,
   cross,
   curveGeometry,
@@ -55,6 +56,7 @@ import {
   triangulateGeometry,
   uvSphere,
   type Color,
+  type ColorMode,
   type Geometry,
   type Vector,
 } from '@vector-nodes/runtime';
@@ -373,6 +375,20 @@ const randomValue: NodeEvaluator = ({ inputs }) => {
   return { value: values[0], integer: integers[0], vector: vectors[0], values, integers, vectors };
 };
 
+// Build an RGBA color from channel components (issue #139), one evaluator per
+// color space. `a`/`b`/`c` name the three channel inputs for that space.
+const combineColorNode =
+  (mode: ColorMode, a: string, b: string, c: string): NodeEvaluator =>
+  ({ inputs }) => ({
+    color: combineColor(
+      mode,
+      inputs[a] as number,
+      inputs[b] as number,
+      inputs[c] as number,
+      inputs.alpha as number,
+    ),
+  });
+
 const mapRangeNode: NodeEvaluator = ({ inputs }) => ({
   value: mapRange(
     inputs.value as number,
@@ -474,6 +490,9 @@ export const BASIC_OPERATORS: OperatorTable = {
   InstanceOnPoints: instanceOnPointsNode,
   MathFloat: mathFloat,
   RandomValue: randomValue,
+  CombineColorRGB: combineColorNode('RGB', 'red', 'green', 'blue'),
+  CombineColorHSL: combineColorNode('HSL', 'hue', 'saturation', 'lightness'),
+  CombineColorHSV: combineColorNode('HSV', 'hue', 'saturation', 'value'),
   MapRange: mapRangeNode,
   Clamp: clampNode,
   PlaneMesh: planeMeshNode,

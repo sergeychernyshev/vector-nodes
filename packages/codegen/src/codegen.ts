@@ -305,6 +305,19 @@ const EMITTERS: Record<string, Emitter> = {
     expr: `{ geometry: colorGeometry(${inputs.geometry}, ${inputs.color}) }`,
     uses: ['colorGeometry'],
   }),
+  // Combine channels into an RGBA color (issue #139), one node per color space.
+  CombineColorRGB: ({ inputs }) => ({
+    expr: `{ color: combineColor('RGB', ${inputs.red}, ${inputs.green}, ${inputs.blue}, ${inputs.alpha}) }`,
+    uses: ['combineColor'],
+  }),
+  CombineColorHSL: ({ inputs }) => ({
+    expr: `{ color: combineColor('HSL', ${inputs.hue}, ${inputs.saturation}, ${inputs.lightness}, ${inputs.alpha}) }`,
+    uses: ['combineColor'],
+  }),
+  CombineColorHSV: ({ inputs }) => ({
+    expr: `{ color: combineColor('HSV', ${inputs.hue}, ${inputs.saturation}, ${inputs.value}, ${inputs.alpha}) }`,
+    uses: ['combineColor'],
+  }),
 
   BoundingBox: ({ inputs }) => ({
     expr: `{ geometry: { points: boundingBox(${inputs.geometry}), curves: [], meshes: [] } }`,

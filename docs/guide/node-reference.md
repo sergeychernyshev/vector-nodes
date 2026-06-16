@@ -26,14 +26,17 @@ Plus a **Parameter** node per socket type (`ParameterFloat` … `ParameterGeomet
 
 ## Input
 
-| Node                                  | Inputs | Outputs          | Params  |
-| ------------------------------------- | ------ | ---------------- | ------- |
-| **Boolean Constant** (`ConstBoolean`) | —      | `value`: Boolean | `value` |
-| **Color Constant** (`ConstColor`)     | —      | `value`: Color   | `value` |
-| **Float Constant** (`ConstFloat`)     | —      | `value`: Float   | `value` |
-| **Integer Constant** (`ConstInteger`) | —      | `value`: Integer | `value` |
-| **String Constant** (`ConstString`)   | —      | `value`: String  | `value` |
-| **Vector Constant** (`ConstVector`)   | —      | `value`: Vector  | `value` |
+| Node                                  | Inputs                                                                | Outputs          | Params  |
+| ------------------------------------- | --------------------------------------------------------------------- | ---------------- | ------- |
+| **Boolean Constant** (`ConstBoolean`) | —                                                                     | `value`: Boolean | `value` |
+| **Color Constant** (`ConstColor`)     | —                                                                     | `value`: Color   | `value` |
+| **Combine HSL** (`CombineColorHSL`)   | `hue`: Float, `saturation`: Float, `lightness`: Float, `alpha`: Float | `color`: Color   | —       |
+| **Combine HSV** (`CombineColorHSV`)   | `hue`: Float, `saturation`: Float, `value`: Float, `alpha`: Float     | `color`: Color   | —       |
+| **Combine RGB** (`CombineColorRGB`)   | `red`: Float, `green`: Float, `blue`: Float, `alpha`: Float           | `color`: Color   | —       |
+| **Float Constant** (`ConstFloat`)     | —                                                                     | `value`: Float   | `value` |
+| **Integer Constant** (`ConstInteger`) | —                                                                     | `value`: Integer | `value` |
+| **String Constant** (`ConstString`)   | —                                                                     | `value`: String  | `value` |
+| **Vector Constant** (`ConstVector`)   | —                                                                     | `value`: Vector  | `value` |
 
 ## Mesh
 

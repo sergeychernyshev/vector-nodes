@@ -85,9 +85,21 @@ body {
   border-bottom: 1px solid #555;
 }
 .vnode__title {
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Filled circle preview of a color node's output, left of its title (issue #139).
+   The fill color is applied inline; translucent colors blend with the header. */
+.vnode__color-dot {
+  flex: none;
+  width: 1em;
+  height: 1em;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.45);
 }
 
 /* Per-node preview box and its show/hide toggle (issue #79). */
@@ -213,6 +225,16 @@ body {
 }
 .vnode__input--axis {
   width: 44px;
+}
+/* Scrubber for a bounded float (e.g. color channels in [0, 1], issue #139): a
+   range slider beside the number so the value's range is obvious. */
+.vnode__range {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.vnode__slider {
+  width: 64px;
 }
 .vnode__vector {
   display: inline-flex;

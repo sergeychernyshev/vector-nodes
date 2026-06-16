@@ -8,6 +8,7 @@ import {
   type FlowSocket,
   type VNodeFlowNode,
 } from './flow';
+import { colorToCss, nodeColor } from './node-color';
 import { useNodePreview } from './NodePreviewContext';
 import {
   InputDefaultField,
@@ -16,6 +17,19 @@ import {
   ParamControls,
 } from './ParamControls';
 import { SvgView } from './SvgView';
+
+/** Filled circle showing the color a Combine/Color node produces (issue #139). */
+function ColorDot({ data }: { data: FlowNodeData }) {
+  const color = nodeColor(data);
+  if (!color) return null;
+  return (
+    <span
+      className="vnode__color-dot"
+      aria-hidden="true"
+      style={{ background: colorToCss(color) }}
+    />
+  );
+}
 
 /** A node is previewable (issue #79) when it emits a Geometry output. */
 export function isPreviewable(data: FlowNodeData): boolean {
@@ -106,6 +120,7 @@ function NodeCard({ id, data, selected, ghost, connectedInputs }: NodeCardProps)
       )}
       <div className={classes.join(' ')}>
         <div className="vnode__header">
+          <ColorDot data={data} />
           <span className="vnode__title">{data.label}</span>
           {previewable && (
             <button

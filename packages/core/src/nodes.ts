@@ -456,6 +456,48 @@ export const BASIC_NODE_DEFINITIONS: NodeDefinition[] = [
     outputs: [{ name: 'geometry', type: 'Geometry' }],
     params: [],
   },
+  // Build an RGBA color from channel components (issue #139), one node per color
+  // space. Every channel is normalized to [0, 1]; hue (HSL/HSV) is in turns.
+  // HSL/HSV are converted so the output is always RGBA.
+  {
+    type: 'CombineColorRGB',
+    label: 'Combine RGB',
+    category: 'Input',
+    inputs: [
+      { name: 'red', type: 'Float', default: 0, min: 0, max: 1 },
+      { name: 'green', type: 'Float', default: 0, min: 0, max: 1 },
+      { name: 'blue', type: 'Float', default: 0, min: 0, max: 1 },
+      { name: 'alpha', type: 'Float', default: 1, min: 0, max: 1, description: 'Opacity.' },
+    ],
+    outputs: [{ name: 'color', type: 'Color' }],
+    params: [],
+  },
+  {
+    type: 'CombineColorHSL',
+    label: 'Combine HSL',
+    category: 'Input',
+    inputs: [
+      { name: 'hue', type: 'Float', default: 0, min: 0, max: 1, description: 'Hue, in turns.' },
+      { name: 'saturation', type: 'Float', default: 0, min: 0, max: 1 },
+      { name: 'lightness', type: 'Float', default: 0, min: 0, max: 1 },
+      { name: 'alpha', type: 'Float', default: 1, min: 0, max: 1, description: 'Opacity.' },
+    ],
+    outputs: [{ name: 'color', type: 'Color' }],
+    params: [],
+  },
+  {
+    type: 'CombineColorHSV',
+    label: 'Combine HSV',
+    category: 'Input',
+    inputs: [
+      { name: 'hue', type: 'Float', default: 0, min: 0, max: 1, description: 'Hue, in turns.' },
+      { name: 'saturation', type: 'Float', default: 0, min: 0, max: 1 },
+      { name: 'value', type: 'Float', default: 0, min: 0, max: 1 },
+      { name: 'alpha', type: 'Float', default: 1, min: 0, max: 1, description: 'Opacity.' },
+    ],
+    outputs: [{ name: 'color', type: 'Color' }],
+    params: [],
+  },
   {
     type: 'InstanceOnPoints',
     label: 'Instance on Points',
