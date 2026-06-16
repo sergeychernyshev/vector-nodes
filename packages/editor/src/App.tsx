@@ -179,7 +179,7 @@ export function App() {
   const pendingShift = useRef<{ newNodeId: string; downstreamIds: Set<string> } | null>(null);
   const idCounter = useRef(maxAutoId(initialNodes));
   const toolbarRef = useRef<ToolbarHandle>(null);
-  const { screenToFlowPosition, getNode } = useReactFlow<VNodeFlowNode>();
+  const { screenToFlowPosition } = useReactFlow<VNodeFlowNode>();
 
   // Registry = base node definitions + a definition per meta-node, so instances
   // render with their interface sockets and links type-check.
@@ -319,10 +319,13 @@ export function App() {
     (connection: Connection) => {
       takeSnapshot();
       // Array inputs accept any number of connections (issue #99); a scalar input
-      // replaces its existing link (issue #41) before the new one is added.
-      const targetSocket = getNode(connection.target ?? '')?.data.inputs.find(
-        (s) => s.name === connection.targetHandle,
-      );
+      // replaces its existing link (issue #41) before the new one is added. Read
+      // the target socket from our own node state (the same source isValidConnection
+      // uses), not React Flow's store — the store can lag, and a missed `isArray`
+      // there would wrongly drop the input's other links (issue #146).
+      const targetSocket = nodesRef.current
+        .find((n) => n.id === connection.target)
+        ?.data.inputs.find((s) => s.name === connection.targetHandle);
       setEdges((eds) =>
         addEdge(
           connection,
@@ -333,7 +336,7 @@ export function App() {
       );
       clearError();
     },
-    [setEdges, clearError, takeSnapshot, getNode],
+    [setEdges, clearError, takeSnapshot],
   );
 
   const editApi = useMemo<NodeEditApi>(
@@ -704,8 +707,10 @@ export function App() {
       if (handleType === 'target') {
         // Dragged off an input: new node's output → the dragged input. Array
         // inputs accept many connections (issue #99); a scalar input replaces.
+        // Resolve the target node from our own state, not React Flow's store,
+        // which can lag and report a stale `isArray` (issue #146).
         const { outputHandle } = suggestion as SourceSuggestion;
-        const targetNode = getNode(nodeId);
+        const targetNode = nodesRef.current.find((n) => n.id === nodeId);
         const inputSocket = targetNode?.data.inputs.find((s) => s.name === handleId);
         // When the chosen source is a constant whose output type matches the
         // input exactly, seed it with the value the input held so converting an
@@ -735,7 +740,7 @@ export function App() {
       }
       clearError();
     },
-    [connectMenu, createNodeAt, setEdges, setNodes, clearError, getNode, registry, library],
+    [connectMenu, createNodeAt, setEdges, setNodes, clearError, registry, library],
   );
 
   // Deleting a node that bridged two compatible sockets heals the gap with a
