@@ -76,8 +76,48 @@ describe('PreviewPane', () => {
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
 
+  it('persists the mode to localStorage when 2D is clicked', () => {
+    const setItem = vi.fn();
+    vi.stubGlobal('localStorage', { getItem: () => null, setItem });
+    try {
+      const { getByRole } = render(<PreviewPane result={{ geometry: sampleGeometry() }} />);
+      fireEvent.click(getByRole('button', { name: '2D' }));
+      expect(setItem).toHaveBeenCalledWith('vn:preview-mode', '2d');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('persists the mode to localStorage when 3D is clicked', () => {
+    const setItem = vi.fn();
+    vi.stubGlobal('localStorage', { getItem: () => '2d', setItem });
+    try {
+      const { getByRole } = render(<PreviewPane result={{ geometry: sampleGeometry() }} />);
+      fireEvent.click(getByRole('button', { name: '3D' }));
+      expect(setItem).toHaveBeenCalledWith('vn:preview-mode', '3d');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('restores a previously saved 2D mode from localStorage', () => {
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => (key === 'vn:preview-mode' ? '2d' : null),
+      setItem: vi.fn(),
+    });
+    try {
+      const { queryByTestId, getByRole } = render(
+        <PreviewPane result={{ geometry: sampleGeometry() }} />,
+      );
+      expect(queryByTestId('preview-svg')).toBeTruthy();
+      expect(queryByTestId('preview-canvas')).toBeNull();
+      expect(getByRole('button', { name: '2D' }).getAttribute('aria-pressed')).toBe('true');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('reports bottom-border drags and persists the height on release', () => {
-    // The environment's localStorage is a non-functional stub; replace it to
     // observe the write.
     const setItem = vi.fn();
     vi.stubGlobal('localStorage', { getItem: () => null, setItem });
